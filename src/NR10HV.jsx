@@ -5,13 +5,13 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/NR10 HV/NR10 HV/apostila_nr10_comentada [downloaded with 1stBrowser].pdf" },
-    { id: 2, titulo: "Apostila 2", arquivo: "/public/IMGs/NR10 HV/Apostila-NR-10-Basíco [downloaded with 1stBrowser].pdf" },
-    { id: 3, titulo: "Apostila 3", arquivo: "/public/IMGs/NR10 HV/APOSTILA.pdf" },
-    { id: 4, titulo: "Apostila 4", arquivo: "/public/IMGs/NR10 HV/NR10 HV.pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/NR10 HV/NR10 HV/apostila_nr10_comentada [downloaded with 1stBrowser].pdf" },
+    { id: 2, titulo: "Apostila 2", arquivo: "/IMGs/NR10 HV/Apostila-NR-10-Basíco [downloaded with 1stBrowser].pdf" },
+    { id: 3, titulo: "Apostila 3", arquivo: "/IMGs/NR10 HV/APOSTILA.pdf" },
+    { id: 4, titulo: "Apostila 4", arquivo: "/IMGs/NR10 HV/NR10 HV.pdf" },
   ],
   videos: [
-     { id: 1, titulo: "Aula 1", arquivo: "/public/IMGs/NR10 HV/Napo - Acidentes com a Corrente Elétrica [downloaded with 1stBrowser].mp4" },
+     { id: 1, titulo: "Aula 1", arquivo: "/IMGs/NR10 HV/Napo - Acidentes com a Corrente Elétrica [downloaded with 1stBrowser].mp4" },
   ],
 };
 
@@ -86,7 +86,7 @@ export default function AcessoProtegido() {
      <h2>CURSO NR10 - HV</h2>
 
 <img
-  src="/public/IMGs/10.jpg"
+  src="/IMGs/10.jpg"
   alt="Imagem do curso"
   style={{
     width: "100%",
@@ -145,7 +145,7 @@ export default function AcessoProtegido() {
 
       {/* ---------- LINK FINAL ---------- */}
       {finalizado && (
-  <button onClick={() => window.open("/src/PROVA-NR10HV", "_blank")}>
+  <button onClick={() => window.open("/PROVA-NR10HV", "_blank")}>
     ACESSAR PROVA
   </button>
 )}
