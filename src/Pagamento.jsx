@@ -1,28 +1,31 @@
 import { useEffect, useState } from "react";
 
 const cursosPadrao = [
-  { id: 1, nome: "curso NR1", preco: 50.0, arquivoCurso: "projeto/src/NR1.jsx" },
-  { id: 2, nome: "Curso NR5", preco: 60.0, arquivoCurso: "projeto/src/NR5.jsx" },
-  { id: 3, nome: "Curso NR6", preco: 80.0, arquivoCurso: "projeto/src/NR6.jsx" },
-  { id: 4, nome: "curso NR10", preco: 50.0, arquivoCurso: "projeto/src/NR10.jsx" },
-  { id: 5, nome: "Curso NR10HV", preco: 60.0, arquivoCurso: "projeto/src/NR10HV.jsx" },
-  { id: 6, nome: "Curso NR11", preco: 80.0, arquivoCurso: "projeto/src/NR11.jsx" },
-  { id: 7, nome: "curso NR12", preco: 50.0, arquivoCurso: "projeto/src/NR12.jsx" },
-  { id: 8, nome: "Curso NR13", preco: 60.0, arquivoCurso: "projeto/src/NR13.jsx" },
-  { id: 9, nome: "Curso NR16", preco: 80.0, arquivoCurso: "projeto/src/NR16.jsx" },
-  { id: 10, nome: "curso NR17", preco: 50.0, arquivoCurso: "projeto/src/NR17.jsx" },
-  { id: 11, nome: "Curso NR18", preco: 60.0, arquivoCurso: "projeto/src/NR18.jsx" },
-  { id: 12, nome: "curso NR20", preco: 50.0, arquivoCurso: "projeto/src/NR20.jsx" },
-  { id: 13, nome: "Curso NR23", preco: 60.0, arquivoCurso: "projeto/src/NR23.jsx" },
-  { id: 14, nome: "Curso NR26", preco: 80.0, arquivoCurso: "projeto/src/NR26.jsx" },
-  { id: 15, nome: "curso NR29", preco: 50.0, arquivoCurso: "projeto/src/NR29.jsx" },
-  { id: 16, nome: "Curso NR30", preco: 60.0, arquivoCurso: "projeto/src/NR30.jsx" },
-  { id: 17, nome: "Curso NR32", preco: 80.0, arquivoCurso: "projeto/src/NR32.jsx" },
-  { id: 18, nome: "curso NR33", preco: 50.0, arquivoCurso: "projeto/src/NR33.jsx" },
-  { id: 19, nome: "Curso NR34", preco: 60.0, arquivoCurso: "projeto/src/NR34.jsx" },
-  { id: 20, nome: "Curso NR35", preco: 80.0, arquivoCurso: "projeto/src/NR35.jsx" },
-  { id: 21, nome: "curso NR37", preco: 50.0, arquivoCurso: "projeto/src/NR37.jsx" },
-  { id: 22, nome: "Curso NR38", preco: 60.0, arquivoCurso: "projeto/src/NR38.jsx" },
+  const cursosPadrao = [
+  { id: 1, nome: "Curso NR1", preco: 50, arquivoCurso: "/NR1" },
+  { id: 2, nome: "Curso NR5", preco: 60, arquivoCurso: "/NR5" },
+  { id: 3, nome: "Curso NR6", preco: 80, arquivoCurso: "/NR6" },
+  { id: 4, nome: "Curso NR10", preco: 50, arquivoCurso: "/NR10" },
+  { id: 5, nome: "Curso NR10HV", preco: 60, arquivoCurso: "/NR10HV" },
+  { id: 6, nome: "Curso NR11", preco: 80, arquivoCurso: "/NR11" },
+  { id: 7, nome: "Curso NR12", preco: 50, arquivoCurso: "/NR12" },
+  { id: 8, nome: "Curso NR13", preco: 60, arquivoCurso: "/NR13" },
+  { id: 9, nome: "Curso NR16", preco: 80, arquivoCurso: "/NR16" },
+  { id: 10, nome: "Curso NR17", preco: 50, arquivoCurso: "/NR17" },
+  { id: 11, nome: "Curso NR18", preco: 60, arquivoCurso: "/NR18" },
+  { id: 12, nome: "Curso NR20", preco: 50, arquivoCurso: "/NR20" },
+  { id: 13, nome: "Curso NR23", preco: 60, arquivoCurso: "/NR23" },
+  { id: 14, nome: "Curso NR26", preco: 80, arquivoCurso: "/NR26" },
+  { id: 15, nome: "Curso NR29", preco: 50, arquivoCurso: "/NR29" },
+  { id: 16, nome: "Curso NR30", preco: 60, arquivoCurso: "/NR30" },
+  { id: 17, nome: "Curso NR32", preco: 80, arquivoCurso: "/NR32" },
+  { id: 18, nome: "Curso NR33", preco: 50, arquivoCurso: "/NR33" },
+  { id: 19, nome: "Curso NR34", preco: 60, arquivoCurso: "/NR34" },
+  { id: 20, nome: "Curso NR35", preco: 80, arquivoCurso: "/NR35" },
+  { id: 21, nome: "Curso NR37", preco: 50, arquivoCurso: "/NR37" },
+  { id: 22, nome: "Curso NR38", preco: 60, arquivoCurso: "/NR38" },
+];
+
 ];
 
 export default function Cursos() {
