@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ficha de Inscrição</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f1f1f1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .form-container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .form-container h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 12px;
+      width: 100%;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #botaoEnviar {
+      background: #25d366;
+    }
+
+    #botaoEnviar:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    #botaoOpcaoA, #botaoOpcaoB {
+      background: #007bff;
+    }
+
+    .oculto {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h2>Ficha de Inscrição</h2>
+    <form id="fichaForm">
+      <label for="nome">Nome:</label>
+      <input type="text" id="nome" required />
+
+      <label for="email">Email:</label>
+      <input type="email" id="email" required />
+
+      <label for="estado">Estado:</label>
+      <select id="estado" required>
+        <option value="">Selecione...</option>
+        <option value="SP">São Paulo</option>
+        <option value="RJ">Rio de Janeiro</option>
+        <option value="MG">Minas Gerais</option>
+        <option value="BA">Bahia</option>
+      </select>
+
+      <label for="numero">Número (com DDD):</label>
+      <input type="tel" id="numero" required />
+
+      <label for="opcao">Escolha uma opção:</label>
+      <select id="opcao" required>
+        <option value="">Selecione...</option>
+        <option value="A">NR</option>
+        <option value="B">PREPARATORIO</option>
+      </select>
+
+      <button type="button" id="botaoEnviar" onclick="enviarWhatsApp()">Enviar para WhatsApp</button>
+      <button id="botaoOpcaoA" class="oculto" type="button" onclick="irParaOpcaoA()">Ir para Opção A</button>
+      <button id="botaoOpcaoB" class="oculto" type="button" onclick="irParaOpcaoB()">Ir para Opção B</button>
+    </form>
+  </div>
+
+  <script>
+    const fichaSalva = JSON.parse(localStorage.getItem("fichaInscricao"));
+
+    window.onload = function () {
+      if (fichaSalva && fichaSalva.enviado) {
+        preencherCampos(fichaSalva);
+        desabilitarFicha();
+        mostrarBotaoOpcao(fichaSalva.opcao);
+      }
+    };
+
+    function preencherCampos(dados) {
+      document.getElementById("nome").value = dados.nome;
+      document.getElementById("email").value = dados.email;
+      document.getElementById("estado").value = dados.estado;
+      document.getElementById("numero").value = dados.numero;
+      document.getElementById("opcao").value = dados.opcao;
+    }
+
+    function desabilitarFicha() {
+      document.getElementById("nome").disabled = true;
+      document.getElementById("email").disabled = true;
+      document.getElementById("estado").disabled = true;
+      document.getElementById("numero").disabled = true;
+      document.getElementById("opcao").disabled = true;
+      document.getElementById("botaoEnviar").disabled = true;
+      document.getElementById("botaoEnviar").classList.add("oculto");
+    }
+
+    function validarCampos() {
+      return (
+        document.getElementById("nome").value &&
+        document.getElementById("email").value &&
+        document.getElementById("estado").value &&
+        document.getElementById("numero").value &&
+        document.getElementById("opcao").value
+      );
+    }
+
+    function enviarWhatsApp() {
+      if (!validarCampos()) {
+        alert("Preencha todos os campos corretamente.");
+        return;
+      }
+
+      const nome = document.getElementById("nome").value;
+      const email = document.getElementById("email").value;
+      const estado = document.getElementById("estado").value;
+      const numero = document.getElementById("numero").value;
+      const opcao = document.getElementById("opcao").value;
+
+      const numeroDestino = "+5521920439641"; // Substitua pelo número real
+      const mensagem = `📋 *Ficha de Inscrição*%0A*Nome:* ${nome}%0A*Email:* ${email}%0A*Estado:* ${estado}%0A*Número:* ${numero}%0A*Opção Escolhida:* ${opcao}`;
+      const link = `https://wa.me/${numeroDestino}?text=${mensagem}`;
+      window.open(link, "_blank");
+
+      // Salvar os dados localmente
+      localStorage.setItem("fichaInscricao", JSON.stringify({
+        nome, email, estado, numero, opcao, enviado: true
+      }));
+
+      desabilitarFicha();
+      mostrarBotaoOpcao(opcao);
+    }
+
+    function mostrarBotaoOpcao(opcao) {
+      if (opcao === "A") {
+        document.getElementById("botaoOpcaoA").classList.remove("oculto");
+      } else if (opcao === "B") {
+        document.getElementById("botaoOpcaoB").classList.remove("oculto");
+      }
+    }
+
+    function irParaOpcaoA() {
+      window.location.href = "http://localhost:5173/pagamento"; // Substitua pelo caminho correto
+    }
+
+    function irParaOpcaoB() {
+      window.location.href = "http://localhost:5173/preparatorio"; // Substitua pelo caminho correto
+    }
+  </script>
+</body>
+</html>
