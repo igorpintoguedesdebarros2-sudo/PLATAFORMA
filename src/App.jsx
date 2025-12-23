@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
 import Login from "./auth/Login";
 import Register from "./auth/Register";
@@ -6,6 +6,7 @@ import Profile from "./auth/Profile";
 import Pagamento from "./Pagamento";
 import Preparatorio from "./Preparatorio";
 
+// Cursos NR
 import NR1 from "./NR1";
 import PROVANR1 from "./PROVA-NR1";
 import NR5 from "./NR5";
@@ -50,107 +51,106 @@ import PROVANR37 from "./PROVA-NR37";
 import NR38 from "./NR38";
 import PROVANR38 from "./PROVA-NR38";
 
+// Básico
 import MATEMATICA from "./MATEMATICA";
 import MATEMATICA2 from "./MATEMATICA2";
 import PROVAMATEMATICA from "./PROVA-MATEMATICA";
 import PORTUGUES from "./PORTUGUES";
 import PROVAPORTUGUES from "./PROVA-PORTUGUES";
 import PROVAPORTUGUES2 from "./PROVA-PORTUGUES2";
+
+// Drone
 import DRONE from "./DRONE";
 
-function App() {
+export default function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Auth */}
-        <Route path="/" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/profile" element={<Profile />} />
+    <Routes>
+      {/* Auth */}
+      <Route path="/" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/profile" element={<Profile />} />
 
-        {/* Sistema */}
-        <Route path="/pagamento" element={<Pagamento />} />
-        <Route path="/preparatorio" element={<Preparatorio />} />
+      {/* Sistema */}
+      <Route path="/pagamento" element={<Pagamento />} />
+      <Route path="/preparatorio" element={<Preparatorio />} />
 
-        {/* Cursos NR */}
-        <Route path="/nr1" element={<NR1 />} />
-        <Route path="/nr1/prova" element={<PROVANR1 />} />
+      {/* Cursos NR */}
+      <Route path="/nr1" element={<NR1 />} />
+      <Route path="/nr1/prova" element={<PROVANR1 />} />
 
-        <Route path="/nr5" element={<NR5 />} />
-        <Route path="/nr5/prova" element={<PROVANR5 />} />
+      <Route path="/nr5" element={<NR5 />} />
+      <Route path="/nr5/prova" element={<PROVANR5 />} />
 
-        <Route path="/nr6" element={<NR6 />} />
-        <Route path="/nr6/prova" element={<PROVANR6 />} />
+      <Route path="/nr6" element={<NR6 />} />
+      <Route path="/nr6/prova" element={<PROVANR6 />} />
 
-        <Route path="/nr10" element={<NR10 />} />
-        <Route path="/nr10/prova" element={<PROVANR10 />} />
+      <Route path="/nr10" element={<NR10 />} />
+      <Route path="/nr10/prova" element={<PROVANR10 />} />
 
-        <Route path="/nr10hv" element={<NR10HV />} />
-        <Route path="/nr10hv/prova" element={<PROVANR10HV />} />
+      <Route path="/nr10hv" element={<NR10HV />} />
+      <Route path="/nr10hv/prova" element={<PROVANR10HV />} />
 
-        <Route path="/nr11" element={<NR11 />} />
-        <Route path="/nr11/prova" element={<PROVANR11 />} />
+      <Route path="/nr11" element={<NR11 />} />
+      <Route path="/nr11/prova" element={<PROVANR11 />} />
 
-        <Route path="/nr12" element={<NR12 />} />
-        <Route path="/nr12/prova" element={<PROVANR12 />} />
+      <Route path="/nr12" element={<NR12 />} />
+      <Route path="/nr12/prova" element={<PROVANR12 />} />
 
-        <Route path="/nr13" element={<NR13 />} />
-        <Route path="/nr13/prova" element={<PROVANR13 />} />
+      <Route path="/nr13" element={<NR13 />} />
+      <Route path="/nr13/prova" element={<PROVANR13 />} />
 
-        <Route path="/nr16" element={<NR16 />} />
-        <Route path="/nr16/prova" element={<PROVANR16 />} />
+      <Route path="/nr16" element={<NR16 />} />
+      <Route path="/nr16/prova" element={<PROVANR16 />} />
 
-        <Route path="/nr17" element={<NR17 />} />
-        <Route path="/nr17/prova" element={<PROVANR17 />} />
+      <Route path="/nr17" element={<NR17 />} />
+      <Route path="/nr17/prova" element={<PROVANR17 />} />
 
-        <Route path="/nr18" element={<NR18 />} />
-        <Route path="/nr18/prova" element={<PROVANR18 />} />
+      <Route path="/nr18" element={<NR18 />} />
+      <Route path="/nr18/prova" element={<PROVANR18 />} />
 
-        <Route path="/nr20" element={<NR20 />} />
-        <Route path="/nr20/prova" element={<PROVANR20 />} />
+      <Route path="/nr20" element={<NR20 />} />
+      <Route path="/nr20/prova" element={<PROVANR20 />} />
 
-        <Route path="/nr23" element={<NR23 />} />
-        <Route path="/nr23/prova" element={<PROVANR23 />} />
+      <Route path="/nr23" element={<NR23 />} />
+      <Route path="/nr23/prova" element={<PROVANR23 />} />
 
-        <Route path="/nr26" element={<NR26 />} />
-        <Route path="/nr26/prova" element={<PROVANR26 />} />
+      <Route path="/nr26" element={<NR26 />} />
+      <Route path="/nr26/prova" element={<PROVANR26 />} />
 
-        <Route path="/nr29" element={<NR29 />} />
-        <Route path="/nr29/prova" element={<PROVANR29 />} />
+      <Route path="/nr29" element={<NR29 />} />
+      <Route path="/nr29/prova" element={<PROVANR29 />} />
 
-        <Route path="/nr30" element={<NR30 />} />
-        <Route path="/nr30/prova" element={<PROVANR30 />} />
+      <Route path="/nr30" element={<NR30 />} />
+      <Route path="/nr30/prova" element={<PROVANR30 />} />
 
-        <Route path="/nr32" element={<NR32 />} />
+      <Route path="/nr32" element={<NR32 />} />
 
-        <Route path="/nr33" element={<NR33 />} />
-        <Route path="/nr33/prova" element={<PROVANR33 />} />
+      <Route path="/nr33" element={<NR33 />} />
+      <Route path="/nr33/prova" element={<PROVANR33 />} />
 
-        <Route path="/nr34" element={<NR34 />} />
-        <Route path="/nr34/prova" element={<PROVANR34 />} />
+      <Route path="/nr34" element={<NR34 />} />
+      <Route path="/nr34/prova" element={<PROVANR34 />} />
 
-        <Route path="/nr35" element={<NR35 />} />
-        <Route path="/nr35/prova" element={<PROVANR35 />} />
+      <Route path="/nr35" element={<NR35 />} />
+      <Route path="/nr35/prova" element={<PROVANR35 />} />
 
-        <Route path="/nr37" element={<NR37 />} />
-        <Route path="/nr37/prova" element={<PROVANR37 />} />
+      <Route path="/nr37" element={<NR37 />} />
+      <Route path="/nr37/prova" element={<PROVANR37 />} />
 
-        <Route path="/nr38" element={<NR38 />} />
-        <Route path="/nr38/prova" element={<PROVANR38 />} />
+      <Route path="/nr38" element={<NR38 />} />
+      <Route path="/nr38/prova" element={<PROVANR38 />} />
 
-        {/* Básico */}
-        <Route path="/matematica" element={<MATEMATICA />} />
-        <Route path="/matematica2" element={<MATEMATICA2 />} />
-        <Route path="/matematica/prova" element={<PROVAMATEMATICA />} />
+      {/* Básico */}
+      <Route path="/matematica" element={<MATEMATICA />} />
+      <Route path="/matematica2" element={<MATEMATICA2 />} />
+      <Route path="/matematica/prova" element={<PROVAMATEMATICA />} />
 
-        <Route path="/portugues" element={<PORTUGUES />} />
-        <Route path="/portugues/prova" element={<PROVAPORTUGUES />} />
-        <Route path="/portugues/prova2" element={<PROVAPORTUGUES2 />} />
+      <Route path="/portugues" element={<PORTUGUES />} />
+      <Route path="/portugues/prova" element={<PROVAPORTUGUES />} />
+      <Route path="/portugues/prova2" element={<PROVAPORTUGUES2 />} />
 
-        {/* Drone */}
-        <Route path="/drone" element={<DRONE />} />
-      </Routes>
-    </Router>
+      {/* Drone */}
+      <Route path="/drone" element={<DRONE />} />
+    </Routes>
   );
 }
-
-export default App;
