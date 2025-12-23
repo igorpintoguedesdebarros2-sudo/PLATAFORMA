@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 
 const cursosPadrao = [
-  const cursosPadrao = [
   { id: 1, nome: "Curso NR1", preco: 50, arquivoCurso: "#/nr1" },
   { id: 2, nome: "Curso NR5", preco: 60, arquivoCurso: "#/nr5" },
   { id: 3, nome: "Curso NR6", preco: 80, arquivoCurso: "#/nr6" },
@@ -24,8 +23,6 @@ const cursosPadrao = [
   { id: 20, nome: "Curso NR35", preco: 80, arquivoCurso: "#/nr35" },
   { id: 21, nome: "Curso NR37", preco: 50, arquivoCurso: "#/nr37" },
   { id: 22, nome: "Curso NR38", preco: 60, arquivoCurso: "#/nr38" },
-];
-
 ];
 
 export default function Cursos() {
@@ -101,20 +98,6 @@ export default function Cursos() {
     localStorage.setItem("botoesHabilitados", JSON.stringify(novo));
   }
 
-  function moverParaHistorico(id) {
-    const curso = comprados.find((c) => c.id === id);
-    if (!curso) return;
-
-    const novoHistorico = [...historico, curso];
-    const novoComprados = comprados.filter((c) => c.id !== id);
-
-    setHistorico(novoHistorico);
-    setComprados(novoComprados);
-
-    localStorage.setItem("historico", JSON.stringify(novoHistorico));
-    localStorage.setItem("comprados", JSON.stringify(novoComprados));
-  }
-
   return (
     <div>
       <h1>Selecione os Cursos</h1>
@@ -142,9 +125,10 @@ export default function Cursos() {
         <div key={curso.id}>
           {curso.nome}
           <a
-            href={`#${curso.arquivoCurso}`}
+            href={curso.arquivoCurso}
             onClick={() => habilitar(curso.id)}
           >
+            {" "}
             [Acessar]
           </a>
         </div>
