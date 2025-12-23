@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import Profile from "./auth/Profile";
@@ -57,7 +57,7 @@ import DRONE from "./DRONE";
 
 function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -115,7 +115,7 @@ function App() {
         <Route path="/src/PROVA-PORTUGUES2" element={<PROVAPORTUGUES2 />} />
         <Route path="projeto/src/DRONE.jsx" element={<DRONE />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
