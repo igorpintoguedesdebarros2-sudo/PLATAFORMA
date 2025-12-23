@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 
 const cursosPadrao = [
-  const cursosPadrao = [
   { id: 1, nome: "Curso NR1", preco: 50, arquivoCurso: "/NR1" },
   { id: 2, nome: "Curso NR5", preco: 60, arquivoCurso: "/NR5" },
   { id: 3, nome: "Curso NR6", preco: 80, arquivoCurso: "/NR6" },
@@ -26,8 +25,6 @@ const cursosPadrao = [
   { id: 22, nome: "Curso NR38", preco: 60, arquivoCurso: "/NR38" },
 ];
 
-];
-
 export default function Cursos() {
   const [cursosDisponiveis, setCursosDisponiveis] = useState([]);
   const [comprados, setComprados] = useState([]);
@@ -36,12 +33,15 @@ export default function Cursos() {
   const [selecionados, setSelecionados] = useState(new Set());
   const [mostrarQR, setMostrarQR] = useState(false);
 
-  /* ---------- LOAD LOCALSTORAGE ---------- */
   useEffect(() => {
-    const lsCursos = JSON.parse(localStorage.getItem("cursosDisponiveis")) || cursosPadrao;
-    const lsComprados = JSON.parse(localStorage.getItem("comprados")) || [];
-    const lsHistorico = JSON.parse(localStorage.getItem("historico")) || [];
-    const lsBotoes = JSON.parse(localStorage.getItem("botoesHabilitados")) || {};
+    const lsCursos =
+      JSON.parse(localStorage.getItem("cursosDisponiveis")) || cursosPadrao;
+    const lsComprados =
+      JSON.parse(localStorage.getItem("comprados")) || [];
+    const lsHistorico =
+      JSON.parse(localStorage.getItem("historico")) || [];
+    const lsBotoes =
+      JSON.parse(localStorage.getItem("botoesHabilitados")) || {};
 
     const filtrados = lsCursos.filter(
       (c) =>
@@ -55,19 +55,16 @@ export default function Cursos() {
     setBotoesHabilitados(lsBotoes);
   }, []);
 
-  /* ---------- TOTAL ---------- */
   const total = Array.from(selecionados)
     .map((id) => cursosDisponiveis.find((c) => c.id === id)?.preco || 0)
     .reduce((a, b) => a + b, 0);
 
-  /* ---------- SELECIONAR ---------- */
   function toggleCurso(id) {
     const novo = new Set(selecionados);
     novo.has(id) ? novo.delete(id) : novo.add(id);
     setSelecionados(novo);
   }
 
-  /* ---------- PAGAMENTO ---------- */
   function finalizarPagamento() {
     if (selecionados.size === 0) {
       alert("Selecione pelo menos um curso para pagar.");
@@ -82,9 +79,8 @@ export default function Cursos() {
     );
 
     const novosComprados = [...comprados, ...selecionadosCursos];
-
-    const restantes = cursosDisponiveis.filter((c) =>
-      selecionados.has(c.id)
+    const restantes = cursosDisponiveis.filter(
+      (c) => !selecionados.has(c.id)
     );
 
     setComprados(novosComprados);
@@ -96,7 +92,6 @@ export default function Cursos() {
     localStorage.setItem("cursosDisponiveis", JSON.stringify(restantes));
   }
 
-  /* ---------- COMPRADOS ---------- */
   function habilitar(id) {
     const novo = { ...botoesHabilitados, [id]: true };
     setBotoesHabilitados(novo);
@@ -110,91 +105,45 @@ export default function Cursos() {
     const novoHistorico = [...historico, curso];
     const novoComprados = comprados.filter((c) => c.id !== id);
 
-    const novoBotoes = { ...botoesHabilitados };
-    delete novoBotoes[id];
-
     setHistorico(novoHistorico);
     setComprados(novoComprados);
-    setBotoesHabilitados(novoBotoes);
 
     localStorage.setItem("historico", JSON.stringify(novoHistorico));
     localStorage.setItem("comprados", JSON.stringify(novoComprados));
-    localStorage.setItem("botoesHabilitados", JSON.stringify(novoBotoes));
   }
 
-  /* ---------- JSX ---------- */
   return (
     <div>
       <h1>Selecione os Cursos</h1>
 
-      <div>
-        {cursosDisponiveis.map((curso) => (
-          <div key={curso.id} className="curso">
-            <span>
-              {curso.nome} - R$ {curso.preco.toFixed(2)}
-            </span>
-            <button onClick={() => toggleCurso(curso.id)}>
-              {selecionados.has(curso.id) ? "Remover" : "Selecionar"}
-            </button>
-          </div>
-        ))}
-      </div>
+      {cursosDisponiveis.map((curso) => (
+        <div key={curso.id}>
+          {curso.nome} - R$ {curso.preco.toFixed(2)}
+          <button onClick={() => toggleCurso(curso.id)}>
+            {selecionados.has(curso.id) ? "Remover" : "Selecionar"}
+          </button>
+        </div>
+      ))}
 
-      <p>
-        <strong>Total:</strong> R$ {total.toFixed(2)}
-      </p>
+      <p>Total: R$ {total.toFixed(2)}</p>
 
       <button onClick={finalizarPagamento}>Finalizar Pagamento</button>
 
-      {mostrarQR && (
-        <div>
-          <h3>Escaneie o QR Code:</h3>
-          <img
-            src={`https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(
-              "MEU CODIGO PIX"
-            )}`}
-            alt="QR Code"
-          />
-          <br />
-          <button onClick={confirmarPagamento}>
-            Já realizei o pagamento
-          </button>
-        </div>
-      )}
-
       <h2>Cursos Comprados</h2>
 
-       <button
-        onClick={() => window.location.href = "/src/index.html"}
-        style={{
-          padding: "10px",
-          background: "#2563eb",
-          color: "white",
-          border: "none",
-          borderRadius: "6px",
-          cursor: "pointer",
-          marginBottom: "20px"
-        }}
-      >
+      <button onClick={() => (window.location.href = "#/")}>
         VOLTAR
       </button>
 
       {comprados.map((curso) => (
-        <div key={curso.id} className="curso comprado">
-          <span>{curso.nome}</span>
+        <div key={curso.id}>
+          {curso.nome}
           <a
-            href={curso.arquivoCurso}
-            target="_blank"
+            href={`#${curso.arquivoCurso}`}
             onClick={() => habilitar(curso.id)}
           >
-            [Baixar]
+            [Acessar]
           </a>
-          <button
-            disabled={!botoesHabilitados[curso.id]}
-            onClick={() => moverParaHistorico(curso.id)}
-          >
-            Mover para Histórico
-          </button>
         </div>
       ))}
     </div>
