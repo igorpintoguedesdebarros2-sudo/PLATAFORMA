@@ -5,7 +5,7 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/NR1/NR-1.pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/NR1/NR-1.pdf" },
   ],
   videos: [],
 };
@@ -140,7 +140,7 @@ export default function AcessoProtegido() {
 
       {/* ---------- LINK FINAL ---------- */}
     {finalizado && (
-  <button onClick={() => window.open("/src/PROVA-NR1", "_blank")}>
+  <button onClick={() => window.open("/PROVA-NR1", "_blank")}>
     ACESSAR PROVA
   </button>
 )}
