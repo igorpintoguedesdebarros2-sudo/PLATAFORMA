@@ -5,7 +5,7 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/NR23/NR-23-apostila-treinamento-brigada-de-incendio.pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/NR23/NR-23-apostila-treinamento-brigada-de-incendio.pdf" },
   ],
   videos: [],
 };
@@ -81,7 +81,7 @@ export default function AcessoProtegido() {
      <h2>CURSO NR23 - INCENDIO</h2>
 
 <img
-  src="/public/IMGs/23.jpg"
+  src="/IMGs/23.jpg"
   alt="Imagem do curso"
   style={{
     width: "100%",
@@ -140,7 +140,7 @@ export default function AcessoProtegido() {
 
       {/* ---------- LINK FINAL ---------- */}
       {finalizado && (
-  <button onClick={() => window.open("/src/PROVA-NR23", "_blank")}>
+  <button onClick={() => window.open("/PROVA-NR23", "_blank")}>
     ACESSAR PROVA
   </button>
 )}
