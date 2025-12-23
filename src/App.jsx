@@ -60,7 +60,7 @@ import DRONE from "./DRONE";
 
 function App() {
   return (
-    <HashRouter>
+    <Router>
       <Routes>
         {/* Auth */}
         <Route path="/" element={<Login />} />
@@ -149,7 +149,7 @@ function App() {
         {/* Drone */}
         <Route path="/drone" element={<DRONE />} />
       </Routes>
-    </HashRouter>
+    </Router>
   );
 }
 
