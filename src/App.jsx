@@ -1,9 +1,11 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
+
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import Profile from "./auth/Profile";
 import Pagamento from "./Pagamento";
 import Preparatorio from "./Preparatorio";
+
 import NR1 from "./NR1";
 import PROVANR1 from "./PROVA-NR1";
 import NR5 from "./NR5";
@@ -47,6 +49,7 @@ import NR37 from "./NR37";
 import PROVANR37 from "./PROVA-NR37";
 import NR38 from "./NR38";
 import PROVANR38 from "./PROVA-NR38";
+
 import MATEMATICA from "./MATEMATICA";
 import MATEMATICA2 from "./MATEMATICA2";
 import PROVAMATEMATICA from "./PROVA-MATEMATICA";
@@ -57,65 +60,96 @@ import DRONE from "./DRONE";
 
 function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
+        {/* Auth */}
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/profile" element={<Profile />} />
+
+        {/* Sistema */}
         <Route path="/pagamento" element={<Pagamento />} />
         <Route path="/preparatorio" element={<Preparatorio />} />
-        <Route path="projeto/src/NR1.jsx" element={<NR1 />} />
-        <Route path="/src/PROVA-NR1" element={<PROVANR1 />} />
-        <Route path="projeto/src/NR5.jsx" element={<NR5 />} />
-        <Route path="/src/PROVA-NR5" element={<PROVANR5 />} />
-        <Route path="projeto/src/NR6.jsx" element={<NR6 />} />
-        <Route path="/src/PROVA-NR6" element={<PROVANR6 />} />
-        <Route path="projeto/src/NR10.jsx" element={<NR10 />} />
-        <Route path="/src/PROVA-NR10" element={<PROVANR10 />} />
-        <Route path="projeto/src/NR10HV.jsx" element={<NR10HV />} />
-        <Route path="/src/PROVA-NR10HV" element={<PROVANR10HV />} />
-        <Route path="projeto/src/NR11.jsx" element={<NR11 />} />
-        <Route path="/src/PROVA-NR11" element={<PROVANR11 />} />
-        <Route path="projeto/src/NR12.jsx" element={<NR12 />} />
-        <Route path="/src/PROVA-NR12" element={<PROVANR12 />} />
-        <Route path="projeto/src/NR13.jsx" element={<NR13 />} />
-        <Route path="/src/PROVA-NR13" element={<PROVANR13 />} />
-        <Route path="projeto/src/NR16.jsx" element={<NR16 />} />
-        <Route path="/src/PROVA-NR16" element={<PROVANR16 />} />
-        <Route path="projeto/src/NR17.jsx" element={<NR17 />} />
-        <Route path="/src/PROVA-NR17" element={<PROVANR17 />} />
-        <Route path="projeto/src/NR18.jsx" element={<NR18 />} />
-        <Route path="/src/PROVA-NR18" element={<PROVANR18 />} />
-        <Route path="projeto/src/NR20.jsx" element={<NR20 />} />
-        <Route path="/src/PROVA-NR20" element={<PROVANR20 />} />
-        <Route path="projeto/src/NR23.jsx" element={<NR23 />} />
-        <Route path="/src/PROVA-NR23" element={<PROVANR23 />} />
-        <Route path="projeto/src/NR26.jsx" element={<NR26 />} />
-        <Route path="/src/PROVA-NR26" element={<PROVANR26 />} />
-        <Route path="projeto/src/NR29.jsx" element={<NR29 />} />
-        <Route path="/src/PROVA-NR29" element={<PROVANR29 />} />
-        <Route path="projeto/src/NR30.jsx" element={<NR30 />} />
-        <Route path="/src/PROVA-NR30" element={<PROVANR30 />} />
-        <Route path="projeto/src/NR32.jsx" element={<NR32 />} />
-        <Route path="projeto/src/NR33.jsx" element={<NR33 />} />
-        <Route path="/src/PROVA-NR33" element={<PROVANR33 />} />
-        <Route path="projeto/src/NR34.jsx" element={<NR34 />} />
-        <Route path="/src/PROVA-NR34" element={<PROVANR34 />} />
-        <Route path="projeto/src/NR35.jsx" element={<NR35 />} />
-        <Route path="/src/PROVA-NR35" element={<PROVANR35 />} />
-        <Route path="projeto/src/NR37.jsx" element={<NR37 />} />
-        <Route path="/src/PROVA-NR37" element={<PROVANR37 />} />
-        <Route path="projeto/src/NR38.jsx" element={<NR38 />} />
-        <Route path="/src/PROVA-NR38" element={<PROVANR38 />} />
-         <Route path="projeto/src/MATEMATICA.jsx" element={<MATEMATICA />} />
-        <Route path="/src/MATEMATICA2" element={<MATEMATICA2 />} />
-        <Route path="/src/PROVA-MATEMATICA" element={<PROVAMATEMATICA />} />
-        <Route path="projeto/src/PORTUGUES.jsx" element={<PORTUGUES />} />
-        <Route path="/src/PROVA-PORTUGUES" element={<PROVAPORTUGUES />} />
-        <Route path="/src/PROVA-PORTUGUES2" element={<PROVAPORTUGUES2 />} />
-        <Route path="projeto/src/DRONE.jsx" element={<DRONE />} />
+
+        {/* Cursos NR */}
+        <Route path="/nr1" element={<NR1 />} />
+        <Route path="/nr1/prova" element={<PROVANR1 />} />
+
+        <Route path="/nr5" element={<NR5 />} />
+        <Route path="/nr5/prova" element={<PROVANR5 />} />
+
+        <Route path="/nr6" element={<NR6 />} />
+        <Route path="/nr6/prova" element={<PROVANR6 />} />
+
+        <Route path="/nr10" element={<NR10 />} />
+        <Route path="/nr10/prova" element={<PROVANR10 />} />
+
+        <Route path="/nr10hv" element={<NR10HV />} />
+        <Route path="/nr10hv/prova" element={<PROVANR10HV />} />
+
+        <Route path="/nr11" element={<NR11 />} />
+        <Route path="/nr11/prova" element={<PROVANR11 />} />
+
+        <Route path="/nr12" element={<NR12 />} />
+        <Route path="/nr12/prova" element={<PROVANR12 />} />
+
+        <Route path="/nr13" element={<NR13 />} />
+        <Route path="/nr13/prova" element={<PROVANR13 />} />
+
+        <Route path="/nr16" element={<NR16 />} />
+        <Route path="/nr16/prova" element={<PROVANR16 />} />
+
+        <Route path="/nr17" element={<NR17 />} />
+        <Route path="/nr17/prova" element={<PROVANR17 />} />
+
+        <Route path="/nr18" element={<NR18 />} />
+        <Route path="/nr18/prova" element={<PROVANR18 />} />
+
+        <Route path="/nr20" element={<NR20 />} />
+        <Route path="/nr20/prova" element={<PROVANR20 />} />
+
+        <Route path="/nr23" element={<NR23 />} />
+        <Route path="/nr23/prova" element={<PROVANR23 />} />
+
+        <Route path="/nr26" element={<NR26 />} />
+        <Route path="/nr26/prova" element={<PROVANR26 />} />
+
+        <Route path="/nr29" element={<NR29 />} />
+        <Route path="/nr29/prova" element={<PROVANR29 />} />
+
+        <Route path="/nr30" element={<NR30 />} />
+        <Route path="/nr30/prova" element={<PROVANR30 />} />
+
+        <Route path="/nr32" element={<NR32 />} />
+
+        <Route path="/nr33" element={<NR33 />} />
+        <Route path="/nr33/prova" element={<PROVANR33 />} />
+
+        <Route path="/nr34" element={<NR34 />} />
+        <Route path="/nr34/prova" element={<PROVANR34 />} />
+
+        <Route path="/nr35" element={<NR35 />} />
+        <Route path="/nr35/prova" element={<PROVANR35 />} />
+
+        <Route path="/nr37" element={<NR37 />} />
+        <Route path="/nr37/prova" element={<PROVANR37 />} />
+
+        <Route path="/nr38" element={<NR38 />} />
+        <Route path="/nr38/prova" element={<PROVANR38 />} />
+
+        {/* Básico */}
+        <Route path="/matematica" element={<MATEMATICA />} />
+        <Route path="/matematica2" element={<MATEMATICA2 />} />
+        <Route path="/matematica/prova" element={<PROVAMATEMATICA />} />
+
+        <Route path="/portugues" element={<PORTUGUES />} />
+        <Route path="/portugues/prova" element={<PROVAPORTUGUES />} />
+        <Route path="/portugues/prova2" element={<PROVAPORTUGUES2 />} />
+
+        {/* Drone */}
+        <Route path="/drone" element={<DRONE />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
