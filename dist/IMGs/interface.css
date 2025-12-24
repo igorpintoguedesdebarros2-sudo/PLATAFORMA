@@ -1,0 +1,81 @@
+.dropdown {
+    position: relative;
+    display: inline-block;
+  }
+
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f1f1f1;
+    min-width: 160px;
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+    z-index: 1;
+  }
+
+  .dropdown:hover .dropdown-content {
+    display: block;
+  }
+
+.texto {
+    color: black;
+}
+
+.texto-principal {
+    box-sizing: border-box;
+    padding: 4%;
+    margin: 1%;
+    background-color: aqua;
+}
+
+.tropa li {
+    display: inline-block;
+    margin: 2%;
+    padding: 4%;
+    width: 16%;
+}
+
+.letra {
+    color: white;
+}
+
+.porta {
+    color: yellow;
+}
+
+.sendo {
+    color: yellow;
+}
+
+.senta {
+    color: yellow;
+}
+
+.final li {
+    display: inline-block;
+    margin: 4%;
+    padding: 2%;
+    width: 16%;
+}
+
+.final h6 {
+    height: 0px;
+}
+
+.forte {
+    color: aqua;
+}
+
+.gax li {
+    display: inline-block;
+    margin: 2%;
+    padding: 4%;
+    width: 16%;
+}
+
+.imagen {
+    width: 100%;
+}
+
+.paragrafo {
+   text-align: center;
+}
