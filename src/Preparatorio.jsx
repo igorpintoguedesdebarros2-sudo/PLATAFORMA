@@ -3,9 +3,9 @@ import { auth } from "./firebase";
 
 // Cursos padrão do sistema PREPARATÓRIOS
 const cursosPadrao = [
-  { id: 1, nome: "Matemática", preco: 50, arquivoCurso: "projeto/src/MATEMATICA.jsx" },
-  { id: 2, nome: "Portugues", preco: 60, arquivoCurso: "projeto/src/PORTUGUES.jsx" },
-  { id: 3, nome: "Drone", preco: 80, arquivoCurso: "projeto/src/DRONE.jsx" },
+  { id: 1, nome: "Matemática", preco: 50, arquivoCurso: "projeto/MATEMATICA.jsx" },
+  { id: 2, nome: "Portugues", preco: 60, arquivoCurso: "projeto/PORTUGUES.jsx" },
+  { id: 3, nome: "Drone", preco: 80, arquivoCurso: "projeto/DRONE.jsx" },
 ];
 
 export default function Pagamento() {

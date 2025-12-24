@@ -128,7 +128,7 @@ export default function AcessoProtegido() {
 
       {/* ---------- LINK FINAL ---------- */}
       {finalizado && (
-  <button onClick={() => window.open("/src/PROVA-PORTUGUES2", "_blank")}>
+  <button onClick={() => window.open("/PROVA-PORTUGUES2", "_blank")}>
     PROXIMA PROVA
   </button>
 )}

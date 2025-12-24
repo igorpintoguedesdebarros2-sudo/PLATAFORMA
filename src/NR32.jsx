@@ -142,7 +142,7 @@ export default function AcessoProtegido() {
       {finalizado && (
         <button>
           <a
-            href="/src/index.html"
+            href="/index.html"
             target="_blank"
             rel="noreferrer"
             style={{ color: "black", textDecoration: "none" }}
