@@ -3,12 +3,13 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://github.com/igorpintoguedesdebarros2-sudo/PLATAFORMA",
-  "scripts": {
-    "dev": "vite",
+  "homepage": "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA",
+"scripts": {
+   "dev": "vite",
     "build": "vite build",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+  "build": "vite build",
+  "deploy": "npm run build && gh-pages -d dist"
+}
   },
   "dependencies": {
     "firebase": "^12.7.0",
