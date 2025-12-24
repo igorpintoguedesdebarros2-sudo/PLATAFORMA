@@ -54,7 +54,7 @@ export default function Profile() {
       <button onClick={logout}>Sair</button>
 
  <button
-        onClick={() => window.location.href = "/index.html"}
+        onClick={() => window.location.href = "/"}
         style={{
           padding: "10px",
           background: "#2563eb",
