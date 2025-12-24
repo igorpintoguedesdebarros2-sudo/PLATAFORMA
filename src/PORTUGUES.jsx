@@ -5,7 +5,7 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/portugues/00-apostila-completa-portugues-e-formaao-militar-naval_compress.pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/portugues/00-apostila-completa-portugues-e-formaao-militar-naval_compress.pdf" },
   ],
   videos: [],
 };

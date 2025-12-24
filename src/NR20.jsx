@@ -5,13 +5,13 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/NR20/APOSTILAS 20/Apostila de NR 20.pdf" },
-    { id: 2, titulo: "Apostila 2", arquivo: "/public/IMGs/NR20/APOSTILAS 20/Norma Regulamentadora NR 20.pdf" },
-    { id: 3, titulo: "Apostila 3", arquivo: "/public/IMGs/NR20/APOSTILAS 20/nr 20 minha.pdf" },
-    { id: 4, titulo: "Apostila 4", arquivo: "/public/IMGs/NR20/APOSTILAS 20/nr 20.pdf" },
-    { id: 5, titulo: "Apostila 5", arquivo: "/public/IMGs/NR20/APOSTILAS 20/NR20 [downloaded with 1stBrowser].pdf" },
-    { id: 6, titulo: "Apostila 6", arquivo: "/public/IMGs/NR20/APOSTILAS 20/PORTARIA NR20 [downloaded with 1stBrowser].pdf" },
-    { id: 7, titulo: "Apostila 7", arquivo: "/public/IMGs/NR20/Acidente esfera GLP Shell.pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/NR20/APOSTILAS 20/Apostila de NR 20.pdf" },
+    { id: 2, titulo: "Apostila 2", arquivo: "/IMGs/NR20/APOSTILAS 20/Norma Regulamentadora NR 20.pdf" },
+    { id: 3, titulo: "Apostila 3", arquivo: "/IMGs/NR20/APOSTILAS 20/nr 20 minha.pdf" },
+    { id: 4, titulo: "Apostila 4", arquivo: "/IMGs/NR20/APOSTILAS 20/nr 20.pdf" },
+    { id: 5, titulo: "Apostila 5", arquivo: "/IMGs/NR20/APOSTILAS 20/NR20 [downloaded with 1stBrowser].pdf" },
+    { id: 6, titulo: "Apostila 6", arquivo: "/IMGs/NR20/APOSTILAS 20/PORTARIA NR20 [downloaded with 1stBrowser].pdf" },
+    { id: 7, titulo: "Apostila 7", arquivo: "/IMGs/NR20/Acidente esfera GLP Shell.pdf" },
   ],
   videos: [],
 };
@@ -87,7 +87,7 @@ export default function AcessoProtegido() {
      <h2>CURSO NR20 - INFLAMAVEIS E COMBUSTIVEIS</h2>
 
 <img
-  src="/public/IMGs/20.jpg"
+  src="/IMGs/20.jpg"
   alt="Imagem do curso"
   style={{
     width: "100%",

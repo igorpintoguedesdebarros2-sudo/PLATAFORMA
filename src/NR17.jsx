@@ -5,13 +5,13 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/nr17/17/Apresentação nr17 mtepdf.pdf" },
-    { id: 2, titulo: "Apostila 2", arquivo: "/public/IMGs/nr17/17/cartilha NR17 mar11 PRONTA.pdf" },
-    { id: 3, titulo: "Apostila 3", arquivo: "/public/IMGs/nr17/17/Manual-NR17.pdf" },
-    { id: 4, titulo: "Apostila 4", arquivo: "/public/IMGs/nr17/17/Norma  17.pdf" },
-    { id: 5, titulo: "Apostila 5", arquivo: "/public/IMGs/nr17/17/NR 17 -legislação.pdf" },
-    { id: 6, titulo: "Apostila 6", arquivo: "/public/IMGs/nr17/17/Portaria_MTb_n._876_altera_NR-17.pdf" },
-    { id: 7, titulo: "Apostila 7", arquivo: "/public/IMGs/nr17/Apresentação do PowerPoint.pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/nr17/17/Apresentação nr17 mtepdf.pdf" },
+    { id: 2, titulo: "Apostila 2", arquivo: "/IMGs/nr17/17/cartilha NR17 mar11 PRONTA.pdf" },
+    { id: 3, titulo: "Apostila 3", arquivo: "/IMGs/nr17/17/Manual-NR17.pdf" },
+    { id: 4, titulo: "Apostila 4", arquivo: "/IMGs/nr17/17/Norma  17.pdf" },
+    { id: 5, titulo: "Apostila 5", arquivo: "/IMGs/nr17/17/NR 17 -legislação.pdf" },
+    { id: 6, titulo: "Apostila 6", arquivo: "/IMGs/nr17/17/Portaria_MTb_n._876_altera_NR-17.pdf" },
+    { id: 7, titulo: "Apostila 7", arquivo: "/IMGs/nr17/Apresentação do PowerPoint.pdf" },
   ],
   videos: [],
 };
@@ -87,7 +87,7 @@ export default function AcessoProtegido() {
      <h2>CURSO NR17 - ERGONOMIA</h2>
 
 <img
-  src="/public/IMGs/17.jpg"
+  src="/IMGs/17.jpg"
   alt="Imagem do curso"
   style={{
     width: "100%",

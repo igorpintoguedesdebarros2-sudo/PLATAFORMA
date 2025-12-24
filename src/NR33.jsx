@@ -5,24 +5,24 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/NR33/NR 33 OBSERVADOR/1 APOSTILA ESPAÇO CONFINADO.NOVA.pdf" },
-    { id: 2, titulo: "Apostila 2", arquivo: "/public/IMGs/NR33/NR 33 OBSERVADOR/2 NORMA REGULAMENTADORA 33.pdf" },
-    { id: 3, titulo: "Apostila 3", arquivo: "/public/IMGs/NR33/NR 33 SUPERVISOR/1 APOSTILA ESPAÇO CONFINADO.NOVA.pdf" },
-    { id: 4, titulo: "Apostila 4", arquivo: "/public/IMGs/NR33/NR 33 SUPERVISOR/2 NORMA REGULAMENTADORA 33.pdf" },
-    { id: 5, titulo: "Apostila 5", arquivo: "/public/IMGs/NR33/NR 33 SUPERVISOR/3 Apostila NR 33 Supervisores historia.pdf" },
-    { id: 6, titulo: "Apostila 6", arquivo: "/public/IMGs/NR33/NR33/APOSTILAS 33/apostila 33/APOSTILA ESPAÇO CONFINADO 19.pdf" },
-    { id: 7, titulo: "Apostila 7", arquivo: "/public/IMGs/NR33/NR33/APOSTILAS 33/apostila 33/APOSTILA ESPAÇO CONFINADO. 19.pdf" },
-    { id: 8, titulo: "Apostila 8", arquivo: "/public/IMGs/NR33/NR33/APOSTILAS 33/apostila 33/Apostila NR 33 Supervisores.pdf" },
-    { id: 9, titulo: "Apostila 9", arquivo: "/public/IMGs/NR33/NR33/APOSTILAS 33/apostila 33/NORMA REGULAMENTADORA 33.pdf" },
-    { id: 10, titulo: "Apostila 10", arquivo: "/public/IMGs/NR33/NR33/APOSTILAS 33/APOSTILA ESPAÇO CONFINADO.NOVA.pdf" },
-    { id: 11, titulo: "Apostila 11", arquivo: "/public/IMGs/NR33/NR33/APOSTILAS 33/Apostila NR 33 Supervisores.pdf" },
-    { id: 12, titulo: "Apostila 12", arquivo: "/public/IMGs/NR33/NR33/APOSTILAS 33/NORMA REGULAMENTADORA 33.pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/NR33/NR 33 OBSERVADOR/1 APOSTILA ESPAÇO CONFINADO.NOVA.pdf" },
+    { id: 2, titulo: "Apostila 2", arquivo: "/IMGs/NR33/NR 33 OBSERVADOR/2 NORMA REGULAMENTADORA 33.pdf" },
+    { id: 3, titulo: "Apostila 3", arquivo: "/IMGs/NR33/NR 33 SUPERVISOR/1 APOSTILA ESPAÇO CONFINADO.NOVA.pdf" },
+    { id: 4, titulo: "Apostila 4", arquivo: "/IMGs/NR33/NR 33 SUPERVISOR/2 NORMA REGULAMENTADORA 33.pdf" },
+    { id: 5, titulo: "Apostila 5", arquivo: "/IMGs/NR33/NR 33 SUPERVISOR/3 Apostila NR 33 Supervisores historia.pdf" },
+    { id: 6, titulo: "Apostila 6", arquivo: "/IMGs/NR33/NR33/APOSTILAS 33/apostila 33/APOSTILA ESPAÇO CONFINADO 19.pdf" },
+    { id: 7, titulo: "Apostila 7", arquivo: "/IMGs/NR33/NR33/APOSTILAS 33/apostila 33/APOSTILA ESPAÇO CONFINADO. 19.pdf" },
+    { id: 8, titulo: "Apostila 8", arquivo: "/IMGs/NR33/NR33/APOSTILAS 33/apostila 33/Apostila NR 33 Supervisores.pdf" },
+    { id: 9, titulo: "Apostila 9", arquivo: "/IMGs/NR33/NR33/APOSTILAS 33/apostila 33/NORMA REGULAMENTADORA 33.pdf" },
+    { id: 10, titulo: "Apostila 10", arquivo: "/IMGs/NR33/NR33/APOSTILAS 33/APOSTILA ESPAÇO CONFINADO.NOVA.pdf" },
+    { id: 11, titulo: "Apostila 11", arquivo: "/IMGs/NR33/NR33/APOSTILAS 33/Apostila NR 33 Supervisores.pdf" },
+    { id: 12, titulo: "Apostila 12", arquivo: "/IMGs/NR33/NR33/APOSTILAS 33/NORMA REGULAMENTADORA 33.pdf" },
   ],
   videos: [
-    { id: 1, titulo: "Aula 1", arquivo: "/public/IMGs/NR33/NR 33 OBSERVADOR/NR-33 Espaço Confinado - Vídeo Aula [downloaded with 1stBrowser].mp4" },
-    { id: 2, titulo: "Aula 2", arquivo: "/public/IMGs/NR33/NR 33 OBSERVADOR/videoplayback. [downloaded with 1stBrowser].mp4" },
-    { id: 3, titulo: "Aula 3", arquivo: "/public/IMGs/NR33/NR 33 SUPERVISOR/NR-33 Espaço Confinado - Vídeo Aula [downloaded with 1stBrowser].mp4" },
-    { id: 4, titulo: "Aula 4", arquivo: "/public/IMGs/NR33/NR 33 SUPERVISOR/videoplayback. [downloaded with 1stBrowser].mp4" },
+    { id: 1, titulo: "Aula 1", arquivo: "/IMGs/NR33/NR 33 OBSERVADOR/NR-33 Espaço Confinado - Vídeo Aula [downloaded with 1stBrowser].mp4" },
+    { id: 2, titulo: "Aula 2", arquivo: "/IMGs/NR33/NR 33 OBSERVADOR/videoplayback. [downloaded with 1stBrowser].mp4" },
+    { id: 3, titulo: "Aula 3", arquivo: "/IMGs/NR33/NR 33 SUPERVISOR/NR-33 Espaço Confinado - Vídeo Aula [downloaded with 1stBrowser].mp4" },
+    { id: 4, titulo: "Aula 4", arquivo: "/IMGs/NR33/NR 33 SUPERVISOR/videoplayback. [downloaded with 1stBrowser].mp4" },
   ],
 };
 
@@ -97,7 +97,7 @@ export default function AcessoProtegido() {
      <h2>CURSO NR33 - ESPAÇOS CONFINADOS</h2>
 
 <img
-  src="/public/IMGs/33.jpg"
+  src="/IMGs/33.jpg"
   alt="Imagem do curso"
   style={{
     width: "100%",

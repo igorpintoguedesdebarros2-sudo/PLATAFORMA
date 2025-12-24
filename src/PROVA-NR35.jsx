@@ -5,7 +5,7 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/NR35/prova-NR35.pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/NR35/prova-NR35.pdf" },
   ],
   videos: [],
 };

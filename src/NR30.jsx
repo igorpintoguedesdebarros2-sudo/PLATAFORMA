@@ -5,12 +5,12 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/NR 30/30/Apresentação NR 30.pdf" },
-    { id: 2, titulo: "Apostila 2", arquivo: "/public/IMGs/NR 30/30/modelo_de_ASO_NR_30.pdf" },
-    { id: 3, titulo: "Apostila 3", arquivo: "/public/IMGs/NR 30/30/nr-30-atualizada-2018 (1).pdf" },
-    { id: 4, titulo: "Apostila 4", arquivo: "/public/IMGs/NR 30/30/nr-30-atualizada-2018.pdf" },
-    { id: 5, titulo: "Apostila 5", arquivo: "/public/IMGs/NR 30/30/nr30.pdf" },
-    { id: 6, titulo: "Apostila 6", arquivo: "/public/IMGs/NR 30/30/NT_N°54-DSST_SIT-Capacitação-em-Segurança-e-Saúde-no-Trabalho-pela-modalidade-de-ensino-a-distância-EAD-2.pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/NR 30/30/Apresentação NR 30.pdf" },
+    { id: 2, titulo: "Apostila 2", arquivo: "/IMGs/NR 30/30/modelo_de_ASO_NR_30.pdf" },
+    { id: 3, titulo: "Apostila 3", arquivo: "/IMGs/NR 30/30/nr-30-atualizada-2018 (1).pdf" },
+    { id: 4, titulo: "Apostila 4", arquivo: "/IMGs/NR 30/30/nr-30-atualizada-2018.pdf" },
+    { id: 5, titulo: "Apostila 5", arquivo: "/IMGs/NR 30/30/nr30.pdf" },
+    { id: 6, titulo: "Apostila 6", arquivo: "/IMGs/NR 30/30/NT_N°54-DSST_SIT-Capacitação-em-Segurança-e-Saúde-no-Trabalho-pela-modalidade-de-ensino-a-distância-EAD-2.pdf" },
   ],
   videos: [],
 };
@@ -86,7 +86,7 @@ export default function AcessoProtegido() {
      <h2>CURSO NR30 - AQUAVIARIO</h2>
 
 <img
-  src="/public/IMGs/30.jpg"
+  src="/IMGs/30.jpg"
   alt="Imagem do curso"
   style={{
     width: "100%",

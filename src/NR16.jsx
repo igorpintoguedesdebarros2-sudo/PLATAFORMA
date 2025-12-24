@@ -5,9 +5,9 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/nr16/ENVIAR/1.0 NR 16.pdf" },
-     { id: 2, titulo: "Apostila 2", arquivo: "/public/IMGs/nr16/ENVIAR/2.0 NORMA REGULAMENTADORA 16 ATIVIDADES PERIGOSAS.pdf" },
-      { id: 3, titulo: "Apostila 3", arquivo: "/public/IMGs/nr16/NR 16.pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/nr16/ENVIAR/1.0 NR 16.pdf" },
+     { id: 2, titulo: "Apostila 2", arquivo: "/IMGs/nr16/ENVIAR/2.0 NORMA REGULAMENTADORA 16 ATIVIDADES PERIGOSAS.pdf" },
+      { id: 3, titulo: "Apostila 3", arquivo: "/IMGs/nr16/NR 16.pdf" },
   ],
   videos: [],
 };
@@ -83,7 +83,7 @@ export default function AcessoProtegido() {
      <h2>CURSO NR16 - PERICULOSIDADE</h2>
 
 <img
-  src="/public/IMGs/16.jpg"
+  src="/IMGs/16.jpg"
   alt="Imagem do curso"
   style={{
     width: "100%",

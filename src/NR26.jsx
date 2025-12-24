@@ -5,9 +5,9 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/nr26/nr26/apostila resumo nr26.pdf" },
-     { id: 2, titulo: "Apostila 2", arquivo: "/public/IMGs/nr26/nr26/NR 26 SINALIZAÇÃO DE SEGURANÇA.pdf" },
-      { id: 3, titulo: "Apostila 3", arquivo: "/public/IMGs/nr26/nr26/NR26.pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/nr26/nr26/apostila resumo nr26.pdf" },
+     { id: 2, titulo: "Apostila 2", arquivo: "/IMGs/nr26/nr26/NR 26 SINALIZAÇÃO DE SEGURANÇA.pdf" },
+      { id: 3, titulo: "Apostila 3", arquivo: "/IMGs/nr26/nr26/NR26.pdf" },
   ],
   videos: [],
 };
@@ -83,7 +83,7 @@ export default function AcessoProtegido() {
      <h2>CURSO NR26 - SINALIZAÇÃO</h2>
 
 <img
-  src="/public/IMGs/26.jpg"
+  src="/IMGs/26.jpg"
   alt="Imagem do curso"
   style={{
     width: "100%",

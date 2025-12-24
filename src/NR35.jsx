@@ -5,15 +5,15 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/NR35/LEGISLAÇÃO NR35.pdf" },
-    { id: 2, titulo: "Apostila 2", arquivo: "/public/IMGs/NR35/NORMA REGULAMENTADORA Nº 35.pdf" },
-    { id: 3, titulo: "Apostila 3", arquivo: "/public/IMGs/NR35/NR 35. Mpdf.pdf" },
-    { id: 4, titulo: "Apostila 4", arquivo: "/public/IMGs/NR35/nr35.nova.pdf" },
-    { id: 5, titulo: "Apostila 5", arquivo: "/public/IMGs/NR35/Talabarte.pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/NR35/LEGISLAÇÃO NR35.pdf" },
+    { id: 2, titulo: "Apostila 2", arquivo: "/IMGs/NR35/NORMA REGULAMENTADORA Nº 35.pdf" },
+    { id: 3, titulo: "Apostila 3", arquivo: "/IMGs/NR35/NR 35. Mpdf.pdf" },
+    { id: 4, titulo: "Apostila 4", arquivo: "/IMGs/NR35/nr35.nova.pdf" },
+    { id: 5, titulo: "Apostila 5", arquivo: "/IMGs/NR35/Talabarte.pdf" },
   ],
   videos: [
-    { id: 1, titulo: "Aula 1", arquivo: "/public/IMGs/NR35/video sobre seguranca no trabalho.avi" },
-    { id: 2, titulo: "Aula 2", arquivo: "/public/IMGs/NR35/videoplayback. [downloaded with 1stBrowser].mp4" },
+    { id: 1, titulo: "Aula 1", arquivo: "/IMGs/NR35/video sobre seguranca no trabalho.avi" },
+    { id: 2, titulo: "Aula 2", arquivo: "/IMGs/NR35/videoplayback. [downloaded with 1stBrowser].mp4" },
   ],
 };
 
@@ -88,7 +88,7 @@ export default function AcessoProtegido() {
      <h2>CURSO NR35 - TRABALHO EM ALTURA</h2>
 
 <img
-  src="/public/IMGs/35.jpg"
+  src="/IMGs/35.jpg"
   alt="Imagem do curso"
   style={{
     width: "100%",

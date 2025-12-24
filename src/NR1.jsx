@@ -81,7 +81,7 @@ export default function AcessoProtegido() {
      <h2>CURSO NR1 - DISPOSOÇÕES GERAIS</h2>
 
 <img
-  src="/public/IMGs/1.jpg"
+  src="/IMGs/1.jpg"
   alt="Imagem do curso"
   style={{
     width: "100%",

@@ -5,9 +5,9 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquio: "/public/IMGs/nr6/1 APOSTILA NR6.pdf" },
-      { id: 2, titulo: "Apostila 2", arquio: "/public/IMGs/nr6/1 LEGISLAÇÃO NR6.pdf" },
-        { id: 3, titulo: "Apostila 3", arquio: "/public/IMGs/nr6/2 APOSTILA NR6.pdf" },
+    { id: 1, titulo: "Apostila 1", arquio: "/IMGs/nr6/1 APOSTILA NR6.pdf" },
+      { id: 2, titulo: "Apostila 2", arquio: "/IMGs/nr6/1 LEGISLAÇÃO NR6.pdf" },
+        { id: 3, titulo: "Apostila 3", arquio: "/IMGs/nr6/2 APOSTILA NR6.pdf" },
   ],
   videos: [],
 };
@@ -83,7 +83,7 @@ export default function AcessoProtegido() {
      <h2>CURSO NR6 - EPI</h2>
 
 <img
-  src="/public/IMGs/6.jpg"
+  src="/IMGs/6.jpg"
   alt="Imagem do curso"
   style={{
     width: "100%",

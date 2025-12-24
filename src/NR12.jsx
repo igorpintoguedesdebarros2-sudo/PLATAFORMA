@@ -5,12 +5,12 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/NR 12/apostila/apresentacao-NR12.pdf" },
-    { id: 2, titulo: "Apostila 2", arquivo: "/public/IMGs/NR 12/apostila/NR12pdf.pdf" },
-    { id: 3, titulo: "Apostila 3", arquivo: "/public/IMGs/NR 12/apostila/palestra NR12.pdf" },
-    { id: 4, titulo: "Apostila 4", arquivo: "/public/IMGs/NR 12/apostila/Portaria_MTPS_509_Alteracao_da_NR12 [downloaded with 1stBrowser].pdf" },
-    { id: 5, titulo: "Apostila 5", arquivo: "/public/IMGs/NR 12/apresentacao-NR121 [downloaded with 1stBrowser].pdf" },
-    { id: 6, titulo: "Apostila 6", arquivo: "/public/IMGs/NR 12/palestra_SINGRAMAR. [downloaded with 1stBrowser].pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/NR 12/apostila/apresentacao-NR12.pdf" },
+    { id: 2, titulo: "Apostila 2", arquivo: "/IMGs/NR 12/apostila/NR12pdf.pdf" },
+    { id: 3, titulo: "Apostila 3", arquivo: "/IMGs/NR 12/apostila/palestra NR12.pdf" },
+    { id: 4, titulo: "Apostila 4", arquivo: "/IMGs/NR 12/apostila/Portaria_MTPS_509_Alteracao_da_NR12 [downloaded with 1stBrowser].pdf" },
+    { id: 5, titulo: "Apostila 5", arquivo: "/IMGs/NR 12/apresentacao-NR121 [downloaded with 1stBrowser].pdf" },
+    { id: 6, titulo: "Apostila 6", arquivo: "/IMGs/NR 12/palestra_SINGRAMAR. [downloaded with 1stBrowser].pdf" },
   ],
   videos: [],
 };
@@ -86,7 +86,7 @@ export default function AcessoProtegido() {
      <h2>CURSO NR12 - MAQUINAS E EQUIPAMENTOS</h2>
 
 <img
-  src="projeto/public/IMGs/12.jpg"
+  src="projeto/IMGs/12.jpg"
   alt="Imagem do curso"
   style={{
     width: "100%",

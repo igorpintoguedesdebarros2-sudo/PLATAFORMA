@@ -5,14 +5,14 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/NR13/Apostila de NR 13 ManualTecnicoCaldeiras_2006.pdf" },
-    { id: 2, titulo: "Apostila 2", arquivo: "/public/IMGs/NR13/APRESENTAÇÃO-NR13-SENAI-rev.00 [downloaded with 1stBrowser].pdf" },
-    { id: 3, titulo: "Apostila 3", arquivo: "/public/IMGs/NR13/caldeiras-godoy [downloaded with 1stBrowser].pdf" },
-    { id: 4, titulo: "Apostila 4", arquivo: "/public/IMGs/NR13/CARTILHA NR13.pdf" },
-    { id: 5, titulo: "Apostila 5", arquivo: "/public/IMGs/NR13/NR13 [downloaded with 1stBrowser].pdf" },
-    { id: 6, titulo: "Apostila 6", arquivo: "/public/IMGs/NR13/Portaria-n.º-594-Altera-a-NR-13 [downloaded with 1stBrowser].pdf" },
-    { id: 7, titulo: "Apostila 7", arquivo: "/public/IMGs/NR13/RESUMO NR 13.pdf" },
-    { id: 8, titulo: "Apostila 8", arquivo: "/public/IMGs/NR13/treinamento-para-operadores-vasos-de-pressao-revisão-1 [downloaded with 1stBrowser].pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/NR13/Apostila de NR 13 ManualTecnicoCaldeiras_2006.pdf" },
+    { id: 2, titulo: "Apostila 2", arquivo: "/IMGs/NR13/APRESENTAÇÃO-NR13-SENAI-rev.00 [downloaded with 1stBrowser].pdf" },
+    { id: 3, titulo: "Apostila 3", arquivo: "/IMGs/NR13/caldeiras-godoy [downloaded with 1stBrowser].pdf" },
+    { id: 4, titulo: "Apostila 4", arquivo: "/IMGs/NR13/CARTILHA NR13.pdf" },
+    { id: 5, titulo: "Apostila 5", arquivo: "/IMGs/NR13/NR13 [downloaded with 1stBrowser].pdf" },
+    { id: 6, titulo: "Apostila 6", arquivo: "/IMGs/NR13/Portaria-n.º-594-Altera-a-NR-13 [downloaded with 1stBrowser].pdf" },
+    { id: 7, titulo: "Apostila 7", arquivo: "/IMGs/NR13/RESUMO NR 13.pdf" },
+    { id: 8, titulo: "Apostila 8", arquivo: "/IMGs/NR13/treinamento-para-operadores-vasos-de-pressao-revisão-1 [downloaded with 1stBrowser].pdf" },
   ],
   videos: [],
 };
@@ -88,7 +88,7 @@ export default function AcessoProtegido() {
      <h2>CURSO NR13 - CALDEIRAS VASOS E TUBULAÇÕES</h2>
 
 <img
-  src="/public/IMGs/13.jpg"
+  src="/IMGs/13.jpg"
   alt="Imagem do curso"
   style={{
     width: "100%",

@@ -5,15 +5,15 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/NR11/ALMOXARIFE/manual_almoxarifado_. [downloaded with 1stBrowser].pdf" },
-    { id: 2, titulo: "Apostila 2", arquivo: "/public/IMGs/NR11/novo/APOSTILA 1.pdf" },
-    { id: 3, titulo: "Apostila 3", arquivo: "/public/IMGs/NR11/novo/NR 11 comentadapdf.pdf" },
-    { id: 4, titulo: "Apostila 4", arquivo: "/public/IMGs/NR11/2 APOSTILA NR 11 INECS.pdf" },
-    { id: 5, titulo: "Apostila 5", arquivo: "/public/IMGs/NR11/3 APOSTILA  NR11.pdf" },
-    { id: 6, titulo: "Apostila 6", arquivo: "/public/IMGs/NR11/APOSTILA NR 11 INECS.pdf" },
-    { id: 7, titulo: "Apostila 7", arquivo: "/public/IMGs/NR11/AULADE NR11.pdf" },
-    { id: 8, titulo: "Apostila 8", arquivo: "/public/IMGs/NR11/NORMA REGULAMENTADORA 11.pdf" },
-    { id: 9, titulo: "Apostila 9", arquivo: "/public/IMGs/NR11/nr11.NOVAdocx.pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/NR11/ALMOXARIFE/manual_almoxarifado_. [downloaded with 1stBrowser].pdf" },
+    { id: 2, titulo: "Apostila 2", arquivo: "/IMGs/NR11/novo/APOSTILA 1.pdf" },
+    { id: 3, titulo: "Apostila 3", arquivo: "/IMGs/NR11/novo/NR 11 comentadapdf.pdf" },
+    { id: 4, titulo: "Apostila 4", arquivo: "/IMGs/NR11/2 APOSTILA NR 11 INECS.pdf" },
+    { id: 5, titulo: "Apostila 5", arquivo: "/IMGs/NR11/3 APOSTILA  NR11.pdf" },
+    { id: 6, titulo: "Apostila 6", arquivo: "/IMGs/NR11/APOSTILA NR 11 INECS.pdf" },
+    { id: 7, titulo: "Apostila 7", arquivo: "/IMGs/NR11/AULADE NR11.pdf" },
+    { id: 8, titulo: "Apostila 8", arquivo: "/IMGs/NR11/NORMA REGULAMENTADORA 11.pdf" },
+    { id: 9, titulo: "Apostila 9", arquivo: "/IMGs/NR11/nr11.NOVAdocx.pdf" },
   ],
   videos: [],
 };
@@ -89,7 +89,7 @@ export default function AcessoProtegido() {
      <h2>CURSO NR11 - MATERIAIS</h2>
 
 <img
-  src="/public/IMGs/11.jpg"
+  src="/IMGs/11.jpg"
   alt="Imagem do curso"
   style={{
     width: "100%",

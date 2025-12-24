@@ -5,10 +5,10 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/drones/Levantamento orçamento Equipamentos - Inspeção Remota com Drones (1).pdf" },
-     { id: 2, titulo: "Apostila 2", arquivo: "/public/IMGs/drones/Levantamento orçamento Equipamentos - Inspeção Remota com Drones.pdf" },
-      { id: 3, titulo: "Apostila 3", arquivo: "/public/IMGs/drones/ORÇAMENTO DRONES (1).pdf" },
-       { id: 4, titulo: "Apostila 4", arquivo: "/public/IMGs/drones/Procedimentos e Equipamentos - Inspeção Remota com Drones (1).pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/drones/Levantamento orçamento Equipamentos - Inspeção Remota com Drones (1).pdf" },
+     { id: 2, titulo: "Apostila 2", arquivo: "/IMGs/drones/Levantamento orçamento Equipamentos - Inspeção Remota com Drones.pdf" },
+      { id: 3, titulo: "Apostila 3", arquivo: "/IMGs/drones/ORÇAMENTO DRONES (1).pdf" },
+       { id: 4, titulo: "Apostila 4", arquivo: "/IMGs/drones/Procedimentos e Equipamentos - Inspeção Remota com Drones (1).pdf" },
   ],
   videos: [],
 };

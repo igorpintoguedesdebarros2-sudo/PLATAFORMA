@@ -5,8 +5,8 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/NR18/ccivilsebraesc.pdf" },
-    { id: 2, titulo: "Apostila 2", arquivo: "/public/IMGs/NR18/PORTARIA Nº 3.733, DE 10 DE FEVEREIRO DE 2020 - PORTARIA Nº 3.733, DE 10 DE FEVEREIRO DE 2020 - DOU - Imprensa Nacional.pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/NR18/ccivilsebraesc.pdf" },
+    { id: 2, titulo: "Apostila 2", arquivo: "/IMGs/NR18/PORTARIA Nº 3.733, DE 10 DE FEVEREIRO DE 2020 - PORTARIA Nº 3.733, DE 10 DE FEVEREIRO DE 2020 - DOU - Imprensa Nacional.pdf" },
   ],
   videos: [],
 };
@@ -82,7 +82,7 @@ export default function AcessoProtegido() {
      <h2>CURSO NR18 - PCMAT</h2>
 
 <img
-  src="/public/IMGs/18.jpg"
+  src="/IMGs/18.jpg"
   alt="Imagem do curso"
   style={{
     width: "100%",

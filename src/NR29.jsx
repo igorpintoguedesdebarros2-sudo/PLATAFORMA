@@ -5,7 +5,7 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/NR 29/NR-29.pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/NR 29/NR-29.pdf" },
   ],
   videos: [],
 };
@@ -81,7 +81,7 @@ export default function AcessoProtegido() {
      <h2>CURSO NR29 - PORTUARIO</h2>
 
 <img
-  src="/public/IMGs/29.jpg"
+  src="/IMGs/29.jpg"
   alt="Imagem do curso"
   style={{
     width: "100%",

@@ -5,7 +5,7 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/NR 38/NR38.pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/NR 38/NR38.pdf" },
   ],
   videos: [],
 };
@@ -81,7 +81,7 @@ export default function AcessoProtegido() {
      <h2>CURSO NR38 - LIMPEZA URBABA</h2>
 
 <img
-  src="/public/IMGs/38.jpg"
+  src="/IMGs/38.jpg"
   alt="Imagem do curso"
   style={{
     width: "100%",

@@ -5,12 +5,12 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/matematica/apostila matemática1.pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/matematica/apostila matemática1.pdf" },
   ],
   videos: [
-     { id: 1, titulo: "Aula 1", arquivo: "/public/IMGs/matematica/aula 1.mp4" },
-      { id: 2, titulo: "Aula 2", arquivo: "/public/IMGs/matematica/aula 2.mp4" },
-       { id: 3, titulo: "Aula 3", arquivo: "/public/IMGs/matematica/aula 3.mp4" },
+     { id: 1, titulo: "Aula 1", arquivo: "/IMGs/matematica/aula 1.mp4" },
+      { id: 2, titulo: "Aula 2", arquivo: "/IMGs/matematica/aula 2.mp4" },
+       { id: 3, titulo: "Aula 3", arquivo: "/IMGs/matematica/aula 3.mp4" },
   ],
 };
 

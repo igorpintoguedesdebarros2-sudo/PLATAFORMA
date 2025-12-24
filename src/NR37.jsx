@@ -5,10 +5,10 @@ const numeroWhatsApp = "+5521920439641";
 /* 👉 CONFIGURAÇÃO DOS CONTEÚDOS */
 const conteudos = {
   pdfs: [
-    { id: 1, titulo: "Apostila 1", arquivo: "/public/IMGs/nr37/apostila NR 37.pdf" },
-    { id: 2, titulo: "Apostila 2", arquivo: "/public/IMGs/nr37/NR-37 SEGURANÇA E SAÚDE EM PLATAFORMAS DE PETRÓLEO.pdf" },
-    { id: 3, titulo: "Apostila 3", arquivo: "/public/IMGs/nr37/nr-37-atualizada-2018.pdf" },
-    { id: 4, titulo: "Apostila 4", arquivo: "/public/IMGs/nr37/NR-37.pdf" },
+    { id: 1, titulo: "Apostila 1", arquivo: "/IMGs/nr37/apostila NR 37.pdf" },
+    { id: 2, titulo: "Apostila 2", arquivo: "/IMGs/nr37/NR-37 SEGURANÇA E SAÚDE EM PLATAFORMAS DE PETRÓLEO.pdf" },
+    { id: 3, titulo: "Apostila 3", arquivo: "/IMGs/nr37/nr-37-atualizada-2018.pdf" },
+    { id: 4, titulo: "Apostila 4", arquivo: "/IMGs/nr37/NR-37.pdf" },
   ],
   videos: [],
 };
@@ -84,7 +84,7 @@ export default function AcessoProtegido() {
      <h2>CURSO NR37 - BASICO</h2>
 
 <img
-  src="/public/IMGs/37.jpg"
+  src="/IMGs/37.jpg"
   alt="Imagem do curso"
   style={{
     width: "100%",
