@@ -53,7 +53,7 @@ export default function Profile() {
       <p><strong>Email:</strong> {user.email}</p>
       <button onClick={logout}>Sair</button>
 
- <button
+<button
   onClick={() => navigate("/")}
   style={{
     padding: "10px",
@@ -67,6 +67,7 @@ export default function Profile() {
 >
   VOLTAR
 </button>
+
 
       {/* -------- CURSOS ATIVOS -------- */}
       <h2 style={{ marginTop: 40 }}>Cursos em andamento</h2>
