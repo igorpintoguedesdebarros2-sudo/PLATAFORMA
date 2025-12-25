@@ -53,7 +53,7 @@ export default function Profile() {
       <p><strong>Email:</strong> {user.email}</p>
       <button onClick={logout}>Sair</button>
 
-<button onClick={() => navigate("/home")}>VOLTAR</button>
+<button onClick={() => navigate("/HOME")}>VOLTAR</button>
 
 
       {/* -------- CURSOS ATIVOS -------- */}
