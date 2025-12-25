@@ -7,13 +7,12 @@ export default function Profile() {
   const [user, setUser] = useState(null);
   const [comprados, setComprados] = useState([]);
   const [historico, setHistorico] = useState([]);
-
   const navigate = useNavigate();
 
   /* ---------- AUTH ---------- */
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
-      if (!u) navigate("/");
+      if (!u) navigate("/"); // se deslogado, vai para Login
       else setUser(u);
     });
     return () => unsub();
@@ -53,35 +52,39 @@ export default function Profile() {
       <p><strong>Email:</strong> {user.email}</p>
       <button onClick={logout}>Sair</button>
 
-<button onClick={() => navigate("/HOME")}>VOLTAR</button>
+      <button
+        onClick={() => navigate("/home")} // VOLTAR vai para Home.jsx
+        style={{
+          padding: "10px",
+          background: "#2563eb",
+          color: "white",
+          border: "none",
+          borderRadius: "6px",
+          cursor: "pointer",
+          marginBottom: "20px"
+        }}
+      >
+        VOLTAR
+      </button>
 
-
-      {/* -------- CURSOS ATIVOS -------- */}
+      {/* CURSOS ATIVOS */}
       <h2 style={{ marginTop: 40 }}>Cursos em andamento</h2>
-
       {comprados.length === 0 && <p>Nenhum curso ativo.</p>}
-
       {comprados.map((curso) => (
         <div key={curso.id} className="curso">
           <strong>{curso.nome}</strong>
           <br />
           <a href={curso.arquivoCurso} target="_blank">Acessar curso</a>
           <br />
-          <button onClick={() => concluirCurso(curso.id)}>
-            Marcar como concluído
-          </button>
+          <button onClick={() => concluirCurso(curso.id)}>Marcar como concluído</button>
         </div>
       ))}
 
-      {/* -------- HISTÓRICO -------- */}
+      {/* HISTÓRICO */}
       <h2 style={{ marginTop: 40 }}>Histórico de Cursos</h2>
-
       {historico.length === 0 && <p>Ainda nenhum curso concluído.</p>}
-
       {historico.map((curso) => (
-        <div key={curso.id} className="curso historico">
-          {curso.nome}
-        </div>
+        <div key={curso.id} className="curso historico">{curso.nome}</div>
       ))}
     </div>
   );
