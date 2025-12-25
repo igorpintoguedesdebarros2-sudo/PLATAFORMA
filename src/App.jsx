@@ -5,6 +5,8 @@ import Register from "./auth/Register";
 import Profile from "./auth/Profile";
 import Pagamento from "./Pagamento";
 import Preparatorio from "./Preparatorio";
+import Home from "./Home"; 
+
 
 // Cursos NR
 import NR1 from "./NR1";
@@ -69,6 +71,7 @@ export default function App() {
       <Route path="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/profile" element={<Profile />} />
+      <Route path="/home" element={<Home />} />
 
       {/* Sistema */}
       <Route path="/pagamento" element={<Pagamento />} />
