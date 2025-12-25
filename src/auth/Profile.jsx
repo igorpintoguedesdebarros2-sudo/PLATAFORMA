@@ -53,19 +53,20 @@ export default function Profile() {
       <button onClick={logout}>Sair</button>
 
       <button
-        onClick={() => navigate("/home")} // VOLTAR vai para Home.jsx
-        style={{
-          padding: "10px",
-          background: "#2563eb",
-          color: "white",
-          border: "none",
-          borderRadius: "6px",
-          cursor: "pointer",
-          marginBottom: "20px"
-        }}
-      >
-        VOLTAR
-      </button>
+  onClick={() => navigate("/home")}
+  style={{
+    padding: "10px",
+    background: "#2563eb",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    marginBottom: "20px"
+  }}
+>
+  VOLTAR
+</button>
+
 
       {/* CURSOS ATIVOS */}
       <h2 style={{ marginTop: 40 }}>Cursos em andamento</h2>
