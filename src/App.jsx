@@ -4,7 +4,7 @@ import { Routes, Route } from "react-router-dom";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import Profile from "./auth/Profile";
-import Home from "./Home"; // antes podia estar ../../../home
+import Home from "./Home";
 import Pagamento from "./Pagamento";
 import Preparatorio from "./Preparatorio";
 
