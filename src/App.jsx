@@ -5,7 +5,7 @@ import Register from "./auth/Register";
 import Profile from "./auth/Profile";
 import Home from "./Home"
 import Pagamento from "./Pagamento";
-import Preparatorio from "./Pretaratorio";
+import Preparatorio from "./Preparatorio";
 
 // Cursos NR
 import NR1 from "./NR1";
