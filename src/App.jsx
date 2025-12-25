@@ -71,7 +71,8 @@ export default function App() {
       <Route path="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/profile" element={<Profile />} />
-      <Route path="/home" element={<Home />} /> {/* Rota para Home.jsx */}
+<Route path="/home" element={<Home />} />
+
 
       {/* Sistema */}
       <Route path="/pagamento" element={<Pagamento />} />
