@@ -9,22 +9,22 @@ export default function Profile() {
   const [historico, setHistorico] = useState([]);
   const navigate = useNavigate();
 
-  /* ---------- AUTH ---------- */
+  // ---------- AUTENTICAÇÃO ----------
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
-      if (!u) navigate("/"); // se deslogado, vai para Login
+      if (!u) navigate("/"); // se não estiver logado, vai para login
       else setUser(u);
     });
     return () => unsub();
   }, []);
 
-  /* ---------- LOAD DADOS ---------- */
+  // ---------- CARREGAR DADOS ----------
   useEffect(() => {
     setComprados(JSON.parse(localStorage.getItem("comprados")) || []);
     setHistorico(JSON.parse(localStorage.getItem("historico")) || []);
   }, []);
 
-  /* ---------- CONCLUIR CURSO ---------- */
+  // ---------- CONCLUIR CURSO ----------
   function concluirCurso(id) {
     const curso = comprados.find((c) => c.id === id);
     if (!curso) return;
@@ -41,7 +41,7 @@ export default function Profile() {
 
   function logout() {
     signOut(auth);
-    navigate("/");
+    navigate("/"); // volta pro login
   }
 
   if (!user) return null;
@@ -52,21 +52,21 @@ export default function Profile() {
       <p><strong>Email:</strong> {user.email}</p>
       <button onClick={logout}>Sair</button>
 
+      {/* Botão para Home */}
       <button
-  onClick={() => navigate("/home")}
-  style={{
-    padding: "10px",
-    background: "#2563eb",
-    color: "white",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-    marginBottom: "20px"
-  }}
->
-  VOLTAR
-</button>
-
+        onClick={() => navigate("/home")}
+        style={{
+          padding: "10px",
+          background: "#2563eb",
+          color: "white",
+          border: "none",
+          borderRadius: "6px",
+          cursor: "pointer",
+          marginBottom: "20px"
+        }}
+      >
+        VOLTAR
+      </button>
 
       {/* CURSOS ATIVOS */}
       <h2 style={{ marginTop: 40 }}>Cursos em andamento</h2>
@@ -77,7 +77,9 @@ export default function Profile() {
           <br />
           <a href={curso.arquivoCurso} target="_blank">Acessar curso</a>
           <br />
-          <button onClick={() => concluirCurso(curso.id)}>Marcar como concluído</button>
+          <button onClick={() => concluirCurso(curso.id)}>
+            Marcar como concluído
+          </button>
         </div>
       ))}
 
@@ -85,7 +87,9 @@ export default function Profile() {
       <h2 style={{ marginTop: 40 }}>Histórico de Cursos</h2>
       {historico.length === 0 && <p>Ainda nenhum curso concluído.</p>}
       {historico.map((curso) => (
-        <div key={curso.id} className="curso historico">{curso.nome}</div>
+        <div key={curso.id} className="curso historico">
+          {curso.nome}
+        </div>
       ))}
     </div>
   );
