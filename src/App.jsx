@@ -4,7 +4,8 @@ import { Routes, Route } from "react-router-dom";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import Profile from "./auth/Profile";
-import Home from "./Home";
+import Home from "./Home";      // se App.jsx também está em src
+
 import Pagamento from "./Pagamento";
 import Preparatorio from "./Preparatorio";
 
