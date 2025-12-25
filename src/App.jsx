@@ -1,9 +1,10 @@
 import { Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import Profile from "./auth/Profile";
-import Home from "./Home"
+import Home from "./Home"; // import Home.jsx
 import Pagamento from "./Pagamento";
 import Preparatorio from "./Preparatorio";
 
@@ -70,8 +71,7 @@ export default function App() {
       <Route path="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/profile" element={<Profile />} />
-      
-      <Route path="/home" element={<Home />} />
+      <Route path="/home" element={<Home />} /> {/* Rota para Home.jsx */}
 
       {/* Sistema */}
       <Route path="/pagamento" element={<Pagamento />} />
