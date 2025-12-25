@@ -3,10 +3,9 @@ import { Routes, Route } from "react-router-dom";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import Profile from "./auth/Profile";
+import Home from "./Home"
 import Pagamento from "./Pagamento";
-import Preparatorio from "./Preparatorio";
-import Home from "./Home"; 
-
+import Preparatorio from "./Pretaratorio";
 
 // Cursos NR
 import NR1 from "./NR1";
@@ -71,6 +70,7 @@ export default function App() {
       <Route path="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/profile" element={<Profile />} />
+      
       <Route path="/home" element={<Home />} />
 
       {/* Sistema */}
