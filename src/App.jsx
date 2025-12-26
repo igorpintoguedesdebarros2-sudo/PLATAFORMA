@@ -4,7 +4,7 @@ import { Routes, Route } from "react-router-dom";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import Profile from "./auth/Profile";
-import Home from "./Home";      // se App.jsx também está em src
+import Planilha from "./Planilha";      // se App.jsx também está em src
 
 import Pagamento from "./Pagamento";
 import Preparatorio from "./Preparatorio";
@@ -72,7 +72,7 @@ export default function App() {
       <Route path="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/profile" element={<Profile />} />
-<Route path="/home" element={<Home />} />
+<Route path="/planilha" element={<Planilha />} />
 
 
       {/* Sistema */}
