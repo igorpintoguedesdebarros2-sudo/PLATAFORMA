@@ -132,7 +132,7 @@ export default function AcessoProtegido() {
 
       {/* ---------- LINK FINAL ---------- */}
       {finalizado && (
-  <button onClick={() => window.open("/MATEMATICA2", "_blank")}>
+  <button onClick={() => window.open("/matematica2", "_blank")}>
     PROXIMO CURSO
   </button>
 )}
