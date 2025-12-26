@@ -145,7 +145,7 @@ export default function AcessoProtegido() {
 
       {/* ---------- LINK FINAL ---------- */}
       {finalizado && (
-  <button onClick={() => window.open("/PROVA-NR30", "_blank")}>
+  <button onClick={() => window.open("/nr30/prova", "_blank")}>
     ACESSAR PROVA
   </button>
 )}
