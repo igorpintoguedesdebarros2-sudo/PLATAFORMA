@@ -2,9 +2,9 @@ import { Routes, Route } from "react-router-dom";
 import { Routes, Route } from "react-router-dom";
 
 import { HashRouter, Routes, Route } from "react-router-dom";
-import Login from "./pages/Login";
-import Home from "./pages/Home";
-import Profile from "./pages/Profile";
+import Login from "./auth/Login";
+import Home from "./auth/Home";
+import Profile from "./auth/Profile";
 
 import Pagamento from "./Pagamento";
 import Preparatorio from "./Preparatorio";
