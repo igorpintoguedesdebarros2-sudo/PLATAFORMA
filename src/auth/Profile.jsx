@@ -54,7 +54,7 @@ export default function Profile() {
 
       {/* Botão para Home */}
       <button
-     onClick={() => navigate("/home")}
+     onClick={() => navigate("/planilha")}
 
         style={{
           padding: "10px",
