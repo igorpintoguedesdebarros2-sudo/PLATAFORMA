@@ -67,14 +67,13 @@ import DRONE from "./DRONE";
 
 export default function App() {
   return (
-    <Routes>
-      {/* Auth */}
-      <Route path="/" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/profile" element={<Profile />} />
-<Route path="/planilha" element={<Planilha />} />
+    <HashRouter>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/profile" element={<Profile />} />
 
-
+        
       {/* Sistema */}
       <Route path="/pagamento" element={<Pagamento />} />
       <Route path="/preparatorio" element={<Preparatorio />} />
@@ -156,6 +155,7 @@ export default function App() {
 
       {/* Drone */}
       <Route path="/drone" element={<DRONE />} />
-    </Routes>
+      </Routes>
+    </HashRouter>
   );
 }
