@@ -1,10 +1,10 @@
 import { Routes, Route } from "react-router-dom";
 import { Routes, Route } from "react-router-dom";
 
-import Login from "./auth/Login";
-import Register from "./auth/Register";
-import Profile from "./auth/Profile";
-import Planilha from "./Planilha";      // se App.jsx também está em src
+import { HashRouter, Routes, Route } from "react-router-dom";
+import Login from "./pages/Login";
+import Home from "./pages/Home";
+import Profile from "./pages/Profile";
 
 import Pagamento from "./Pagamento";
 import Preparatorio from "./Preparatorio";
