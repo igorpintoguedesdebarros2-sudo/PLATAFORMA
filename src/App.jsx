@@ -1,13 +1,12 @@
-import { Routes, Route } from "react-router-dom";
-import { Routes, Route } from "react-router-dom";
-
 import { HashRouter, Routes, Route } from "react-router-dom";
+
 import Login from "./auth/Login";
 import Home from "./auth/Home";
 import Profile from "./auth/Profile";
 
 import Pagamento from "./Pagamento";
 import Preparatorio from "./Preparatorio";
+
 
 // Cursos NR
 import NR1 from "./NR1";
