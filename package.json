@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
- "homepage": "https://github.com/igorpintoguedesdebarros2-sudo/PLATAFORMA",
+  "homepage": "https://github.com/igorpintoguedesdebarros2-sudo/PLATAFORMA",
 "scripts": {
   "dev": "vite",
   "build": "vite build",
