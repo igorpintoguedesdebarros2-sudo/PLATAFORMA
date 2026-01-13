@@ -4,11 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "homepage": "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/",
-"scripts": {
-  "dev": "vite",
-  "build": "vite build",
-  "deploy": "npm run build && gh-pages -d dist"
-},
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "deploy": "npm run build && gh-pages -d dist -b gh-pages -r https://github.com/igorpintoguedesdebarros2-sudo/PLATAFORMA.git"
+  },
   "dependencies": {
     "firebase": "^12.7.0",
     "react": "^19.2.0",
