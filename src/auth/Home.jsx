@@ -15,7 +15,7 @@ export default function Home() {
 
         <ul className="dropdown-menu">
           <li>
-            <Link className="dropdown-item" to="/profile">
+            <Link className="dropdown-item" to="/perfil">
               PERFIL
             </Link>
           </li>
