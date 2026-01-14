@@ -6,7 +6,7 @@ import Home from "./auth/Home";
 import Planilha from "./Planilha";
 import Pagamento from "./Pagamento";
 import Preparatorio from "./Preparatorio";
-import NR1 from "./Preparatorio";
+import NR1 from "./NR1";
 
 export default function App() {
   return (
