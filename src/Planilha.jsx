@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 
 export default function FichaInscricao() {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     nome: "",
     email: "",
@@ -57,13 +60,14 @@ export default function FichaInscricao() {
     setForm(dadosSalvos);
   }
 
-  function irParaOpcaoA() {
-    window.location.href = "/pagamento";
-  }
+ function irParaOpcaoA() {
+  navigate("/pagamento");
+}
 
-  function irParaOpcaoB() {
-    window.location.href = "/preparatorio";
-  }
+function irParaOpcaoB() {
+  navigate("/preparatorio");
+}
+
 
   return (
     <div style={styles.body}>
