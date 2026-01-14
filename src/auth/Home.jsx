@@ -1,7 +1,8 @@
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate, Link } from "react-router-dom";
 
 export default function Home() {
-     const navigate = useNavigate();
+  const navigate = useNavigate();
+
   return (
     <div className="container text-center">
       <div className="dropdown mt-3">
@@ -14,9 +15,9 @@ export default function Home() {
 
         <ul className="dropdown-menu">
           <li>
-            <a className="dropdown-item" href="/profile">
+            <Link className="dropdown-item" to="/profile">
               PERFIL
-            </a>
+            </Link>
           </li>
         </ul>
       </div>
@@ -28,12 +29,10 @@ export default function Home() {
       <p>aqui temos diversos cursos de NRs e preparatórios</p>
 
       <p>
-        <strong>
-          clique no botão abaixo pra preencher uma planilha
-        </strong>
+        <strong>clique no botão abaixo pra preencher uma planilha</strong>
       </p>
 
-  <button
+      <button
         onClick={() => navigate("/planilha")}
         style={{
           padding: "10px",
@@ -45,7 +44,7 @@ export default function Home() {
           marginBottom: "20px"
         }}
       >
-        VOLTAR
+        IR PARA PLANILHA
       </button>
     </div>
   );
