@@ -6,6 +6,7 @@ import Home from "./auth/Home";
 import Planilha from "./Planilha";
 import Pagamento from "./Pagamento";
 import Preparatorio from "./Preparatorio";
+import NR1 from "./Preparatorio";
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/planilha" element={<Planilha />} />
            <Route path="/pagamento" element={<Pagamento />} />
             <Route path="/preparatorio" element={<Preparatorio />} />
+            <Route path="/nr1" element={<NR1 />} />
       </Routes>
   );
 }
