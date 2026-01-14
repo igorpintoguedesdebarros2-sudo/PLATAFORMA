@@ -3,7 +3,7 @@ import { auth } from "../src/firebase";
 
 // Cursos padrão do sistema NRs
 const cursosPadrao = [
-  { id: 1, nome: "NR-01", preco: 120, arquivoCurso: "*/nr1" },
+  { id: 1, nome: "NR-01", preco: 120, arquivoCurso: "/PLATAFORMA/nr1" },
   { id: 2, nome: "NR-06", preco: 150, arquivoCurso: "/cursos/nr/nr06" },
   { id: 3, nome: "NR-10", preco: 200, arquivoCurso: "/cursos/nr/nr10" },
 ];
