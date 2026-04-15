@@ -6,7 +6,7 @@
   "homepage": "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA",
   "scripts": {
     "dev": "vite",
-   "build": "vite build",
+    "build": "vite build",
     "deploy": "gh-pages -d dist",
     "preview": "vite preview"
   },
@@ -19,6 +19,7 @@
     "express-rate-limit": "^8.3.1",
     "firebase": "^12.11.0",
     "firebase-admin": "^13.7.0",
+    "gh-pages": "^6.3.0",
     "jsonwebtoken": "^9.0.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
