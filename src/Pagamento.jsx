@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 export default function Pagamento() {
 
-  const TELEFONE_ADM = "5521999999999";
+  const TELEFONE_ADM = "+5521920439641";
 
   const cursos = [
     { nome: "NR1", link: "/nr1" },
