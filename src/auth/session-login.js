@@ -29,7 +29,7 @@ app.use((req, res, next) => {
 
 // 🔐 CORS
 app.use(cors({
-  origin: process.env.CLIENT_URL,
+  origin: "https://igorpintoguedesdebarros2-sudo.github.io/.github.io", // depois você troca
   credentials: true
 }));
 
