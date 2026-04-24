@@ -5,6 +5,8 @@ import jwt from "jsonwebtoken";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import Stripe from "stripe";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 // 🔥 importa a key
 if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
