@@ -29,7 +29,7 @@ app.use((req, res, next) => {
 
 // 🔐 CORS
 app.use(cors({
-  origin: "https://igorpintoguedesdebarros2-sudo.github.io/", // depois você troca
+  origin: "plataforma-production-ea85.up.railway.app", // depois você troca
   credentials: true
 }));
 
