@@ -8,12 +8,32 @@ import Stripe from "stripe";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 
+process.on("uncaughtException", (err) => {
+  console.error("🔥 Uncaught Exception:", err);
+});
+
+process.on("unhandledRejection", (err) => {
+  console.error("🔥 Unhandled Rejection:", err);
+});
+
 // 🔥 importa a key
-if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
-  throw new Error("FIREBASE_SERVICE_ACCOUNT não definida");
+function getFirebaseConfig() {
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+  if (!projectId || !clientEmail || !privateKey) {
+    throw new Error("Firebase ENV incompleto");
+  }
+
+  return {
+    project_id: projectId,
+    client_email: clientEmail,
+    private_key: privateKey.replace(/\\n/g, "\n"),
+  };
 }
 
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+const serviceAccount = getFirebaseConfig();
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -22,6 +42,10 @@ admin.initializeApp({
 const db = admin.firestore();
 
 const app = express();
+
+app.get("/health", (req, res) => {
+  res.status(200).json({ ok: true });
+});
 
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
