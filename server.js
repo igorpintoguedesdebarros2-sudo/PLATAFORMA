@@ -11,7 +11,7 @@ if (!process.env.FIREBASE_PRIVATE_KEY) {
   throw new Error("FIREBASE_PRIVATE_KEY não definida");
 }
 
-const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
+const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n");
 
 admin.initializeApp({
   credential: admin.credential.cert({
