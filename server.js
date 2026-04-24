@@ -7,23 +7,14 @@ import cookieParser from "cookie-parser";
 import Stripe from "stripe";
 
 // 🔥 importa a key
-if (!process.env.FIREBASE_PRIVATE_KEY) {
-  throw new Error("FIREBASE_PRIVATE_KEY não definida");
+if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+  throw new Error("FIREBASE_SERVICE_ACCOUNT não definida");
 }
 
-const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n");
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 admin.initializeApp({
-  credential: admin.credential.cert({
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: privateKey,
-  }),
-});
-
-// 🔥 inicializa UMA VEZ só
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+  credential: admin.credential.cert(serviceAccount),
 });
 
 const db = admin.firestore();
