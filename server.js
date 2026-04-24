@@ -5,7 +5,6 @@ import jwt from "jsonwebtoken";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import Stripe from "stripe";
-import admin from "firebase-admin";
 
 // 🔥 importa a key
 const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
