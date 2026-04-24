@@ -23,12 +23,9 @@ const db = admin.firestore();
 
 const app = express();
 
-const helmet = require("helmet");
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
-
-const rateLimit = require("express-rate-limit");
 
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
