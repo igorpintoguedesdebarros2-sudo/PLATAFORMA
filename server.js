@@ -627,7 +627,10 @@ app.get("/my-payments", authMiddleware, async (req, res) => {
   }
 });
 
-// =============================
+app.get("/", (req, res) => {
+  res.send("API rodando");
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
