@@ -5,9 +5,18 @@ import jwt from "jsonwebtoken";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import Stripe from "stripe";
+import admin from "firebase-admin";
 
 // 🔥 importa a key
-const serviceAccount = JSON.parse(process.env.FIREBASE_KEY);
+const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
+
+admin.initializeApp({
+  credential: admin.credential.cert({
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    privateKey: privateKey,
+  }),
+});
 
 // 🔥 inicializa UMA VEZ só
 admin.initializeApp({
