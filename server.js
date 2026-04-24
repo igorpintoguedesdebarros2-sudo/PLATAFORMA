@@ -1,11 +1,10 @@
-require("dotenv").config();
-
-const express = require("express");
-const admin = require("firebase-admin");
-const jwt = require("jsonwebtoken");
-const cors = require("cors");
-const cookieParser = require("cookie-parser");
-const Stripe = require("stripe");
+import "dotenv/config";
+import express from "express";
+import admin from "firebase-admin";
+import jwt from "jsonwebtoken";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import Stripe from "stripe";
 
 // 🔥 importa a key
 const serviceAccount = JSON.parse(process.env.FIREBASE_KEY);
