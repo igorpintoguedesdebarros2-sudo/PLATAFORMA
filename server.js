@@ -66,9 +66,13 @@ console.log("🔥 FIREBASE DEBUG:", {
   keyPreview: process.env.FIREBASE_PRIVATE_KEY?.slice(0, 30)
 });
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+} else {
+  admin.app(); 
+}
 
 const db = admin.firestore();
 
