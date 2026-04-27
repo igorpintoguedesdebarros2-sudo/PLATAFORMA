@@ -676,8 +676,6 @@ app.get("/my-payments", authMiddleware, async (req, res) => {
   }
 });
 
-const app = express();
-
 // 🔥 ADICIONE AQUI
 app.set("trust proxy", 1);
 
