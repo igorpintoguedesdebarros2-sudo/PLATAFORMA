@@ -23,8 +23,16 @@ function getFirebaseConfig() {
   const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
   if (!projectId || !clientEmail || !privateKey) {
-    throw new Error("Firebase ENV incompleto");
-  }
+  console.error("Firebase ENV incompleto");
+} else {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      project_id: projectId,
+      client_email: clientEmail,
+      private_key: privateKey.replace(/\\n/g, "\n")
+    }),
+  });
+}
 
   return {
     project_id: projectId,
