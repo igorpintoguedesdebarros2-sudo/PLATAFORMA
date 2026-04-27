@@ -677,7 +677,13 @@ app.get("/my-payments", authMiddleware, async (req, res) => {
 });
 
 // 🔥 ADICIONE AQUI
+
 app.set("trust proxy", 1);
+
+// 🔥 coloque AQUI
+app.get("/", (req, res) => {
+  res.status(200).send("OK");
+});
 
 app.get("/health", (req, res) => {
   res.status(200).json({ ok: true });
