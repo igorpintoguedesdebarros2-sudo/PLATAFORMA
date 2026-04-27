@@ -67,8 +67,8 @@ app.use(rateLimit({
   skip: (req) => req.originalUrl === "/stripe-webhook"
 }));
 
-if (!stripe) {
-  return res.status(500).send("Stripe não configurado");
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error("STRIPE_SECRET_KEY não definida");
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
