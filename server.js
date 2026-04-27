@@ -44,6 +44,15 @@ function getFirebaseConfig() {
   };
 }
 
+console.log("CHECK ENV:", {
+  FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID || "MISSING",
+  FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL || "MISSING",
+  FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY ? "OK" : "MISSING",
+  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY ? "OK" : "MISSING",
+  JWT_SECRET: process.env.JWT_SECRET ? "OK" : "MISSING",
+  CLIENT_URL: process.env.CLIENT_URL || "MISSING"
+});
+
 const serviceAccount = getFirebaseConfig();
 
 console.log("🔥 FIREBASE DEBUG:", {
@@ -53,11 +62,11 @@ console.log("🔥 FIREBASE DEBUG:", {
   keyPreview: process.env.FIREBASE_PRIVATE_KEY?.slice(0, 30)
 });
 
-//admin.initializeApp({
-  //credential: admin.credential.cert(serviceAccount),
-//});
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 
-//const db = admin.firestore();
+const db = admin.firestore();
 
 const app = express();
 
