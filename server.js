@@ -676,15 +676,21 @@ app.get("/my-payments", authMiddleware, async (req, res) => {
   }
 });
 
-app.get("/", (req, res) => {
-  res.status(200).send("OK");
+const app = express();
+
+// 🔥 ADICIONE AQUI
+app.set("trust proxy", 1);
+
+app.get("/health", (req, res) => {
+  res.status(200).json({ ok: true });
 });
 
 const PORT = process.env.PORT;
 
+console.log("DEBUG PORT:", PORT);
+
 if (!PORT) {
-  console.error("❌ PORT não definida pelo Railway");
-  process.exit(1);
+  throw new Error("PORT não veio do Railway");
 }
 
 app.listen(PORT, "0.0.0.0", () => {
