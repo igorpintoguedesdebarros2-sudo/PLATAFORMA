@@ -8,6 +8,10 @@ import Stripe from "stripe";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 
+process.on("exit", (code) => {
+  console.log("Process exit:", code);
+});
+
 process.on("uncaughtException", (err) => {
   console.error("🔥 Uncaught Exception:", err);
 });
@@ -680,6 +684,10 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log("Servidor rodando na porta", PORT);
+app.listen(process.env.PORT || 8080, "0.0.0.0", () => {
+  console.log("Servidor rodando na porta", process.env.PORT);
 });
+
+setInterval(() => {
+  console.log("alive");
+}, 5000);
