@@ -45,11 +45,11 @@ console.log("🔥 FIREBASE DEBUG:", {
   keyPreview: process.env.FIREBASE_PRIVATE_KEY?.slice(0, 30)
 });
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+//admin.initializeApp({
+  //credential: admin.credential.cert(serviceAccount),
+//});
 
-const db = admin.firestore();
+//const db = admin.firestore();
 
 const app = express();
 
@@ -454,17 +454,7 @@ if (data.status === "pago") {
 // 🔔 WEBHOOK
 // =============================
 app.post("/stripe-webhook", async (req, res) => {
-
-  let stripe = null;
-
   try {
-
-if (process.env.STRIPE_SECRET_KEY) {
-  stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-} else {
-  console.warn("⚠️ Stripe não configurado");
-}
-
     const signature = req.headers["stripe-signature"];
 
     if (!signature) {
@@ -475,7 +465,7 @@ if (process.env.STRIPE_SECRET_KEY) {
       req.body,
       signature,
       process.env.STRIPE_WEBHOOK_SECRET
-    );
+    ); 
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
