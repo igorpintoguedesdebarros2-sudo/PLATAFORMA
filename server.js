@@ -29,11 +29,21 @@ function getFirebaseConfig() {
   return {
     project_id: projectId,
     client_email: clientEmail,
-    private_key: privateKey.replace(/\\n/g, "\n"),
+    private_key: privateKey
+  .replace(/\\n/g, "\n")
+  .replace(/\r/g, "")
+  .trim(),
   };
 }
 
 const serviceAccount = getFirebaseConfig();
+
+console.log("🔥 FIREBASE DEBUG:", {
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+  hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
+  keyPreview: process.env.FIREBASE_PRIVATE_KEY?.slice(0, 30)
+});
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
