@@ -444,10 +444,16 @@ if (data.status === "pago") {
 // 🔔 WEBHOOK
 // =============================
 app.post("/stripe-webhook", async (req, res) => {
+
+  let stripe = null;
+
   try {
-    if (!process.env.STRIPE_WEBHOOK_SECRET) {
-      throw new Error("STRIPE_WEBHOOK_SECRET não definido");
-    }
+
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+} else {
+  console.warn("⚠️ Stripe não configurado");
+}
 
     const signature = req.headers["stripe-signature"];
 
