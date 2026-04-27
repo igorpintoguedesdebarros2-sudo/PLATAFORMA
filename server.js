@@ -28,15 +28,9 @@ function getFirebaseConfig() {
 
   if (!projectId || !clientEmail || !privateKey) {
   console.error("Firebase ENV incompleto");
-} else {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      project_id: projectId,
-      client_email: clientEmail,
-      private_key: privateKey.replace(/\\n/g, "\n")
-    }),
-  });
-}
+  } else {
+
+  }
 
   return {
     project_id: projectId,
@@ -686,10 +680,10 @@ app.get("/", (req, res) => {
   res.send("API rodando");
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
-app.listen(process.env.PORT, "0.0.0.0", () => {
-  console.log("Servidor rodando na porta", process.env.PORT);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log("Servidor rodando na porta", PORT);
 });
 
 setInterval(() => {
