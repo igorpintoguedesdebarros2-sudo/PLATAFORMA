@@ -706,12 +706,10 @@ if (!PORT) {
 app.use(express.static(path.join(__dirname, "dist")));
 
 // fallback React Router
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
-});
+app.use(express.static(path.join(__dirname, "dist")));
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log("Servidor rodando na porta", PORT);
+app.get("/*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
 setInterval(() => {
