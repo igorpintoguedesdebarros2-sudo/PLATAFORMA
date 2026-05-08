@@ -702,12 +702,10 @@ if (!PORT) {
   throw new Error("PORT não veio do Railway");
 }
 
-/// FRONTEND VITE
-app.use(express.static(path.join(__dirname, "plataforma/dist")));
+app.use(express.static(path.join(__dirname, "dist")));
 
-// React Router fallback
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, "plataforma/dist/index.html"));
+app.get(/.*/, (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
 app.listen(PORT, "0.0.0.0", () => {
