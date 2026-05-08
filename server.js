@@ -7,6 +7,8 @@ import cookieParser from "cookie-parser";
 import Stripe from "stripe";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import path from "path";
+import { fileURLToPath } from "url";
 
 process.on("exit", (code) => {
   console.log("Process exit:", code);
@@ -71,6 +73,9 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 const app = express();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.get("/health", (req, res) => {
   res.status(200).json({ ok: true });
@@ -696,6 +701,16 @@ console.log("DEBUG PORT:", PORT);
 if (!PORT) {
   throw new Error("PORT não veio do Railway");
 }
+
+// 🔥 servir frontend React/Vite
+app.use(express.static(path.join(__dirname, "dist")));
+
+// 🔥 React Router fallback
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
+
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log("Servidor rodando na porta", PORT);
