@@ -703,11 +703,11 @@ if (!PORT) {
 }
 
 // arquivos do React
-app.use(express.static(path.join(__dirname, "plataforma", "dist")));
+app.use(express.static(path.join(__dirname, "PLATAFORMA", "dist")));
 
 // fallback React Router
 app.use((req, res) => {
-  res.sendFile(path.join(__dirname, "plataforma", "dist", "index.html"));
+  res.sendFile(path.join(__dirname, "PLATAFORMA", "dist", "index.html"));
 });
 
 app.listen(PORT, "0.0.0.0", () => {
