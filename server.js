@@ -702,11 +702,11 @@ if (!PORT) {
   throw new Error("PORT não veio do Railway");
 }
 
-// 🔥 servir frontend React/Vite
+// arquivos do React
 app.use(express.static(path.join(__dirname, "dist")));
 
-// 🔥 React Router fallback
-app.get("*", (req, res) => {
+// fallback React Router
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
