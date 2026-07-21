@@ -47,9 +47,6 @@ const API_URL =
 
 let usuarioAtual = null;
 
-
-
-
 onAuthStateChanged(
     auth,
     (usuario)=>{
@@ -57,16 +54,14 @@ onAuthStateChanged(
 
         if(!usuario){
 
-            window.location =
-            "index.html";
+            window.location = "index.html";
 
             return;
 
         }
 
 
-        usuarioAtual =
-        usuario;
+        usuarioAtual = usuario;
 
 
         carregarCursos();
@@ -74,10 +69,175 @@ onAuthStateChanged(
 
     }
 );
+ 
+function carregarCursos(){
+
+    const solicitacoes =
+    document.getElementById(
+        "solicitacoes"
+    );
+
+
+    const liberados =
+    document.getElementById(
+        "cursosLiberados"
+    );
+
+
+    const historico =
+    document.getElementById(
+        "historico"
+    );
+
+
+    onValue(
+
+        ref(db,"solicitacoes_cursos"),
+
+        (snapshot)=>{
+
+
+            solicitacoes.innerHTML = "";
+
+            liberados.innerHTML = "";
 
 
 
+            snapshot.forEach((item)=>{
 
+
+                const curso =
+                item.val();
+
+
+                const id =
+                item.key;
+
+
+
+                if(
+                    curso.usuarioId !== usuarioAtual.uid
+                ){
+
+                    return;
+
+                }
+
+
+
+                if(
+                    curso.status === "aguardando"
+                ){
+
+
+                    solicitacoes.innerHTML += `
+
+                    <div class="curso-card">
+
+                    <h3>${curso.curso}</h3>
+
+                    <p>
+                    Aguardando aprovação
+                    </p>
+
+                    </div>
+
+                    `;
+
+
+                }
+
+
+
+                if(
+                    curso.status === "aguardando_pagamento"
+                ){
+
+
+                    solicitacoes.innerHTML += `
+
+                    <div class="curso-card">
+
+                    <h3>${curso.curso}</h3>
+
+                    <p>
+                    Valor: R$ ${curso.valor}
+                    </p>
+
+
+                    <button onclick="pagarCurso('${id}')">
+
+                    Pagar
+
+                    </button>
+
+
+                    </div>
+
+                    `;
+
+
+                }
+
+
+
+                if(
+                    curso.status === "liberado"
+                ){
+
+
+                    liberados.innerHTML += `
+
+                    <div class="curso-card">
+
+
+                    <h3>${curso.curso}</h3>
+
+
+                    <p>
+                    Pagamento confirmado
+                    </p>
+
+
+                    <a href="${curso.linkCurso}"
+                    target="_blank">
+
+
+                    <button>
+                    Acessar Curso
+                    </button>
+
+
+                    </a>
+
+
+                    </div>
+
+                    `;
+
+
+                }
+
+
+            });
+
+
+        }
+
+    );
+
+
+}
+
+document
+.getElementById("sair")
+.onclick = ()=>{
+
+    signOut(auth);
+
+    window.location="index.html";
+
+};
 
 document
 .getElementById("solicitar")
