@@ -418,13 +418,13 @@ async(req,res)=>{
 
             success_url:
 
-            "https://plataforma-56gy.onrender.com/sucesso.html?session_id={CHECKOUT_SESSION_ID}",
+            "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/sucesso.html?session_id={CHECKOUT_SESSION_ID}",
 
 
 
             cancel_url:
 
-            "https://plataforma-56gy.onrender.com/cancelado.html"
+            "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/cancelado.html"
 
 
         });
