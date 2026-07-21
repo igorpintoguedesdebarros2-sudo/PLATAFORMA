@@ -293,47 +293,29 @@ await db
 
 // =======================
 // JSON NORMAL
-// DEPOIS DO WEBHOOK
-// =======================
-
+//************************
 
 app.use(
-express.json()
+    express.json()
 );
-
-
-
-
-
 
 
 // =======================
 // CRIAR PAGAMENTO STRIPE
 // =======================
 
-
 app.post(
-
 "/criar-pagamento",
-
 async(req,res)=>{
 
 
     const {
-
         curso,
-
         valor,
-
         pedidoId,
-
         usuarioId
 
-
     } = req.body;
-
-
-
 
 
 
@@ -342,7 +324,6 @@ async(req,res)=>{
         !valor ||
         !pedidoId
     ){
-
 
         return res
         .status(400)
@@ -353,11 +334,7 @@ async(req,res)=>{
 
         });
 
-
     }
-
-
-
 
 
 
@@ -368,8 +345,6 @@ async(req,res)=>{
         const session =
         await stripe.checkout.sessions.create({
 
-
-
             payment_method_types:[
 
                 "card"
@@ -377,30 +352,22 @@ async(req,res)=>{
             ],
 
 
-
-
             line_items:[
-
 
                 {
 
                     price_data:{
 
-
                         currency:
                         "brl",
 
 
-
                         product_data:{
-
 
                             name:
                             curso
 
-
                         },
-
 
 
                         unit_amount:
@@ -408,55 +375,49 @@ async(req,res)=>{
                             Number(valor) * 100
                         )
 
-
                     },
 
 
-
-                    quantity:
-                    1
-
+                    quantity:1
 
                 }
 
-
             ],
-
-
-
 
 
 
             mode:
             "payment",
 
-       metadata:{
-        pedidoId: pedidoId,
-        usuarioId: usuarioId || "",
-        curso: curso
-     },
+
+
+            metadata:{
+
+                pedidoId:
+                pedidoId,
+
+                usuarioId:
+                usuarioId || "",
+
+                curso:
+                curso
+
+            },
+
+
 
             success_url:
-
 
             "http://127.0.0.1:5500/sucesso.html?session_id={CHECKOUT_SESSION_ID}",
 
 
 
-
-
-
             cancel_url:
-
 
             "http://127.0.0.1:5500/cancelado.html"
 
 
-
         });
-
-
-
 
 
 
@@ -466,8 +427,6 @@ async(req,res)=>{
             session.id
 
         });
-
-
 
 
 
@@ -483,7 +442,6 @@ async(req,res)=>{
         );
 
 
-
         res.status(500)
         .json({
 
@@ -493,29 +451,21 @@ async(req,res)=>{
         });
 
 
-
     }
-
 
 
 });
 
 
 
+const PORT =
+process.env.PORT || 3000;
 
 
+app.listen(PORT, ()=>{
 
-
-app.listen(
-
-3000,
-
-()=>{
-
-
-console.log(
-"Servidor Stripe rodando na porta 3000"
-);
-
+    console.log(
+        "Servidor rodando na porta " + PORT
+    );
 
 });
