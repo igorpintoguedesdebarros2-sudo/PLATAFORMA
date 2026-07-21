@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Cursos</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+
+<body>
+
+
+<div class="box">
+
+
+<h2>Comprar Curso</h2>
+
+
+<select id="curso">
+
+<option value="">
+Selecione um curso
+</option>
+
+
+<option value="HTML Completo">
+HTML Completo
+</option>
+
+
+<option value="CSS Completo">
+CSS Completo
+</option>
+
+
+<option value="JavaScript">
+JavaScript
+</option>
+
+
+<option value="Python">
+Python
+</option>
+
+
+<option value="Firebase">
+Firebase
+</option>
+
+
+</select>
+
+
+<br><br>
+
+
+<button id="solicitar">
+
+Solicitar Curso
+
+</button>
+
+
+<hr>
+
+
+<h2>Solicitações</h2>
+
+
+<div id="solicitacoes">
+
+<p>Nenhuma solicitação.</p>
+
+</div>
+
+
+<hr>
+
+
+<h2>Cursos Liberados</h2>
+
+
+<div id="cursosLiberados">
+
+<p>Nenhum curso liberado.</p>
+
+</div>
+
+
+<hr>
+
+
+<h2>Histórico de Cursos</h2>
+
+
+<div id="historico">
+
+<p>Você ainda não concluiu nenhum curso.</p>
+
+</div>
+
+
+<br>
+
+
+<button id="sair">
+
+Sair
+
+</button>
+
+
+</div>
+
+
+
+<!-- Stripe -->
+
+<script src="https://js.stripe.com/v3/"></script>
+
+
+<!-- Firebase + sistema -->
+
+<script type="module" src="pagamento.js"></script>
+
+
+</body>
+
+</html>
