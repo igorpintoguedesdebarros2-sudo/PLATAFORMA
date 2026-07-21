@@ -3,12 +3,9 @@ const cors = require("cors");
 const Stripe = require("stripe");
 require("dotenv").config();
 
-
-const {
-    initializeApp,
-    cert
-} = require("firebase-admin/app");
-
+const serviceAccount = JSON.parse(
+    process.env.FIREBASE_ADMIN_JSON
+);
 
 const {
     getDatabase
