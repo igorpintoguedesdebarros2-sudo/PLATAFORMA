@@ -31,7 +31,7 @@ from
 // Stripe Public Key
 
 const stripe = Stripe(
-    "pk_test_SUA_CHAVE_PUBLICA"
+    "pk_test_51TE8ZZLs51eEGUV1zJcylus26Ox4xxRVL8iiCeMmGngVvnbnRoR2laAVPhHxldhn0jkKs8kjugG4woYDr93qJX6z00QMKrOCbX"
 );
 
 
@@ -40,7 +40,7 @@ const stripe = Stripe(
 // Backend
 
 const API_URL =
-"https://SEU-BACKEND.onrender.com";
+"https://plataforma-56gy.onrender.com";
 
 
 
