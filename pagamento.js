@@ -27,20 +27,27 @@ from
 
 
 
-// Chave pública do Stripe
-// Substitua pela sua pk_test
+
+// Stripe Public Key
+
 const stripe = Stripe(
-    "pk_test_51TE8ZZLs51eEGUV1zJcylus26Ox4xxRVL8iiCeMmGngVvnbnRoR2laAVPhHxldhn0jkKs8kjugG4woYDr93qJX6z00QMKrOCbX"
+    "pk_test_SUA_CHAVE_PUBLICA"
 );
+
+
+
+
+// Backend
+
+const API_URL =
+"https://SEU-BACKEND.onrender.com";
+
 
 
 
 let usuarioAtual = null;
 
 
-
-
-// Verificar usuário logado
 
 
 onAuthStateChanged(
@@ -50,14 +57,16 @@ onAuthStateChanged(
 
         if(!usuario){
 
-            window.location="index.html";
+            window.location =
+            "index.html";
 
             return;
 
         }
 
 
-        usuarioAtual = usuario;
+        usuarioAtual =
+        usuario;
 
 
         carregarCursos();
@@ -68,12 +77,6 @@ onAuthStateChanged(
 
 
 
-
-
-
-
-
-// Solicitar novo curso
 
 
 document
@@ -88,21 +91,17 @@ document
 
 
 
-    if(curso === ""){
+    if(!curso){
 
 
         alert(
-        "Selecione um curso."
+            "Selecione um curso"
         );
 
 
         return;
 
-
     }
-
-
-
 
 
 
@@ -113,9 +112,6 @@ document
             "solicitacoes_cursos"
         )
     );
-
-
-
 
 
 
@@ -130,45 +126,37 @@ document
             usuarioAtual.uid,
 
 
-
             nomeUsuario:
             usuarioAtual.displayName ||
             "Usuário",
-
 
 
             email:
             usuarioAtual.email,
 
 
-
             curso:
             curso,
-
 
 
             valor:
             0,
 
 
-
             status:
             "aguardando",
 
+
+            pago:
+            false,
 
 
             linkCurso:
             ""
 
-
-
         }
 
     );
-
-
-
-
 
 
 
@@ -179,334 +167,71 @@ document
 
 };
 
-function carregarCursos(){
+window.pagarCurso = async(id)=>{
 
 
-    const solicitacoes =
-    document.getElementById(
-        "solicitacoes"
-    );
+    try{
 
 
+        const resultado =
+        await get(
 
-    const liberados =
-    document.getElementById(
-        "cursosLiberados"
-    );
+            ref(
+                db,
+                "solicitacoes_cursos/"+id
+            )
 
+        );
 
 
 
-    onValue(
+        const curso =
+        resultado.val();
 
-        ref(
-            db,
-            "solicitacoes_cursos"
-        ),
 
 
-        (snapshot)=>{
+        if(!curso){
 
 
-            solicitacoes.innerHTML = "";
-
-            liberados.innerHTML = "";
-
-
-
-
-            snapshot.forEach(
-
-                (item)=>{
-
-
-                    const curso =
-                    item.val();
-
-
-
-                    const id =
-                    item.key;
-
-
-
-
-                    if(
-                        curso.usuarioId !== usuarioAtual.uid
-                    ){
-
-                        return;
-
-                    }
-
-
-
-
-
-
-
-
-                    // Curso aguardando análise do administrador
-
-
-                    if(
-                        curso.status === "aguardando"
-                    ){
-
-
-                        solicitacoes.innerHTML += `
-
-
-                        <div class="curso-card">
-
-
-                            <h3>
-                            ${curso.curso}
-                            </h3>
-
-
-                            <p>
-                            Status:
-                            Aguardando aprovação
-                            </p>
-
-
-                        </div>
-
-
-                        `;
-
-
-                    }
-
-
-
-
-
-
-
-
-
-                    // Administrador definiu valor
-
-
-                    if(
-                        curso.status === "aguardando_pagamento"
-                    ){
-
-
-
-                        solicitacoes.innerHTML += `
-
-
-                        <div class="curso-card">
-
-
-                            <h3>
-                            ${curso.curso}
-                            </h3>
-
-
-
-                            <p>
-                            Valor:
-                            R$ ${curso.valor}
-                            </p>
-
-
-
-
-                            <button
-                            onclick="pagarCurso('${id}')">
-
-
-                            Pagar
-
-
-                            </button>
-
-
-
-                        </div>
-
-
-                        `;
-
-
-                    }
-
-
-
-
-
-
-
-
-
-                    // Curso liberado após pagamento confirmado
-
-
-                    if(
-                        curso.status === "liberado"
-                    ){
-
-
-                        liberados.innerHTML += `
-
-
-                        <div class="curso-card">
-
-
-                            <h3>
-                            ${curso.curso}
-                            </h3>
-
-
-
-
-                            <p>
-                            Valor pago:
-                            R$ ${curso.valor}
-                            </p>
-
-
-
-
-
-                            <a href="${curso.linkCurso}"
-                            target="_blank">
-
-
-                            <button>
-
-
-                            Acessar Curso
-
-
-                            </button>
-
-
-                            </a>
-
-
-
-
-
-
-                            <button
-                            onclick="finalizarCurso('${id}')">
-
-
-                            Concluir Curso
-
-
-                            </button>
-
-
-
-                        </div>
-
-
-                        `;
-
-
-                    }
-
-
-
-
-
-                }
-
+            alert(
+                "Curso não encontrado"
             );
 
+
+            return;
 
         }
 
 
-    );
+
+        if(
+            !curso.valor ||
+            Number(curso.valor)<=0
+        ){
 
 
-}
-
-// Pagamento usando Stripe
-// O valor vem do administrador pelo Firebase
-
-
-window.pagarCurso = async(id)=>{
+            alert(
+                "Aguardando definição do valor."
+            );
 
 
-    const resultado =
-    await get(
+            return;
 
-        ref(
-            db,
-            "solicitacoes_cursos/"+id
-        )
-
-    );
-
-
-
-    const curso =
-    resultado.val();
-
-
-
-
-    if(!curso){
-
-
-        alert(
-        "Curso não encontrado."
-        );
-
-
-        return;
-
-
-    }
-
-
-
-
-
-
-    if(
-        !curso.valor ||
-        Number(curso.valor) <= 0
-    ){
-
-
-        alert(
-        "O administrador ainda não definiu o valor."
-        );
-
-
-        return;
-
-
-    }
-
-
-
-
-
-
-    try{
+        }
 
 
 
         const resposta =
         await fetch(
 
-            "http://localhost:3000/criar-pagamento",
+            API_URL +
+            "/criar-pagamento",
 
             {
 
 
-                method:"POST",
-
+                method:
+                "POST",
 
 
                 headers:{
@@ -519,28 +244,23 @@ window.pagarCurso = async(id)=>{
                 },
 
 
-
-                body:JSON.stringify({
-
+                body:
+                JSON.stringify({
 
                     pedidoId:
                     id,
-
 
 
                     usuarioId:
                     usuarioAtual.uid,
 
 
-
                     curso:
                     curso.curso,
 
 
-
                     valor:
                     Number(curso.valor)
-
 
 
                 })
@@ -552,13 +272,8 @@ window.pagarCurso = async(id)=>{
 
 
 
-
-
-
         const dados =
         await resposta.json();
-
-
 
 
 
@@ -567,47 +282,35 @@ window.pagarCurso = async(id)=>{
 
 
             alert(
-            "Erro ao criar pagamento."
+                "Erro criando pagamento"
             );
 
 
             return;
 
-
         }
 
 
 
 
-
-
-
-
-        const resultadoStripe =
+        const checkout =
         await stripe.redirectToCheckout({
-
 
             sessionId:
             dados.id
-
 
         });
 
 
 
-
-
-
-        if(resultadoStripe.error){
+        if(checkout.error){
 
 
             alert(
-            resultadoStripe.error.message
+                checkout.error.message
             );
 
-
         }
-
 
 
 
@@ -615,215 +318,15 @@ window.pagarCurso = async(id)=>{
     catch(error){
 
 
-
         console.error(error);
 
 
-
         alert(
-        "Erro ao iniciar pagamento."
+            "Erro no pagamento"
         );
 
 
-
     }
-
-
-
-};
-
-
-// Finalizar curso
-// Envia para histórico de cursos e pagamentos
-
-
-window.finalizarCurso = async(id)=>{
-
-
-    const resultado =
-    await get(
-
-        ref(
-            db,
-            "solicitacoes_cursos/"+id
-        )
-
-    );
-
-
-
-    const curso =
-    resultado.val();
-
-
-
-
-    if(!curso){
-
-
-        alert(
-        "Curso não encontrado."
-        );
-
-
-        return;
-
-
-    }
-
-
-
-
-
-
-
-
-    // Histórico de cursos concluídos
-
-
-    await set(
-
-        ref(
-
-            db,
-
-            "usuarios/"
-            +usuarioAtual.uid+
-            "/cursos/"+id
-
-        ),
-
-
-        {
-
-
-            nome:
-            curso.curso,
-
-
-
-            status:
-            "Concluído",
-
-
-
-            data:
-            new Date()
-            .toLocaleDateString()
-
-
-
-        }
-
-    );
-
-
-
-
-
-
-
-
-
-    // Histórico de pagamentos
-
-
-    await set(
-
-        ref(
-
-            db,
-
-            "usuarios/"
-            +usuarioAtual.uid+
-            "/pagamentos/"+id
-
-        ),
-
-
-        {
-
-
-            curso:
-            curso.curso,
-
-
-
-            valor:
-            curso.valor,
-
-
-
-            data:
-            new Date()
-            .toLocaleDateString()
-
-
-
-        }
-
-    );
-
-
-
-
-
-
-
-
-
-    // Remove da lista de cursos ativos
-
-
-    await remove(
-
-        ref(
-
-            db,
-
-            "solicitacoes_cursos/"+id
-
-        )
-
-    );
-
-
-
-
-
-
-
-    alert(
-        "Curso enviado para o histórico."
-    );
-
-
-
-};
-
-
-
-
-
-
-
-
-
-
-
-// Logout
-
-
-document
-.getElementById("sair")
-.onclick = ()=>{
-
-
-    signOut(auth);
-
-
-    window.location =
-    "index.html";
 
 
 };
