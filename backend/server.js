@@ -32,10 +32,12 @@ const serviceAccount = {
     clientEmail:
     process.env.FIREBASE_CLIENT_EMAIL,
 
-
     privateKey:
-    process.env.FIREBASE_PRIVATE_KEY
-    .replace(/\\n/g, "\n")
+process.env.FIREBASE_PRIVATE_KEY
+?
+process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g,"\n")
+:
+undefined
 
 };
 
@@ -226,27 +228,30 @@ try{
             linkCurso = "";
     }
 
-await db
-.ref(
-    "solicitacoes_cursos/" + pedidoId
-)
-.update({
+    await update(
 
-    status:"liberado",
+    ref(
+        db,
+        "solicitacoes_cursos/" + pedidoId
+    ),
 
-    pago:true,
+    {
+        status:"liberado",
 
-    pagamentoId:
-    sessao.id,
+        pago:true,
 
-    linkCurso:
-    linkCurso,
+        pagamentoId:
+        sessao.id,
 
-    dataPagamento:
-    new Date()
-    .toLocaleDateString()
+        linkCurso:
+        linkCurso,
 
-});
+        dataPagamento:
+        new Date()
+        .toLocaleDateString()
+    }
+
+);
 
             console.log(
                 "Curso liberado:",
@@ -413,13 +418,13 @@ async(req,res)=>{
 
             success_url:
 
-            "http://127.0.0.1:5500/sucesso.html?session_id={CHECKOUT_SESSION_ID}",
+            "https://plataforma-56gy.onrender.com/sucesso.html?session_id={CHECKOUT_SESSION_ID}",
 
 
 
             cancel_url:
 
-            "http://127.0.0.1:5500/cancelado.html"
+            "https://plataforma-56gy.onrender.com/cancelado.html"
 
 
         });
@@ -461,6 +466,19 @@ async(req,res)=>{
 
 });
 
+// Teste da API
+app.get("/", (req,res)=>{
+
+    res.json({
+
+        status:"online",
+
+        mensagem:
+        "API Plataforma funcionando"
+
+    });
+
+});
 
 const PORT =
 process.env.PORT || 3000;
