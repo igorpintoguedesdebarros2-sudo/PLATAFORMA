@@ -3,12 +3,10 @@ const cors = require("cors");
 const Stripe = require("stripe");
 require("dotenv").config();
 
-
 const {
     initializeApp,
     cert
 } = require("firebase-admin/app");
-
 
 const {
     getDatabase,
@@ -16,11 +14,21 @@ const {
     update
 } = require("firebase-admin/database");
 
+const serviceAccount =
+    require("./firebase-service-account.json");
 
+initializeApp({
+    credential: cert(serviceAccount),
+    databaseURL:
+        "https://proje-79338-default-rtdb.firebaseio.com"
+});
+
+const db = getDatabase();
+
+const stripe =
+    Stripe(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
-
-
 
 // Firebase Admin
 const serviceAccount = {
