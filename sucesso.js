@@ -54,13 +54,16 @@ let usuarioAtual = null;
 let cursosPresenciais = [];
 
 // =====================================================
-// FUNÇÕES AUXILIARES
+// AUXILIARES
 // =====================================================
 
 function mostrarStatus(mensagem) {
 
     if (statusPagamento) {
-        statusPagamento.textContent = mensagem;
+
+        statusPagamento.textContent =
+            mensagem;
+
     }
 
 }
@@ -70,20 +73,29 @@ function mostrarStatus(mensagem) {
 function limparCursos() {
 
     if (cursosComprados) {
-        cursosComprados.innerHTML = "";
+
+        cursosComprados.innerHTML =
+            "";
+
     }
 
 }
 
 // =====================================================
 
-function criarElemento(tag, texto = "") {
+function criarElemento(
+    tag,
+    texto = ""
+) {
 
     const elemento =
         document.createElement(tag);
 
-    if (texto !== "") {
-        elemento.textContent = texto;
+    if (texto) {
+
+        elemento.textContent =
+            texto;
+
     }
 
     return elemento;
@@ -94,7 +106,10 @@ function criarElemento(tag, texto = "") {
 // CARD EAD
 // =====================================================
 
-function criarCardEAD(curso, id) {
+function criarCardEAD(
+    curso,
+    id
+) {
 
     const card =
         criarElemento("div");
@@ -109,7 +124,8 @@ function criarCardEAD(curso, id) {
     card.appendChild(
         criarElemento(
             "h3",
-            curso.curso || "Curso"
+            curso.curso ||
+            "Curso"
         )
     );
 
@@ -164,7 +180,8 @@ function criarCardEAD(curso, id) {
         card.appendChild(
             criarElemento(
                 "p",
-                "Valor pago: R$ " + valor
+                "Valor pago: R$ " +
+                valor
             )
         );
 
@@ -225,7 +242,7 @@ function criarCardEAD(curso, id) {
     }
 
     // -------------------------------------------------
-    // ACESSAR CURSO
+    // LINK DO CURSO
     // -------------------------------------------------
 
     if (curso.linkCurso) {
@@ -306,13 +323,18 @@ function criarCardEAD(curso, id) {
 // CARD PRESENCIAL
 // =====================================================
 
-function criarCardPresencial(curso, id) {
+function criarCardPresencial(
+    curso,
+    id
+) {
 
     cursosPresenciais.push({
 
-        id: id,
+        id:
+            id,
 
-        curso: curso
+        curso:
+            curso
 
     });
 
@@ -385,7 +407,8 @@ function criarCardPresencial(curso, id) {
         card.appendChild(
             criarElemento(
                 "p",
-                "Valor pago: R$ " + valor
+                "Valor pago: R$ " +
+                valor
             )
         );
 
@@ -411,7 +434,10 @@ function criarCardPresencial(curso, id) {
             criarElemento(
                 "p",
                 "Data: " +
-                (agendamento.data || "")
+                (
+                    agendamento.data ||
+                    ""
+                )
             )
         );
 
@@ -419,7 +445,10 @@ function criarCardPresencial(curso, id) {
             criarElemento(
                 "p",
                 "Horário: " +
-                (agendamento.horario || "")
+                (
+                    agendamento.horario ||
+                    ""
+                )
             )
         );
 
@@ -427,7 +456,10 @@ function criarCardPresencial(curso, id) {
             criarElemento(
                 "p",
                 "Status: " +
-                (agendamento.status || "Agendado")
+                (
+                    agendamento.status ||
+                    "Agendado"
+                )
             )
         );
 
@@ -471,18 +503,27 @@ function criarCardPresencial(curso, id) {
 // MOSTRAR CURSO
 // =====================================================
 
-function mostrarCurso(curso, id) {
+function mostrarCurso(
+    curso,
+    id
+) {
 
     if (!curso) {
+
         return;
+
     }
 
     const categoria =
         String(
-            curso.categoria || "EAD"
+            curso.categoria ||
+            "EAD"
         ).toLowerCase();
 
-    if (categoria === "ead") {
+    if (
+        categoria ===
+        "ead"
+    ) {
 
         criarCardEAD(
             curso,
@@ -493,7 +534,10 @@ function mostrarCurso(curso, id) {
 
     }
 
-    if (categoria === "presencial") {
+    if (
+        categoria ===
+        "presencial"
+    ) {
 
         criarCardPresencial(
             curso,
@@ -568,9 +612,9 @@ async function verificarPagamento() {
 
     try {
 
-        // =================================================
-        // CONSULTAR BACKEND
-        // =================================================
+        // -------------------------------------------------
+        // URL DO BACKEND
+        // -------------------------------------------------
 
         const url =
             API_URL +
@@ -588,13 +632,13 @@ async function verificarPagamento() {
         );
 
         console.log(
-            "Session:",
-            sessionId
+            "Usuário:",
+            usuarioAtual.uid
         );
 
         console.log(
-            "Usuário:",
-            usuarioAtual.uid
+            "Session:",
+            sessionId
         );
 
         console.log(
@@ -606,9 +650,9 @@ async function verificarPagamento() {
             "======================================"
         );
 
-        // =================================================
-        // REQUEST
-        // =================================================
+        // -------------------------------------------------
+        // FETCH
+        // -------------------------------------------------
 
         const resposta =
             await fetch(
@@ -628,32 +672,23 @@ async function verificarPagamento() {
                 }
             );
 
-        // =================================================
-        // LER RESPOSTA
-        // =================================================
-
-        const texto =
-            await resposta.text();
+        // -------------------------------------------------
+        // JSON
+        // -------------------------------------------------
 
         let dados = null;
 
         try {
 
             dados =
-                texto
-                    ? JSON.parse(texto)
-                    : null;
+                await resposta.json();
 
         }
         catch (erroJSON) {
 
             console.error(
-                "Resposta inválida do servidor:",
-                texto
-            );
-
-            throw new Error(
-                "O servidor retornou uma resposta que não é JSON."
+                "Resposta não é JSON:",
+                erroJSON
             );
 
         }
@@ -664,13 +699,13 @@ async function verificarPagamento() {
         );
 
         console.log(
-            "Resposta:",
+            "Backend:",
             dados
         );
 
-        // =================================================
+        // -------------------------------------------------
         // ERRO HTTP
-        // =================================================
+        // -------------------------------------------------
 
         if (!resposta.ok) {
 
@@ -686,17 +721,15 @@ async function verificarPagamento() {
 
         }
 
-        // =================================================
+        // -------------------------------------------------
         // PAGAMENTO NÃO CONFIRMADO
-        // =================================================
+        // -------------------------------------------------
 
         if (!dados?.pago) {
 
             mostrarStatus(
-
                 dados?.mensagem ||
                 "O pagamento ainda não foi confirmado."
-
             );
 
             limparCursos();
@@ -720,14 +753,18 @@ async function verificarPagamento() {
 
         }
 
-        // =================================================
+        // -------------------------------------------------
         // VALIDAR USUÁRIO
-        // =================================================
+        // -------------------------------------------------
 
         if (
             dados.usuarioId &&
-            String(dados.usuarioId) !==
-            String(usuarioAtual.uid)
+            String(
+                dados.usuarioId
+            ) !==
+            String(
+                usuarioAtual.uid
+            )
         ) {
 
             console.error(
@@ -764,9 +801,9 @@ async function verificarPagamento() {
 
         }
 
-        // =================================================
+        // -------------------------------------------------
         // MONTAR CURSO
-        // =================================================
+        // -------------------------------------------------
 
         const curso = {
 
@@ -818,9 +855,9 @@ async function verificarPagamento() {
 
         };
 
-        // =================================================
+        // -------------------------------------------------
         // VALIDAR CURSO
-        // =================================================
+        // -------------------------------------------------
 
         if (!curso.curso) {
 
@@ -830,9 +867,9 @@ async function verificarPagamento() {
 
         }
 
-        // =================================================
-        // LIMPAR
-        // =================================================
+        // -------------------------------------------------
+        // LIMPAR TELA
+        // -------------------------------------------------
 
         limparCursos();
 
@@ -845,22 +882,19 @@ async function verificarPagamento() {
 
         }
 
-        // =================================================
+        // -------------------------------------------------
         // MOSTRAR CURSO
-        // =================================================
+        // -------------------------------------------------
 
         mostrarCurso(
-
             curso,
-
             dados.pedidoId ||
             sessionId
-
         );
 
-        // =================================================
+        // -------------------------------------------------
         // STATUS
-        // =================================================
+        // -------------------------------------------------
 
         mostrarStatus(
             "Pagamento confirmado. Curso liberado."
@@ -872,6 +906,7 @@ async function verificarPagamento() {
         );
 
     }
+
     catch (erro) {
 
         console.error(
@@ -1014,10 +1049,6 @@ if (botaoAgendar) {
 
             try {
 
-                // =================================================
-                // AGENDAR CADA CURSO
-                // =================================================
-
                 for (
                     const item
                     of cursosPresenciais
@@ -1025,10 +1056,8 @@ if (botaoAgendar) {
 
                     const resposta =
                         await fetch(
-
                             API_URL +
                             "/agendar-curso",
-
                             {
 
                                 method:
@@ -1062,25 +1091,20 @@ if (botaoAgendar) {
                                     })
 
                             }
-
                         );
-
-                    const texto =
-                        await resposta.text();
 
                     let dados = null;
 
                     try {
 
                         dados =
-                            texto
-                                ? JSON.parse(texto)
-                                : null;
+                            await resposta.json();
 
                     }
                     catch {
 
-                        dados = null;
+                        dados =
+                            null;
 
                     }
 
@@ -1103,10 +1127,6 @@ if (botaoAgendar) {
                     }
 
                 }
-
-                // =================================================
-                // SUCESSO
-                // =================================================
 
                 mostrarStatus(
                     "Pagamento confirmado e curso presencial agendado."
@@ -1183,6 +1203,7 @@ if (botaoAgendar) {
                 }
 
             }
+
             catch (erro) {
 
                 console.error(
@@ -1196,6 +1217,7 @@ if (botaoAgendar) {
                 );
 
             }
+
             finally {
 
                 botaoAgendar.disabled =
@@ -1211,13 +1233,11 @@ if (botaoAgendar) {
 }
 
 // =====================================================
-// INICIAR
+// AUTENTICAÇÃO
 // =====================================================
 
 onAuthStateChanged(
-
     auth,
-
     async function (usuario) {
 
         if (!usuario) {
@@ -1238,29 +1258,16 @@ onAuthStateChanged(
             usuario;
 
         console.log(
-            "======================================"
-        );
-
-        console.log(
-            "USUÁRIO AUTENTICADO"
-        );
-
-        console.log(
-            "UID:",
+            "Usuário autenticado:",
             usuario.uid
         );
 
         console.log(
-            "STRIPE SESSION:",
+            "Stripe session:",
             sessionId
-        );
-
-        console.log(
-            "======================================"
         );
 
         await verificarPagamento();
 
     }
-
 );
