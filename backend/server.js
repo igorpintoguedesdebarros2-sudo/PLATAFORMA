@@ -24,7 +24,6 @@ const firebaseConfig =
     require("./firebase-admin.json");
 
 const serviceAccount = {
-
     project_id:
         firebaseConfig.project_id,
 
@@ -45,7 +44,6 @@ const serviceAccount = {
 // =====================================================
 
 if (!serviceAccount.project_id) {
-
     console.error(
         "ERRO: project_id não encontrado no firebase-admin.json."
     );
@@ -54,7 +52,6 @@ if (!serviceAccount.project_id) {
 }
 
 if (!serviceAccount.private_key) {
-
     console.error(
         "ERRO: FIREBASE_PRIVATE_KEY não encontrada."
     );
@@ -63,7 +60,6 @@ if (!serviceAccount.private_key) {
 }
 
 if (!serviceAccount.client_email) {
-
     console.error(
         "ERRO: FIREBASE_CLIENT_EMAIL não encontrada."
     );
@@ -76,24 +72,19 @@ if (!serviceAccount.client_email) {
 // =====================================================
 
 initializeApp({
-
-    credential:
-        cert(serviceAccount),
+    credential: cert(serviceAccount),
 
     databaseURL:
         "https://proje-79338-default-rtdb.firebaseio.com"
-
 });
 
-const db =
-    getDatabase();
+const db = getDatabase();
 
 // =====================================================
 // STRIPE
 // =====================================================
 
 if (!process.env.STRIPE_SECRET_KEY) {
-
     console.error(
         "ERRO: STRIPE_SECRET_KEY não encontrada no .env."
     );
@@ -125,97 +116,74 @@ app.use(
 // CURSOS E PREÇOS FIXOS
 // =====================================================
 //
-// O preço é definido SOMENTE aqui.
+// O PREÇO OFICIAL É DEFINIDO AQUI.
 //
 // O frontend NÃO envia preço.
-//
-// O usuário NÃO solicita aprovação.
-//
+// O usuário NÃO envia solicitação.
 // O administrador NÃO define preço.
 //
 // Fluxo:
 //
-// usuário escolhe curso
+// Usuário escolhe curso
 //        ↓
-// backend identifica curso
+// Backend encontra curso
 //        ↓
-// backend identifica preço
+// Backend encontra preço
 //        ↓
 // Stripe Checkout
 //        ↓
-// pagamento
+// Pagamento
 //        ↓
-// curso liberado
+// Verificação
+//        ↓
+// Firebase
+//        ↓
+// Curso liberado
 //
 // =====================================================
 
 const cursos = {
 
     "HTML Completo": {
-
         valor: 49.90,
-
         categoria: "EAD",
-
         link:
             "https://seusite.com/cursos/html"
-
     },
 
     "CSS Completo": {
-
         valor: 39.90,
-
         categoria: "EAD",
-
         link:
             "https://seusite.com/cursos/css"
-
     },
 
     "JavaScript": {
-
         valor: 59.90,
-
         categoria: "EAD",
-
         link:
             "https://seusite.com/cursos/javascript"
-
     },
 
     "Python": {
-
         valor: 69.90,
-
         categoria: "EAD",
-
         link:
             "https://seusite.com/cursos/python"
-
     },
 
     "Firebase": {
-
         valor: 79.90,
-
         categoria: "EAD",
-
         link:
             "https://seusite.com/cursos/firebase"
-
     },
 
     "Python Presencial": {
-
         valor: 99.90,
-
         categoria: "Presencial",
-
         link: ""
-
     }
-
 };
 
 // =====================================================
@@ -262,6 +230,15 @@ app.post(
             usuarioId
         } = req.body;
 
+        console.log(
+            "Novo pagamento recebido:",
+            {
+                curso,
+                pedidoId,
+                usuarioId
+            }
+        );
+
         // -------------------------------------------------
         // VALIDAR CURSO
         // -------------------------------------------------
@@ -271,15 +248,13 @@ app.post(
             return res
                 .status(400)
                 .json({
-
                     erro:
                         "Curso não informado."
-
                 });
         }
 
         // -------------------------------------------------
-        // BUSCAR CURSO NO BACKEND
+        // BUSCAR CURSO
         // -------------------------------------------------
 
         const cursoSelecionado =
@@ -290,10 +265,8 @@ app.post(
             return res
                 .status(400)
                 .json({
-
                     erro:
                         "Curso inválido."
-
                 });
         }
 
@@ -306,10 +279,8 @@ app.post(
             return res
                 .status(400)
                 .json({
-
                     erro:
                         "Usuário não informado."
-
                 });
         }
 
@@ -326,7 +297,7 @@ app.post(
         try {
 
             // -------------------------------------------------
-            // CRIAR CHECKOUT STRIPE
+            // STRIPE CHECKOUT
             // -------------------------------------------------
 
             const session =
@@ -340,46 +311,31 @@ app.post(
                         ],
 
                         line_items: [
-
                             {
-
                                 price_data: {
 
                                     currency:
                                         "brl",
 
                                     product_data: {
-
                                         name:
                                             curso
-
                                     },
-
-                                    // ---------------------------------
-                                    // PREÇO FIXO DO SERVIDOR
-                                    // ---------------------------------
 
                                     unit_amount:
                                         Math.round(
                                             cursoSelecionado.valor *
                                             100
                                         )
-
                                 },
 
                                 quantity:
                                     1
-
                             }
-
                         ],
 
                         mode:
                             "payment",
-
-                        // -------------------------------------------------
-                        // METADATA
-                        // -------------------------------------------------
 
                         metadata: {
 
@@ -397,26 +353,23 @@ app.post(
                                 String(
                                     curso
                                 )
-
                         },
-
-                        // -------------------------------------------------
-                        // PÁGINA DE SUCESSO
-                        // -------------------------------------------------
 
                         success_url:
                             "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/sucesso.html?session_id={CHECKOUT_SESSION_ID}",
 
-                        // -------------------------------------------------
-                        // CANCELAMENTO
-                        // -------------------------------------------------
-
                         cancel_url:
                             "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/cancelado.html"
-
                     });
 
+            // -------------------------------------------------
+            // RESPOSTA
+            // -------------------------------------------------
+
             return res.json({
+
+                sucesso:
+                    true,
 
                 id:
                     session.id,
@@ -428,8 +381,10 @@ app.post(
                     curso,
 
                 valor:
-                    cursoSelecionado.valor
+                    cursoSelecionado.valor,
 
+                categoria:
+                    cursoSelecionado.categoria
             });
 
         }
@@ -443,13 +398,10 @@ app.post(
             return res
                 .status(500)
                 .json({
-
                     erro:
                         "Não foi possível criar o pagamento."
-
                 });
         }
-
     }
 );
 
@@ -470,10 +422,8 @@ app.get(
             return res
                 .status(400)
                 .json({
-
                     erro:
                         "session_id não informado."
-
                 });
         }
 
@@ -507,7 +457,6 @@ app.get(
 
                     status:
                         session.payment_status
-
                 });
             }
 
@@ -540,15 +489,13 @@ app.get(
                 return res
                     .status(400)
                     .json({
-
                         erro:
                             "Dados do pagamento incompletos."
-
                     });
             }
 
             // -------------------------------------------------
-            // BUSCAR CONFIGURAÇÃO DO CURSO
+            // BUSCAR CURSO
             // -------------------------------------------------
 
             const cursoSelecionado =
@@ -559,27 +506,13 @@ app.get(
                 return res
                     .status(400)
                     .json({
-
                         erro:
                             "Curso não encontrado."
-
                     });
             }
 
             // -------------------------------------------------
             // REFERÊNCIA FIREBASE
-            // -------------------------------------------------
-            //
-            // IMPORTANTE:
-            //
-            // Firebase Admin atual usa:
-            //
-            // ref(db, "caminho")
-            //
-            // e não:
-            //
-            // db.ref(...)
-            //
             // -------------------------------------------------
 
             const pedidoRef =
@@ -648,14 +581,13 @@ app.get(
                         agendamento:
                             pedidoExistente.agendamento ||
                             null
-
                     });
                 }
             }
 
-            // -------------------------------------------------
+            // =================================================
             // CRIAR DADOS DO CURSO
-            // -------------------------------------------------
+            // =================================================
 
             const dadosCurso = {
 
@@ -668,7 +600,6 @@ app.get(
                 curso:
                     curso,
 
-                // PREÇO OFICIAL
                 valor:
                     cursoSelecionado.valor,
 
@@ -690,7 +621,6 @@ app.get(
                 dataPagamento:
                     new Date()
                         .toISOString()
-
             };
 
             // =================================================
@@ -710,7 +640,6 @@ app.get(
 
                 dadosCurso.agendamento =
                     null;
-
             }
 
             // =================================================
@@ -730,11 +659,10 @@ app.get(
 
                 dadosCurso.agendamento =
                     null;
-
             }
 
             // -------------------------------------------------
-            // SALVAR CURSO NO FIREBASE
+            // SALVAR NO FIREBASE
             // -------------------------------------------------
 
             await set(
@@ -742,8 +670,19 @@ app.get(
                 dadosCurso
             );
 
+            console.log(
+                "Pagamento confirmado:",
+                {
+                    pedidoId,
+                    usuarioId,
+                    curso,
+                    valor:
+                        dadosCurso.valor
+                }
+            );
+
             // -------------------------------------------------
-            // RESPOSTA
+            // RESPONDER
             // -------------------------------------------------
 
             return res.json({
@@ -786,7 +725,6 @@ app.get(
                 agendamento:
                     dadosCurso.agendamento ||
                     null
-
             });
 
         }
@@ -800,13 +738,10 @@ app.get(
             return res
                 .status(500)
                 .json({
-
                     erro:
                         "Erro ao verificar pagamento."
-
                 });
         }
-
     }
 );
 
@@ -837,7 +772,6 @@ app.post(
 
                     erro:
                         "Pedido ou senha não informado."
-
                 });
         }
 
@@ -864,7 +798,6 @@ app.post(
 
                     erro:
                         "Curso não encontrado."
-
                 });
             }
 
@@ -872,7 +805,7 @@ app.post(
                 snapshot.val();
 
             // -------------------------------------------------
-            // SOMENTE EAD
+            // VERIFICAR CATEGORIA
             // -------------------------------------------------
 
             if (
@@ -887,7 +820,6 @@ app.post(
 
                     erro:
                         "Este curso não utiliza senha."
-
                 });
             }
 
@@ -907,7 +839,6 @@ app.post(
 
                     erro:
                         "Senha incorreta."
-
                 });
             }
 
@@ -932,7 +863,6 @@ app.post(
 
                     erro:
                         "Esta senha já foi utilizada o número máximo de vezes."
-
                 });
             }
 
@@ -946,10 +876,8 @@ app.post(
             await update(
                 pedidoRef,
                 {
-
                     usosRestantes:
                         novosUsos
-
                 }
             );
 
@@ -970,7 +898,6 @@ app.post(
 
                 curso:
                     curso.curso
-
             });
 
         }
@@ -990,10 +917,8 @@ app.post(
 
                     erro:
                         "Erro interno do servidor."
-
                 });
         }
-
     }
 );
 
@@ -1022,17 +947,15 @@ app.post(
             return res
                 .status(400)
                 .json({
-
                     erro:
                         "Dados do agendamento incompletos."
-
                 });
         }
 
         try {
 
             // -------------------------------------------------
-            // REFERÊNCIA DO PEDIDO
+            // REFERÊNCIA
             // -------------------------------------------------
 
             const pedidoRef =
@@ -1056,10 +979,8 @@ app.post(
                 return res
                     .status(404)
                     .json({
-
                         erro:
                             "Pedido não encontrado."
-
                     });
             }
 
@@ -1078,10 +999,8 @@ app.post(
                 return res
                     .status(403)
                     .json({
-
                         erro:
                             "Este pedido pertence a outro usuário."
-
                     });
             }
 
@@ -1097,10 +1016,8 @@ app.post(
                 return res
                     .status(400)
                     .json({
-
                         erro:
                             "Este curso não é presencial."
-
                     });
             }
 
@@ -1116,10 +1033,8 @@ app.post(
                 return res
                     .status(400)
                     .json({
-
                         erro:
                             "O curso ainda não foi pago."
-
                     });
             }
 
@@ -1134,10 +1049,8 @@ app.post(
                 return res
                     .status(400)
                     .json({
-
                         erro:
                             "Este curso já possui um agendamento."
-
                     });
             }
 
@@ -1171,7 +1084,6 @@ app.post(
                 criadoEm:
                     new Date()
                         .toISOString()
-
             };
 
             // -------------------------------------------------
@@ -1187,7 +1099,6 @@ app.post(
                 ),
 
                 agendamento
-
             );
 
             // -------------------------------------------------
@@ -1199,12 +1110,9 @@ app.post(
                 pedidoRef,
 
                 {
-
                     agendamento:
                         agendamento
-
                 }
-
             );
 
             // -------------------------------------------------
@@ -1218,7 +1126,6 @@ app.post(
 
                 agendamento:
                     agendamento
-
             });
 
         }
@@ -1232,13 +1139,10 @@ app.post(
             return res
                 .status(500)
                 .json({
-
                     erro:
                         "Erro ao salvar agendamento."
-
                 });
         }
-
     }
 );
 
@@ -1266,9 +1170,7 @@ app.get(
 
             fluxo:
                 "Escolher curso → Pagar → Liberar curso"
-
         });
-
     }
 );
 
@@ -1315,6 +1217,5 @@ app.listen(
         console.log(
             "======================================"
         );
-
     }
 );
