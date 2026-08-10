@@ -56,27 +56,22 @@ let cursosPresenciais = [];
 
 function mostrarStatus(mensagem) {
 
-```
 if (statusPagamento) {
     statusPagamento.textContent = mensagem;
 }
-```
 
 }
 
 function limparCursos() {
 
-```
 if (cursosComprados) {
     cursosComprados.innerHTML = "";
 }
-```
 
 }
 
 function criarElemento(tag, texto = "") {
 
-```
 const elemento =
     document.createElement(tag);
 
@@ -85,7 +80,6 @@ if (texto) {
 }
 
 return elemento;
-```
 
 }
 
@@ -95,7 +89,6 @@ return elemento;
 
 function gerarSenhaUnica() {
 
-```
 const caracteres =
     "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
 
@@ -114,7 +107,6 @@ for (let i = 0; i < 12; i++) {
 }
 
 return senha;
-```
 
 }
 
@@ -124,7 +116,6 @@ return senha;
 
 async function criarCardEAD(curso, id) {
 
-```
 let senha =
     curso.senhaCurso;
 
@@ -289,7 +280,6 @@ if (cursosComprados) {
     );
 
 }
-```
 
 }
 
@@ -299,7 +289,6 @@ if (cursosComprados) {
 
 function criarCardPresencial(curso, id) {
 
-```
 cursosPresenciais.push({
     id: id,
     curso: curso
@@ -374,7 +363,6 @@ if (areaPresencial) {
         "block";
 
 }
-```
 
 }
 
@@ -384,7 +372,6 @@ if (areaPresencial) {
 
 async function mostrarCurso(curso, id) {
 
-```
 if (!curso) {
     return;
 }
@@ -417,7 +404,6 @@ if (categoria === "presencial") {
     );
 
 }
-```
 
 }
 
@@ -427,7 +413,6 @@ if (categoria === "presencial") {
 
 function procurarPagamento() {
 
-```
 if (!sessionId) {
 
     mostrarStatus(
@@ -557,7 +542,6 @@ onValue(
     }
 
 );
-```
 
 }
 
@@ -567,7 +551,6 @@ onValue(
 
 if (dataCurso) {
 
-```
 const hoje =
     new Date();
 
@@ -598,7 +581,6 @@ dataCurso.min =
     ano + "-" +
     mes + "-" +
     dia;
-```
 
 }
 
@@ -608,7 +590,6 @@ dataCurso.min =
 
 if (botaoAgendar) {
 
-```
 botaoAgendar.onclick =
     async function () {
 
@@ -821,7 +802,6 @@ botaoAgendar.onclick =
         }
 
     };
-```
 
 }
 
@@ -831,7 +811,6 @@ botaoAgendar.onclick =
 
 onAuthStateChanged(
 
-```
 auth,
 
 function (usuario) {
@@ -854,6 +833,5 @@ function (usuario) {
     procurarPagamento();
 
 }
-```
 
 );
