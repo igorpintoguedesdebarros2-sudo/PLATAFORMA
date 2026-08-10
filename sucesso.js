@@ -13,11 +13,7 @@ import {
 // CONFIGURAÇÃO
 // =====================================================
 
-// Desenvolvimento
-const API_URL = "http://localhost:3000";
-
-// Produção:
-// const API_URL = "https://SEU-BACKEND.com";
+const API_URL = "https://plataforma-56gy.onrender.com";
 
 // =====================================================
 // ELEMENTOS
