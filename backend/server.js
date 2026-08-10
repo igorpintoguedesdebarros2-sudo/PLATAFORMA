@@ -24,7 +24,8 @@ const serviceAccount =
 
 initializeApp({
     credential: cert(serviceAccount),
-    databaseURL: "https://proje-79338-default-rtdb.firebaseio.com"
+    databaseURL:
+        "https://proje-79338-default-rtdb.firebaseio.com"
 });
 
 const db = getDatabase();
@@ -64,6 +65,10 @@ app.post("/criar-pagamento", async (req, res) => {
     } = req.body;
 
 
+    // =======================
+    // VALIDAR DADOS
+    // =======================
+
     if (!curso || !valor || !pedidoId) {
 
         return res.status(400).json({
@@ -72,6 +77,10 @@ app.post("/criar-pagamento", async (req, res) => {
 
     }
 
+
+    // =======================
+    // CRIAR CHECKOUT
+    // =======================
 
     try {
 
@@ -101,11 +110,17 @@ app.post("/criar-pagamento", async (req, res) => {
                         },
 
                         quantity: 1
+
                     }
 
                 ],
 
                 mode: "payment",
+
+
+                // =======================
+                // METADATA
+                // =======================
 
                 metadata: {
 
@@ -118,6 +133,11 @@ app.post("/criar-pagamento", async (req, res) => {
 
                 },
 
+
+                // =======================
+                // RETORNO
+                // =======================
+
                 success_url:
                     "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/sucesso.html?session_id={CHECKOUT_SESSION_ID}",
 
@@ -126,6 +146,10 @@ app.post("/criar-pagamento", async (req, res) => {
 
             });
 
+
+        // =======================
+        // ENVIAR SESSION ID
+        // =======================
 
         res.json({
 
