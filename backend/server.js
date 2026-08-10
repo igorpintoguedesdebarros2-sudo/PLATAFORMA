@@ -20,7 +20,7 @@ const {
 // =======================
 
 const serviceAccount =
-    require("./firebase-adminsdk-abc123.json");
+    require("./firebase-admin.json");
 
 initializeApp({
     credential: cert(serviceAccount),
