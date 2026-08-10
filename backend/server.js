@@ -3,19 +3,7 @@ const cors = require("cors");
 const Stripe = require("stripe");
 require("dotenv").config();
 
-// =====================================================
-// FIREBASE ADMIN SDK MODULAR
-// =====================================================
-
-const {
-    getApps,
-    initializeApp,
-    cert
-} = require("firebase-admin/app");
-
-const {
-    getDatabase
-} = require("firebase-admin/database");
+const admin = require("firebase-admin");
 
 // =====================================================
 // CONFIGURAÇÕES
@@ -32,38 +20,20 @@ const FIREBASE_DATABASE_URL =
 // =====================================================
 
 if (!STRIPE_SECRET_KEY) {
-
     console.error(
-        "ERRO: STRIPE_SECRET_KEY não encontrada nas variáveis de ambiente."
+        "ERRO: STRIPE_SECRET_KEY não encontrada no .env."
     );
 
     process.exit(1);
 }
 
 // =====================================================
-// VALIDAR FIREBASE DATABASE URL
+// VALIDAR FIREBASE DATABASE
 // =====================================================
 
 if (!FIREBASE_DATABASE_URL) {
-
     console.error(
-        "ERRO: FIREBASE_DATABASE_URL não encontrada nas variáveis de ambiente."
-    );
-
-    process.exit(1);
-}
-
-// =====================================================
-// CARREGAR SERVICE ACCOUNT
-// =====================================================
-
-const serviceAccount =
-    require("./firebase-admin.json");
-
-if (!serviceAccount.private_key) {
-
-    console.error(
-        "ERRO: private_key não encontrada no firebase-admin.json."
+        "ERRO: FIREBASE_DATABASE_URL não encontrada no .env."
     );
 
     process.exit(1);
@@ -73,32 +43,82 @@ if (!serviceAccount.private_key) {
 // FIREBASE ADMIN
 // =====================================================
 
-let firebaseApp;
+const serviceAccount =
+    require("./firebase-admin.json");
 
-const apps =
-    getApps();
+// =====================================================
+// VALIDAR SERVICE ACCOUNT
+// =====================================================
 
-if (apps.length === 0) {
+if (
+    !serviceAccount ||
+    !serviceAccount.project_id ||
+    !serviceAccount.client_email ||
+    !serviceAccount.private_key
+) {
+    console.error(
+        "ERRO: firebase-admin.json está inválido."
+    );
 
-    firebaseApp =
-        initializeApp({
+    console.error(
+        "O arquivo precisa conter:"
+    );
 
-            credential:
-                cert(serviceAccount),
+    console.error(
+        "project_id"
+    );
 
-            databaseURL:
-                FIREBASE_DATABASE_URL
+    console.error(
+        "client_email"
+    );
 
-        });
+    console.error(
+        "private_key"
+    );
+
+    process.exit(1);
+}
+
+// =====================================================
+// CORRIGIR PRIVATE KEY
+// =====================================================
+//
+// Caso a chave tenha sido salva no JSON como:
+// \\n
+//
+// transformamos em:
+// quebra de linha real
+// =====================================================
+
+serviceAccount.private_key =
+    serviceAccount.private_key.replace(
+        /\\n/g,
+        "\n"
+    );
+
+// =====================================================
+// INICIALIZAR FIREBASE
+// =====================================================
+
+if (!admin.apps.length) {
+
+    admin.initializeApp({
+
+        credential:
+            admin.credential.cert(
+                serviceAccount
+            ),
+
+        databaseURL:
+            FIREBASE_DATABASE_URL
+
+    });
 
     console.log(
         "Firebase Admin inicializado."
     );
 
 } else {
-
-    firebaseApp =
-        apps[0];
 
     console.log(
         "Firebase Admin já estava inicializado."
@@ -110,7 +130,7 @@ if (apps.length === 0) {
 // =====================================================
 
 const db =
-    getDatabase(firebaseApp);
+    admin.database();
 
 console.log(
     "Firebase Realtime Database conectado."
