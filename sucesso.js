@@ -491,14 +491,14 @@ function criarCardPresencial(
                 "p",
                 "Data: " +
                 agendamento.data
-            );
+        );
 
         const horario =
             criarElemento(
                 "p",
                 "Horário: " +
                 agendamento.horario
-            );
+        );
 
         const status =
             criarElemento(
@@ -508,7 +508,7 @@ function criarCardPresencial(
                     agendamento.status ||
                     "Agendado"
                 )
-            );
+        );
 
         card.appendChild(
             data
@@ -662,7 +662,7 @@ async function verificarPagamento() {
     try {
 
         // =================================================
-        // URL
+        // CONSULTAR BACKEND
         // =================================================
 
         const url =
@@ -677,15 +677,10 @@ async function verificarPagamento() {
             url
         );
 
-        // =================================================
-        // REQUEST
-        // =================================================
-
         const resposta =
             await fetch(
                 url,
                 {
-
                     method:
                         "GET",
 
@@ -695,12 +690,11 @@ async function verificarPagamento() {
                             "application/json"
 
                     }
-
                 }
             );
 
         // =================================================
-        // RESPOSTA
+        // LER RESPOSTA
         // =================================================
 
         let dados = null;
@@ -791,8 +785,8 @@ async function verificarPagamento() {
 
         if (
             dados.usuarioId &&
-            dados.usuarioId !==
-            usuarioAtual.uid
+            String(dados.usuarioId) !==
+            String(usuarioAtual.uid)
         ) {
 
             console.error(
@@ -889,7 +883,7 @@ async function verificarPagamento() {
         }
 
         // =================================================
-        // LIMPAR
+        // LIMPAR INTERFACE
         // =================================================
 
         limparCursos();
@@ -904,16 +898,13 @@ async function verificarPagamento() {
         }
 
         // =================================================
-        // MOSTRAR
+        // MOSTRAR CURSO
         // =================================================
 
         mostrarCurso(
-
             curso,
-
             dados.pedidoId ||
             sessionId
-
         );
 
         // =================================================
@@ -1084,7 +1075,7 @@ if (botaoAgendar) {
             try {
 
                 // =================================================
-                // AGENDAR CADA CURSO PELO BACKEND
+                // AGENDAR CURSO
                 // =================================================
 
                 for (
