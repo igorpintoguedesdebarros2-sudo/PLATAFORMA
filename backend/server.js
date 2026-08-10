@@ -1,107 +1,43 @@
 const express = require("express");
 const cors = require("cors");
 const Stripe = require("stripe");
+const admin = require("firebase-admin");
 require("dotenv").config();
 
-const {
-    initializeApp,
-    cert
-} = require("firebase-admin/app");
-
-const {
-    getDatabase,
-    ref,
-    get,
-    set,
-    update
-} = require("firebase-admin/database");
-
 // =====================================================
-// VALIDAR VARIÁVEIS DE AMBIENTE
+// FIREBASE ADMIN
 // =====================================================
 
-const FIREBASE_PROJECT_ID =
-    process.env.FIREBASE_PROJECT_ID;
+if (!admin.apps.length) {
 
-const FIREBASE_CLIENT_EMAIL =
-    process.env.FIREBASE_CLIENT_EMAIL;
+    const serviceAccount = require("./firebase-admin.json");
 
-const FIREBASE_PRIVATE_KEY =
-    process.env.FIREBASE_PRIVATE_KEY
-        ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
-        : undefined;
+    if (!serviceAccount.private_key) {
 
-const STRIPE_SECRET_KEY =
-    process.env.STRIPE_SECRET_KEY;
+        console.error(
+            "ERRO: private_key não encontrada no firebase-admin.json."
+        );
 
-// =====================================================
-// FIREBASE
-// =====================================================
+        process.exit(1);
 
-if (!FIREBASE_PROJECT_ID) {
-    console.error(
-        "ERRO: FIREBASE_PROJECT_ID não encontrada."
-    );
-    process.exit(1);
-}
+    }
 
-if (!FIREBASE_CLIENT_EMAIL) {
-    console.error(
-        "ERRO: FIREBASE_CLIENT_EMAIL não encontrada."
-    );
-    process.exit(1);
-}
-
-if (!FIREBASE_PRIVATE_KEY) {
-    console.error(
-        "ERRO: FIREBASE_PRIVATE_KEY não encontrada."
-    );
-    process.exit(1);
-}
-
-// =====================================================
-// INICIALIZAR FIREBASE
-// =====================================================
-
-const serviceAccount = {
-    projectId: FIREBASE_PROJECT_ID,
-    clientEmail: FIREBASE_CLIENT_EMAIL,
-    privateKey: FIREBASE_PRIVATE_KEY
-};
-
-try {
-
-    initializeApp({
+    admin.initializeApp({
 
         credential:
-            cert(serviceAccount),
+            admin.credential.cert(
+                serviceAccount
+            ),
 
         databaseURL:
-            "https://proje-79338-default-rtdb.firebaseio.com"
+            process.env.FIREBASE_DATABASE_URL
 
     });
 
-    console.log(
-        "Firebase Admin inicializado."
-    );
-
-}
-catch (error) {
-
-    console.error(
-        "ERRO AO INICIALIZAR FIREBASE:"
-    );
-
-    console.error(
-        error
-    );
-
-    process.exit(1);
 }
 
 const db =
-    getDatabase();
-
+    admin.database();
 // =====================================================
 // STRIPE
 // =====================================================
