@@ -1,8 +1,21 @@
 const express = require("express");
 const cors = require("cors");
 const Stripe = require("stripe");
-const admin = require("firebase-admin");
 require("dotenv").config();
+
+// =====================================================
+// FIREBASE ADMIN SDK MODULAR
+// =====================================================
+
+const {
+    getApps,
+    initializeApp,
+    cert
+} = require("firebase-admin/app");
+
+const {
+    getDatabase
+} = require("firebase-admin/database");
 
 // =====================================================
 // CONFIGURAÇÕES
@@ -28,7 +41,7 @@ if (!STRIPE_SECRET_KEY) {
 }
 
 // =====================================================
-// VALIDAR FIREBASE
+// VALIDAR FIREBASE DATABASE URL
 // =====================================================
 
 if (!FIREBASE_DATABASE_URL) {
@@ -41,37 +54,54 @@ if (!FIREBASE_DATABASE_URL) {
 }
 
 // =====================================================
+// CARREGAR SERVICE ACCOUNT
+// =====================================================
+
+const serviceAccount =
+    require("./firebase-admin.json");
+
+if (!serviceAccount.private_key) {
+
+    console.error(
+        "ERRO: private_key não encontrada no firebase-admin.json."
+    );
+
+    process.exit(1);
+}
+
+// =====================================================
 // FIREBASE ADMIN
 // =====================================================
 
-if (!admin.apps.length) {
+let firebaseApp;
 
-    const serviceAccount =
-        require("./firebase-admin.json");
+const apps =
+    getApps();
 
-    if (!serviceAccount.private_key) {
+if (apps.length === 0) {
 
-        console.error(
-            "ERRO: private_key não encontrada no firebase-admin.json."
-        );
+    firebaseApp =
+        initializeApp({
 
-        process.exit(1);
-    }
+            credential:
+                cert(serviceAccount),
 
-    admin.initializeApp({
+            databaseURL:
+                FIREBASE_DATABASE_URL
 
-        credential:
-            admin.credential.cert(
-                serviceAccount
-            ),
-
-        databaseURL:
-            FIREBASE_DATABASE_URL
-
-    });
+        });
 
     console.log(
         "Firebase Admin inicializado."
+    );
+
+} else {
+
+    firebaseApp =
+        apps[0];
+
+    console.log(
+        "Firebase Admin já estava inicializado."
     );
 }
 
@@ -80,7 +110,11 @@ if (!admin.apps.length) {
 // =====================================================
 
 const db =
-    admin.database();
+    getDatabase(firebaseApp);
+
+console.log(
+    "Firebase Realtime Database conectado."
+);
 
 // =====================================================
 // STRIPE
@@ -411,6 +445,7 @@ app.post(
             });
 
         }
+
         catch (error) {
 
             console.error(
@@ -478,7 +513,7 @@ app.get(
             );
 
             // -------------------------------------------------
-            // BUSCAR SESSION NO STRIPE
+            // BUSCAR SESSION STRIPE
             // -------------------------------------------------
 
             const session =
@@ -588,25 +623,7 @@ app.get(
             }
 
             // =================================================
-            // FIREBASE ADMIN SDK
-            // =================================================
-            //
-            // IMPORTANTE:
-            //
-            // CORRETO:
-            //
-            // db.ref(...)
-            // pedidoRef.get()
-            // pedidoRef.set(...)
-            // pedidoRef.update(...)
-            //
-            // NÃO usar:
-            //
-            // ref(db, ...)
-            // get(ref(...))
-            // set(ref(...))
-            //
-            // Essas funções pertencem ao Firebase Web SDK.
+            // FIREBASE ADMIN
             // =================================================
 
             const pedidoRef =
@@ -616,7 +633,7 @@ app.get(
                 );
 
             // -------------------------------------------------
-            // VERIFICAR PEDIDO EXISTENTE
+            // BUSCAR PEDIDO
             // -------------------------------------------------
 
             const snapshot =
@@ -632,13 +649,17 @@ app.get(
                 );
 
                 // -------------------------------------------------
-                // GARANTIR QUE PERTENCE AO MESMO USUÁRIO
+                // VALIDAR USUÁRIO
                 // -------------------------------------------------
 
                 if (
                     pedidoExistente.usuarioId &&
-                    pedidoExistente.usuarioId !==
-                    usuarioId
+                    String(
+                        pedidoExistente.usuarioId
+                    ) !==
+                    String(
+                        usuarioId
+                    )
                 ) {
 
                     return res
@@ -659,6 +680,10 @@ app.get(
                     pedidoExistente.pago ===
                     true
                 ) {
+
+                    console.log(
+                        "Pagamento já processado."
+                    );
 
                     return res.json({
 
@@ -761,7 +786,6 @@ app.get(
 
                 dadosCurso.usosRestantes =
                     2;
-
             }
 
             // -------------------------------------------------
@@ -778,7 +802,6 @@ app.get(
 
                 dadosCurso.usosRestantes =
                     null;
-
             }
 
             // -------------------------------------------------
@@ -822,7 +845,7 @@ app.get(
             );
 
             // -------------------------------------------------
-            // RETORNAR AO FRONTEND
+            // RETORNAR
             // -------------------------------------------------
 
             return res.json({
@@ -869,6 +892,7 @@ app.get(
             });
 
         }
+
         catch (error) {
 
             console.error(
@@ -894,7 +918,7 @@ app.get(
             );
 
             // -------------------------------------------------
-            // ERRO ESPECÍFICO DO STRIPE
+            // ERRO STRIPE
             // -------------------------------------------------
 
             if (
@@ -1085,6 +1109,7 @@ app.post(
             });
 
         }
+
         catch (error) {
 
             console.error(
@@ -1178,8 +1203,8 @@ app.post(
             // -------------------------------------------------
 
             if (
-                curso.usuarioId !==
-                usuarioId
+                String(curso.usuarioId) !==
+                String(usuarioId)
             ) {
 
                 return res
@@ -1322,6 +1347,7 @@ app.post(
             });
 
         }
+
         catch (error) {
 
             console.error(
@@ -1364,6 +1390,9 @@ app.get(
             sistema:
                 "Pagamento direto pelo Stripe",
 
+            firebase:
+                "Realtime Database",
+
             administradorDefinePreco:
                 false,
 
@@ -1371,6 +1400,70 @@ app.get(
                 "Escolher curso → Pagar → Liberar curso"
 
         });
+
+    }
+);
+
+// =====================================================
+// TESTE FIREBASE
+// =====================================================
+
+app.get(
+    "/teste-firebase",
+    async (req, res) => {
+
+        try {
+
+            const testeRef =
+                db.ref(
+                    "teste_servidor"
+                );
+
+            await testeRef.set({
+
+                funcionando:
+                    true,
+
+                data:
+                    new Date()
+                        .toISOString()
+
+            });
+
+            const snapshot =
+                await testeRef.get();
+
+            return res.json({
+
+                sucesso:
+                    true,
+
+                firebase:
+                    snapshot.val()
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "ERRO TESTE FIREBASE:",
+                error
+            );
+
+            return res
+                .status(500)
+                .json({
+
+                    sucesso:
+                        false,
+
+                    erro:
+                        error.message
+
+                });
+        }
 
     }
 );
@@ -1402,7 +1495,13 @@ app.listen(
         console.log(
             "Firebase:",
             process.env.FIREBASE_PROJECT_ID ||
+            serviceAccount.project_id ||
             "Projeto definido pelo service account"
+        );
+
+        console.log(
+            "Firebase Database:",
+            FIREBASE_DATABASE_URL
         );
 
         console.log(
@@ -1428,7 +1527,6 @@ app.listen(
 
         console.log(
             "======================================"
-
         );
 
     }
