@@ -5,74 +5,66 @@ const admin = require("firebase-admin");
 require("dotenv").config();
 
 // =====================================================
+// CONFIGURAÇÕES
+// =====================================================
+
+const STRIPE_SECRET_KEY =
+    process.env.STRIPE_SECRET_KEY;
+
+const FIREBASE_DATABASE_URL =
+    process.env.FIREBASE_DATABASE_URL;
+
+// =====================================================
+// VALIDAR STRIPE
+// =====================================================
+
+if (!STRIPE_SECRET_KEY) {
+
+    console.error(
+        "ERRO: STRIPE_SECRET_KEY não encontrada nas variáveis de ambiente."
+    );
+
+    process.exit(1);
+}
+
+// =====================================================
 // FIREBASE ADMIN
 // =====================================================
 
-let serviceAccount;
+if (!admin.apps.length) {
 
-try {
-    serviceAccount = require("./firebase-admin.json");
-} catch (error) {
-    console.error(
-        "ERRO: não foi possível carregar ./firebase-admin.json"
-    );
+    const serviceAccount =
+        require("./firebase-admin.json");
 
-    console.error(error.message);
+    if (!serviceAccount.private_key) {
 
-    process.exit(1);
-}
+        console.error(
+            "ERRO: private_key não encontrada no firebase-admin.json."
+        );
 
-// -----------------------------------------------------
-// CORRIGIR PRIVATE KEY
-// -----------------------------------------------------
-
-if (!serviceAccount.private_key) {
-
-    console.error(
-        "ERRO: private_key não encontrada no firebase-admin.json."
-    );
-
-    process.exit(1);
-}
-
-// -----------------------------------------------------
-// INICIALIZAR FIREBASE
-// -----------------------------------------------------
-
-try {
-
-    if (!admin.apps.length) {
-
-        admin.initializeApp({
-
-            credential:
-                admin.credential.cert(
-                    serviceAccount
-                ),
-
-            databaseURL:
-                process.env.FIREBASE_DATABASE_URL
-
-        });
-
+        process.exit(1);
     }
 
-} catch (error) {
+    admin.initializeApp({
 
-    console.error(
-        "ERRO AO INICIALIZAR FIREBASE:"
+        credential:
+            admin.credential.cert(
+                serviceAccount
+            ),
+
+        databaseURL:
+            FIREBASE_DATABASE_URL
+
+    });
+
+    console.log(
+        "Firebase Admin inicializado."
     );
-
-    console.error(
-        error
-    );
-
-    process.exit(1);
 }
 
-// -----------------------------------------------------
-// DATABASE
-// -----------------------------------------------------
+// =====================================================
+// FIREBASE DATABASE
+// =====================================================
 
 const db =
     admin.database();
@@ -80,18 +72,6 @@ const db =
 // =====================================================
 // STRIPE
 // =====================================================
-
-const STRIPE_SECRET_KEY =
-    process.env.STRIPE_SECRET_KEY;
-
-if (!STRIPE_SECRET_KEY) {
-
-    console.error(
-        "ERRO: STRIPE_SECRET_KEY não encontrada no .env."
-    );
-
-    process.exit(1);
-}
 
 const stripe =
     Stripe(
@@ -114,7 +94,7 @@ app.use(
 );
 
 // =====================================================
-// CURSOS E PREÇOS FIXOS
+// CURSOS
 // =====================================================
 
 const cursos = {
@@ -211,7 +191,6 @@ function gerarSenhaCurso() {
 
         senha +=
             caracteres[indice];
-
     }
 
     return senha;
@@ -242,17 +221,17 @@ app.post(
             );
 
             console.log(
-                "curso:",
+                "Curso:",
                 curso
             );
 
             console.log(
-                "pedidoId:",
+                "Pedido:",
                 pedidoId
             );
 
             console.log(
-                "usuarioId:",
+                "Usuário:",
                 usuarioId
             );
 
@@ -274,7 +253,6 @@ app.post(
                             "Curso não informado."
 
                     });
-
             }
 
             const cursoSelecionado =
@@ -290,7 +268,6 @@ app.post(
                             "Curso inválido."
 
                     });
-
             }
 
             // -------------------------------------------------
@@ -307,11 +284,10 @@ app.post(
                             "Usuário não informado."
 
                     });
-
             }
 
             // -------------------------------------------------
-            // GERAR PEDIDO
+            // PEDIDO
             // -------------------------------------------------
 
             const idPedido =
@@ -321,7 +297,7 @@ app.post(
                     .substring(2, 8)}`;
 
             // -------------------------------------------------
-            // CRIAR CHECKOUT STRIPE
+            // STRIPE
             // -------------------------------------------------
 
             const session =
@@ -395,10 +371,6 @@ app.post(
 
                     });
 
-            // -------------------------------------------------
-            // RESPOSTA
-            // -------------------------------------------------
-
             return res.json({
 
                 sucesso:
@@ -422,14 +394,10 @@ app.post(
             });
 
         }
-
         catch (error) {
 
             console.error(
-                "ERRO STRIPE:"
-            );
-
-            console.error(
+                "ERRO STRIPE:",
                 error
             );
 
@@ -444,7 +412,6 @@ app.post(
                         error.message
 
                 });
-
         }
 
     }
@@ -465,7 +432,7 @@ app.get(
             } = req.query;
 
             // -------------------------------------------------
-            // VALIDAR SESSION ID
+            // VALIDAR SESSION
             // -------------------------------------------------
 
             if (!session_id) {
@@ -478,7 +445,6 @@ app.get(
                             "session_id não informado."
 
                     });
-
             }
 
             console.log(
@@ -494,12 +460,8 @@ app.get(
                 session_id
             );
 
-            console.log(
-                "======================================"
-            );
-
             // -------------------------------------------------
-            // BUSCAR SESSION STRIPE
+            // BUSCAR SESSION
             // -------------------------------------------------
 
             const session =
@@ -511,7 +473,7 @@ app.get(
                     );
 
             console.log(
-                "Stripe session encontrada:",
+                "Session encontrada:",
                 session.id
             );
 
@@ -521,7 +483,7 @@ app.get(
             );
 
             // -------------------------------------------------
-            // VERIFICAR PAGAMENTO
+            // PAGAMENTO NÃO CONFIRMADO
             // -------------------------------------------------
 
             if (
@@ -535,13 +497,9 @@ app.get(
                         false,
 
                     status:
-                        session.payment_status,
-
-                    mensagem:
-                        "O pagamento ainda não foi confirmado."
+                        session.payment_status
 
                 });
-
             }
 
             // -------------------------------------------------
@@ -585,13 +543,9 @@ app.get(
                     .json({
 
                         erro:
-                            "Dados do pagamento incompletos.",
-
-                        detalhe:
-                            "A sessão Stripe não possui curso, pedidoId ou usuarioId."
+                            "Dados do pagamento incompletos."
 
                     });
-
             }
 
             // -------------------------------------------------
@@ -611,13 +565,12 @@ app.get(
                             "Curso não encontrado."
 
                     });
-
             }
 
             // =================================================
             // FIREBASE ADMIN
             // =================================================
-
+            //
             // IMPORTANTE:
             //
             // NÃO usar:
@@ -627,18 +580,14 @@ app.get(
             // set()
             // update()
             //
-            // Essas funções são do SDK modular.
+            // Essas funções são do Firebase Web SDK.
             //
-            // Como estamos usando:
-            //
-            // admin.database()
-            //
-            // usamos:
+            // No Admin SDK usamos:
             //
             // db.ref()
-            // snapshot.val()
-            // pedidoRef.set()
-            // pedidoRef.update()
+            // referencia.get()
+            // referencia.set()
+            // referencia.update()
             //
             // =================================================
 
@@ -649,13 +598,11 @@ app.get(
                 );
 
             // -------------------------------------------------
-            // VERIFICAR SE JÁ EXISTE
+            // VERIFICAR PEDIDO EXISTENTE
             // -------------------------------------------------
 
             const snapshot =
-                await pedidoRef.once(
-                    "value"
-                );
+                await pedidoRef.get();
 
             if (snapshot.exists()) {
 
@@ -665,10 +612,6 @@ app.get(
                 console.log(
                     "Pedido já existe no Firebase."
                 );
-
-                // -------------------------------------------------
-                // SE JÁ FOI PAGO
-                // -------------------------------------------------
 
                 if (
                     pedidoExistente.pago ===
@@ -717,9 +660,7 @@ app.get(
                             null
 
                     });
-
                 }
-
             }
 
             // -------------------------------------------------
@@ -757,13 +698,16 @@ app.get(
 
                 dataPagamento:
                     new Date()
-                        .toISOString()
+                        .toISOString(),
+
+                agendamento:
+                    null
 
             };
 
-            // =================================================
+            // -------------------------------------------------
             // EAD
-            // =================================================
+            // -------------------------------------------------
 
             if (
                 cursoSelecionado.categoria ===
@@ -776,14 +720,11 @@ app.get(
                 dadosCurso.usosRestantes =
                     2;
 
-                dadosCurso.agendamento =
-                    null;
-
             }
 
-            // =================================================
+            // -------------------------------------------------
             // PRESENCIAL
-            // =================================================
+            // -------------------------------------------------
 
             if (
                 cursoSelecionado.categoria ===
@@ -796,9 +737,6 @@ app.get(
                 dadosCurso.usosRestantes =
                     null;
 
-                dadosCurso.agendamento =
-                    null;
-
             }
 
             // -------------------------------------------------
@@ -807,10 +745,6 @@ app.get(
 
             await pedidoRef.set(
                 dadosCurso
-            );
-
-            console.log(
-                "======================================"
             );
 
             console.log(
@@ -835,11 +769,6 @@ app.get(
             console.log(
                 "Valor:",
                 dadosCurso.valor
-            );
-
-            console.log(
-                "Firebase:",
-                "salvo com sucesso"
             );
 
             console.log(
@@ -894,7 +823,6 @@ app.get(
             });
 
         }
-
         catch (error) {
 
             console.error(
@@ -924,7 +852,6 @@ app.get(
                         error.message
 
                 });
-
         }
 
     }
@@ -961,12 +888,7 @@ app.post(
                             "Pedido ou senha não informado."
 
                     });
-
             }
-
-            // -------------------------------------------------
-            // REFERÊNCIA FIREBASE
-            // -------------------------------------------------
 
             const pedidoRef =
                 db.ref(
@@ -974,14 +896,8 @@ app.post(
                     pedidoId
                 );
 
-            // -------------------------------------------------
-            // BUSCAR
-            // -------------------------------------------------
-
             const snapshot =
-                await pedidoRef.once(
-                    "value"
-                );
+                await pedidoRef.get();
 
             if (!snapshot.exists()) {
 
@@ -994,15 +910,10 @@ app.post(
                         "Curso não encontrado."
 
                 });
-
             }
 
             const curso =
                 snapshot.val();
-
-            // -------------------------------------------------
-            // CATEGORIA
-            // -------------------------------------------------
 
             if (
                 curso.categoria !==
@@ -1018,12 +929,7 @@ app.post(
                         "Este curso não utiliza senha."
 
                 });
-
             }
-
-            // -------------------------------------------------
-            // PAGAMENTO
-            // -------------------------------------------------
 
             if (
                 curso.pago !==
@@ -1039,12 +945,7 @@ app.post(
                         "Este curso ainda não foi pago."
 
                 });
-
             }
-
-            // -------------------------------------------------
-            // SENHA
-            // -------------------------------------------------
 
             if (
                 curso.senhaCurso !==
@@ -1060,12 +961,7 @@ app.post(
                         "Senha incorreta."
 
                 });
-
             }
-
-            // -------------------------------------------------
-            // USOS
-            // -------------------------------------------------
 
             const usos =
                 Number(
@@ -1086,12 +982,7 @@ app.post(
                         "Esta senha já foi utilizada o número máximo de vezes."
 
                 });
-
             }
-
-            // -------------------------------------------------
-            // DIMINUIR USO
-            // -------------------------------------------------
 
             const novosUsos =
                 usos - 1;
@@ -1102,10 +993,6 @@ app.post(
                     novosUsos
 
             });
-
-            // -------------------------------------------------
-            // RETORNAR ACESSO
-            // -------------------------------------------------
 
             return res.json({
 
@@ -1124,7 +1011,6 @@ app.post(
             });
 
         }
-
         catch (error) {
 
             console.error(
@@ -1146,7 +1032,6 @@ app.post(
                         error.message
 
                 });
-
         }
 
     }
@@ -1169,10 +1054,6 @@ app.post(
                 horario
             } = req.body || {};
 
-            // -------------------------------------------------
-            // VALIDAR
-            // -------------------------------------------------
-
             if (
                 !pedidoId ||
                 !usuarioId ||
@@ -1188,7 +1069,6 @@ app.post(
                             "Dados do agendamento incompletos."
 
                     });
-
             }
 
             // -------------------------------------------------
@@ -1202,9 +1082,7 @@ app.post(
                 );
 
             const snapshot =
-                await pedidoRef.once(
-                    "value"
-                );
+                await pedidoRef.get();
 
             if (!snapshot.exists()) {
 
@@ -1216,14 +1094,13 @@ app.post(
                             "Pedido não encontrado."
 
                     });
-
             }
 
             const curso =
                 snapshot.val();
 
             // -------------------------------------------------
-            // USUÁRIO
+            // VALIDAR USUÁRIO
             // -------------------------------------------------
 
             if (
@@ -1239,11 +1116,10 @@ app.post(
                             "Este pedido pertence a outro usuário."
 
                     });
-
             }
 
             // -------------------------------------------------
-            // CATEGORIA
+            // VALIDAR CATEGORIA
             // -------------------------------------------------
 
             if (
@@ -1259,11 +1135,10 @@ app.post(
                             "Este curso não é presencial."
 
                     });
-
             }
 
             // -------------------------------------------------
-            // PAGAMENTO
+            // VALIDAR PAGAMENTO
             // -------------------------------------------------
 
             if (
@@ -1279,11 +1154,10 @@ app.post(
                             "O curso ainda não foi pago."
 
                     });
-
             }
 
             // -------------------------------------------------
-            // IMPEDIR DUPLICAÇÃO
+            // IMPEDIR DUPLICIDADE
             // -------------------------------------------------
 
             if (
@@ -1298,7 +1172,6 @@ app.post(
                             "Este curso já possui um agendamento."
 
                     });
-
             }
 
             // -------------------------------------------------
@@ -1359,9 +1232,10 @@ app.post(
 
             });
 
-            // -------------------------------------------------
-            // RESPOSTA
-            // -------------------------------------------------
+            console.log(
+                "Agendamento criado:",
+                pedidoId
+            );
 
             return res.json({
 
@@ -1374,7 +1248,6 @@ app.post(
             });
 
         }
-
         catch (error) {
 
             console.error(
@@ -1393,7 +1266,6 @@ app.post(
                         error.message
 
                 });
-
         }
 
     }
@@ -1455,15 +1327,19 @@ app.listen(
 
         console.log(
             "Firebase:",
-            serviceAccount.project_id
+            process.env.FIREBASE_PROJECT_ID ||
+            "Projeto definido pelo service account"
+        );
+
+        console.log(
+            "Stripe:",
+            STRIPE_SECRET_KEY.startsWith("sk_test_")
+                ? "MODO TESTE"
+                : "MODO PRODUÇÃO"
         );
 
         console.log(
             "Preços definidos pelo código"
-        );
-
-        console.log(
-            "Pagamento direto pelo Stripe"
         );
 
         console.log(
@@ -1476,7 +1352,6 @@ app.listen(
 
         console.log(
             "======================================"
-
         );
 
     }
