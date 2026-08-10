@@ -1,34 +1,150 @@
+```html
 <!DOCTYPE html>
 
-<html>
+<html lang="pt-BR">
 
 <head>
 
-<title>Pagamento concluído</title>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Pagamento concluído
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
 
 </head>
 
 
 <body>
 
+<div class="box">
 
-<h1>
-Pagamento realizado com sucesso!
-</h1>
+    <h1>
+        Pagamento concluído
+    </h1>
+
+    <p id="statusPagamento">
+        Verificando seu pagamento...
+    </p>
 
 
-<p>
-Seu curso será liberado automaticamente.
-</p>
+    <hr>
 
 
-<a href="pagamento.html">
+    <h2>
+        Cursos adquiridos
+    </h2>
 
-Voltar para meus cursos
 
-</a>
+    <div id="cursosComprados">
 
+        <p>
+            Carregando cursos...
+        </p>
+
+    </div>
+
+
+    <hr>
+
+
+    <div id="areaPresencial"
+         style="display:none;">
+
+        <h2>
+            Agendamento presencial
+        </h2>
+
+        <p>
+            Este curso é presencial.
+            Escolha uma data e um horário.
+        </p>
+
+
+        <label for="dataCurso">
+            Data:
+        </label>
+
+        <br>
+
+        <input
+            type="date"
+            id="dataCurso"
+        >
+
+
+        <br><br>
+
+
+        <label for="horarioCurso">
+            Horário:
+        </label>
+
+        <br>
+
+        <select id="horarioCurso">
+
+            <option value="">
+                Selecione um horário
+            </option>
+
+            <option value="08:00">
+                08:00
+            </option>
+
+            <option value="10:00">
+                10:00
+            </option>
+
+            <option value="14:00">
+                14:00
+            </option>
+
+            <option value="16:00">
+                16:00
+            </option>
+
+            <option value="18:00">
+                18:00
+            </option>
+
+        </select>
+
+
+        <br><br>
+
+
+        <button id="agendarCurso">
+            Agendar curso
+        </button>
+
+    </div>
+
+
+    <br>
+
+
+    <button
+        onclick="window.location='index.html'"
+    >
+        Voltar
+    </button>
+
+</div>
+
+
+<script type="module" src="sucesso.js"></script>
 
 </body>
 
 </html>
+```
