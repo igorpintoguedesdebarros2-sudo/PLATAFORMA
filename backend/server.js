@@ -19,57 +19,70 @@ const {
 // =====================================================
 // FIREBASE
 // =====================================================
-//
-// As credenciais vêm das variáveis de ambiente.
-//
-// NÃO usamos firebase-admin.json.
-// Isso permite o funcionamento no Render.
-//
+
+const firebaseConfig = require("./firebase-admin.json");
 
 const serviceAccount = {
+    projectId: firebaseConfig.project_id,
 
-    project_id:
-        process.env.FIREBASE_PROJECT_ID,
+    privateKey: firebaseConfig.private_key
+        ? firebaseConfig.private_key.replace(/\\n/g, "\n")
+        : undefined,
 
-    private_key:
-        process.env.FIREBASE_PRIVATE_KEY
-            ? process.env.FIREBASE_PRIVATE_KEY.replace(
-                /\\n/g,
-                "\n"
-            )
-            : undefined,
-
-    client_email:
-        process.env.FIREBASE_CLIENT_EMAIL
-
+    clientEmail: firebaseConfig.client_email
 };
 
 // =====================================================
 // VALIDAR FIREBASE
 // =====================================================
 
-if (!serviceAccount.project_id) {
-
+if (!serviceAccount.projectId) {
     console.error(
-        "ERRO: FIREBASE_PROJECT_ID não encontrada."
+        "ERRO: project_id não encontrado no firebase-admin.json."
     );
 
     process.exit(1);
 }
 
-if (!serviceAccount.private_key) {
-
+if (!serviceAccount.privateKey) {
     console.error(
-        "ERRO: FIREBASE_PRIVATE_KEY não encontrada."
+        "ERRO: private_key não encontrada no firebase-admin.json."
     );
 
     process.exit(1);
 }
 
-if (!serviceAccount.client_email) {
-
+if (!serviceAccount.clientEmail) {
     console.error(
-        "ERRO: FIREBASE_CLIENT_EMAIL não encontrada."
+        "ERRO: client_email não encontrado no firebase-admin.json."
+    );
+
+    process.exit(1);
+}
+
+// =====================================================
+// VALIDAR FORMATO DA CHAVE
+// =====================================================
+
+if (
+    !serviceAccount.privateKey.includes(
+        "-----BEGIN PRIVATE KEY-----"
+    )
+) {
+    console.error(
+        "ERRO: a private_key do Firebase não está no formato esperado."
+    );
+
+    process.exit(1);
+}
+
+if (
+    !serviceAccount.privateKey.includes(
+        "-----END PRIVATE KEY-----"
+    )
+) {
+    console.error(
+        "ERRO: a private_key do Firebase está incompleta."
     );
 
     process.exit(1);
@@ -80,17 +93,17 @@ if (!serviceAccount.client_email) {
 // =====================================================
 
 initializeApp({
-
-    credential:
-        cert(serviceAccount),
+    credential: cert({
+        projectId: serviceAccount.projectId,
+        privateKey: serviceAccount.privateKey,
+        clientEmail: serviceAccount.clientEmail
+    }),
 
     databaseURL:
         "https://proje-79338-default-rtdb.firebaseio.com"
-
 });
 
-const db =
-    getDatabase();
+const db = getDatabase();
 
 // =====================================================
 // STRIPE
