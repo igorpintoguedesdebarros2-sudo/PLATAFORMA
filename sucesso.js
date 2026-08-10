@@ -320,6 +320,30 @@ function criarCardEAD(
     }
 
     // =================================================
+    // ID DO PEDIDO
+    // =================================================
+
+    if (id) {
+
+        const pedido =
+            criarElemento(
+                "small",
+                "Pedido: " + id
+            );
+
+        pedido.style.display =
+            "block";
+
+        pedido.style.marginTop =
+            "10px";
+
+        card.appendChild(
+            pedido
+        );
+
+    }
+
+    // =================================================
     // ADICIONAR
     // =================================================
 
@@ -476,12 +500,26 @@ function criarCardPresencial(
                 agendamento.horario
             );
 
+        const status =
+            criarElemento(
+                "p",
+                "Status: " +
+                (
+                    agendamento.status ||
+                    "Agendado"
+                )
+            );
+
         card.appendChild(
             data
         );
 
         card.appendChild(
             horario
+        );
+
+        card.appendChild(
+            status
         );
 
     }
@@ -569,7 +607,14 @@ function mostrarCurso(
             id
         );
 
+        return;
+
     }
+
+    console.warn(
+        "Categoria de curso desconhecida:",
+        curso.categoria
+    );
 
 }
 
@@ -592,6 +637,10 @@ async function verificarPagamento() {
 
         }
 
+        console.error(
+            "session_id não encontrado na URL."
+        );
+
         return;
 
     }
@@ -613,7 +662,7 @@ async function verificarPagamento() {
     try {
 
         // =================================================
-        // MONTAR URL
+        // URL
         // =================================================
 
         const url =
@@ -629,13 +678,14 @@ async function verificarPagamento() {
         );
 
         // =================================================
-        // CONSULTAR BACKEND
+        // REQUEST
         // =================================================
 
         const resposta =
             await fetch(
                 url,
                 {
+
                     method:
                         "GET",
 
@@ -645,11 +695,12 @@ async function verificarPagamento() {
                             "application/json"
 
                     }
+
                 }
             );
 
         // =================================================
-        // LER RESPOSTA
+        // RESPOSTA
         // =================================================
 
         let dados = null;
@@ -660,9 +711,12 @@ async function verificarPagamento() {
                 await resposta.json();
 
         }
-        catch {
+        catch (erroJSON) {
 
-            dados = null;
+            console.error(
+                "Resposta não é JSON:",
+                erroJSON
+            );
 
         }
 
@@ -685,6 +739,7 @@ async function verificarPagamento() {
             const mensagem =
                 dados?.detalhe ||
                 dados?.erro ||
+                dados?.message ||
                 "Erro HTTP " +
                 resposta.status;
 
@@ -708,12 +763,21 @@ async function verificarPagamento() {
             if (cursosComprados) {
 
                 cursosComprados.innerHTML =
-                    "<p>Status: " +
-                    (
-                        dados?.status ||
-                        "processando"
-                    ) +
-                    "</p>";
+                    "";
+
+                const status =
+                    criarElemento(
+                        "p",
+                        "Status: " +
+                        (
+                            dados?.status ||
+                            "processando"
+                        )
+                    );
+
+                cursosComprados.appendChild(
+                    status
+                );
 
             }
 
@@ -734,11 +798,13 @@ async function verificarPagamento() {
             console.error(
                 "Pagamento pertence a outro usuário.",
                 {
+
                     pagamento:
                         dados.usuarioId,
 
                     usuarioAtual:
                         usuarioAtual.uid
+
                 }
             );
 
@@ -746,12 +812,19 @@ async function verificarPagamento() {
                 "Este pagamento não pertence ao usuário atual."
             );
 
+            if (cursosComprados) {
+
+                cursosComprados.innerHTML =
+                    "<p>Pagamento associado a outro usuário.</p>";
+
+            }
+
             return;
 
         }
 
         // =================================================
-        // CURSO RECEBIDO
+        // CURSO RECEBIDO DO BACKEND
         // =================================================
 
         const curso = {
@@ -802,6 +875,18 @@ async function verificarPagamento() {
                 null
 
         };
+
+        // =================================================
+        // VALIDAR CURSO
+        // =================================================
+
+        if (!curso.curso) {
+
+            throw new Error(
+                "O backend confirmou o pagamento, mas não retornou o curso."
+            );
+
+        }
 
         // =================================================
         // LIMPAR
@@ -858,7 +943,8 @@ async function verificarPagamento() {
 
         if (cursosComprados) {
 
-            cursosComprados.innerHTML = "";
+            cursosComprados.innerHTML =
+                "";
 
             const titulo =
                 criarElemento(
@@ -1008,8 +1094,10 @@ if (botaoAgendar) {
 
                     const resposta =
                         await fetch(
+
                             API_URL +
                             "/agendar-curso",
+
                             {
 
                                 method:
@@ -1043,6 +1131,7 @@ if (botaoAgendar) {
                                     })
 
                             }
+
                         );
 
                     let dados =
@@ -1060,6 +1149,11 @@ if (botaoAgendar) {
                             null;
 
                     }
+
+                    console.log(
+                        "Resposta agendamento:",
+                        dados
+                    );
 
                     if (!resposta.ok) {
 
@@ -1211,6 +1305,10 @@ onAuthStateChanged(
     async function (usuario) {
 
         if (!usuario) {
+
+            console.warn(
+                "Nenhum usuário autenticado."
+            );
 
             mostrarStatus(
                 "Usuário não autenticado."
