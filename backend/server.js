@@ -12,323 +12,304 @@ const {
     getDatabase
 } = require("firebase-admin/database");
 
-
 // =======================
 // FIREBASE
 // =======================
 
-const firebaseConfig =
-    require("./firebase-admin.json");
+const firebaseConfig = require("./firebase-admin.json");
 
-
-// Adaptar os nomes do seu JSON
 const serviceAccount = {
+    project_id: firebaseConfig.project_id,
 
-    project_id:
-        firebaseConfig.project_id,
+    private_key: firebaseConfig.FIREBASE_PRIVATE_KEY
+        ? firebaseConfig.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
+        : undefined,
 
-    private_key:
-        firebaseConfig.FIREBASE_PRIVATE_KEY
-            ? firebaseConfig.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
-            : undefined,
-
-    client_email:
-        firebaseConfig.FIREBASE_CLIENT_EMAIL
-
+    client_email: firebaseConfig.FIREBASE_CLIENT_EMAIL
 };
 
+// =======================
+// VALIDAR FIREBASE
+// =======================
 
-// Verificação básica
 if (!serviceAccount.private_key) {
-
-    console.error(
-        "ERRO: FIREBASE_PRIVATE_KEY não encontrada."
-    );
-
+    console.error("ERRO: FIREBASE_PRIVATE_KEY não encontrada.");
     process.exit(1);
 }
-
 
 if (!serviceAccount.client_email) {
-
-    console.error(
-        "ERRO: FIREBASE_CLIENT_EMAIL não encontrada."
-    );
-
+    console.error("ERRO: FIREBASE_CLIENT_EMAIL não encontrada.");
     process.exit(1);
 }
 
+// =======================
+// INICIALIZAR FIREBASE
+// =======================
 
-// Inicializar Firebase
 initializeApp({
-
-    credential:
-        cert(serviceAccount),
-
-    databaseURL:
-        "https://proje-79338-default-rtdb.firebaseio.com"
-
+    credential: cert(serviceAccount),
+    databaseURL: "https://proje-79338-default-rtdb.firebaseio.com"
 });
 
-
-const db =
-    getDatabase();
-
+const db = getDatabase();
 
 // =======================
 // STRIPE
 // =======================
 
 if (!process.env.STRIPE_SECRET_KEY) {
-
-    console.error(
-        "ERRO: STRIPE_SECRET_KEY não encontrada no .env."
-    );
-
+    console.error("ERRO: STRIPE_SECRET_KEY não encontrada no .env.");
     process.exit(1);
 }
 
-
-const stripe =
-    Stripe(
-        process.env.STRIPE_SECRET_KEY
-    );
-
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 // =======================
 // EXPRESS
 // =======================
 
-const app =
-    express();
+const app = express();
 
-app.use(
-    cors()
-);
-
-app.use(
-    express.json()
-);
-
+app.use(cors());
+app.use(express.json());
 
 // =======================
-// CRIAR PAGAMENTO STRIPE
+// CURSOS E PREÇOS FIXOS
 // =======================
 
-app.post(
-    "/criar-pagamento",
-    async (req, res) => {
+const cursos = {
+    "HTML Completo": {
+        valor: 49.90,
+        link: "https://seusite.com/cursos/html"
+    },
 
-        const {
-            curso,
-            valor,
-            pedidoId,
-            usuarioId
-        } = req.body;
+    "CSS Completo": {
+        valor: 39.90,
+        link: "https://seusite.com/cursos/css"
+    },
 
+    "JavaScript": {
+        valor: 59.90,
+        link: "https://seusite.com/cursos/javascript"
+    },
 
-        // =======================
-        // VALIDAR DADOS
-        // =======================
+    "Python": {
+        valor: 69.90,
+        link: "https://seusite.com/cursos/python"
+    },
 
-        if (
-            !curso ||
-            !valor ||
-            !pedidoId
-        ) {
+    "Firebase": {
+        valor: 79.90,
+        link: "https://seusite.com/cursos/firebase"
+    }
+};
 
-            return res
-                .status(400)
-                .json({
+// =======================
+// CRIAR PAGAMENTO
+// =======================
 
-                    erro:
-                        "Dados incompletos"
+app.post("/criar-pagamento", async (req, res) => {
 
-                });
+    const {
+        curso,
+        pedidoId,
+        usuarioId
+    } = req.body;
 
-        }
+    if (!curso) {
+        return res.status(400).json({
+            erro: "Curso não informado."
+        });
+    }
 
+    const cursoSelecionado = cursos[curso];
 
-        // Validar valor
-        const valorNumerico =
-            Number(valor);
+    if (!cursoSelecionado) {
+        return res.status(400).json({
+            erro: "Curso inválido."
+        });
+    }
 
+    const idPedido =
+        pedidoId || `pedido_${Date.now()}`;
 
-        if (
-            !Number.isFinite(
-                valorNumerico
-            ) ||
-            valorNumerico <= 0
-        ) {
+    try {
 
-            return res
-                .status(400)
-                .json({
+        const session =
+            await stripe.checkout.sessions.create({
 
-                    erro:
-                        "Valor inválido"
+                payment_method_types: [
+                    "card"
+                ],
 
-                });
+                line_items: [
+                    {
+                        price_data: {
 
-        }
+                            currency: "brl",
 
+                            product_data: {
+                                name: curso
+                            },
 
-        // =======================
-        // CRIAR CHECKOUT
-        // =======================
-
-        try {
-
-            const session =
-                await stripe
-                    .checkout
-                    .sessions
-                    .create({
-
-                        payment_method_types: [
-                            "card"
-                        ],
-
-
-                        line_items: [
-
-                            {
-
-                                price_data: {
-
-                                    currency:
-                                        "brl",
-
-
-                                    product_data: {
-
-                                        name:
-                                            curso
-
-                                    },
-
-
-                                    unit_amount:
-                                        Math.round(
-                                            valorNumerico * 100
-                                        )
-
-                                },
-
-
-                                quantity:
-                                    1
-
-                            }
-
-                        ],
-
-
-                        mode:
-                            "payment",
-
-
-                        // =======================
-                        // METADATA
-                        // =======================
-
-                        metadata: {
-
-                            pedidoId:
-                                String(
-                                    pedidoId
-                                ),
-
-                            usuarioId:
-                                usuarioId
-                                    ? String(
-                                        usuarioId
-                                    )
-                                    : "",
-
-                            curso:
-                                String(
-                                    curso
+                            unit_amount:
+                                Math.round(
+                                    cursoSelecionado.valor * 100
                                 )
-
                         },
 
+                        quantity: 1
+                    }
+                ],
 
-                        // =======================
-                        // SUCESSO
-                        // =======================
+                mode: "payment",
 
-                        success_url:
-                            "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/sucesso.html?session_id={CHECKOUT_SESSION_ID}",
+                metadata: {
 
+                    pedidoId: String(idPedido),
 
-                        // =======================
-                        // CANCELAMENTO
-                        // =======================
+                    usuarioId: usuarioId
+                        ? String(usuarioId)
+                        : "",
 
-                        cancel_url:
-                            "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/cancelado.html"
+                    curso: String(curso)
+                },
 
-                    });
+                success_url:
+                    "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/sucesso.html?session_id={CHECKOUT_SESSION_ID}",
 
-
-            // =======================
-            // RETORNAR SESSION ID
-            // =======================
-
-            res.json({
-
-                id:
-                    session.id
-
+                cancel_url:
+                    "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/cancelado.html"
             });
 
+        res.json({
+            id: session.id
+        });
 
-        }
-        catch (error) {
+    } catch (error) {
 
-            console.error(
-                "Erro criar pagamento:",
-                error.message
+        console.error(
+            "Erro criar pagamento:",
+            error.message
+        );
+
+        res.status(500).json({
+            erro: error.message
+        });
+    }
+});
+
+// =======================
+// VERIFICAR PAGAMENTO
+// =======================
+
+app.get("/verificar-pagamento", async (req, res) => {
+
+    const {
+        session_id
+    } = req.query;
+
+    if (!session_id) {
+        return res.status(400).json({
+            erro: "session_id não informado."
+        });
+    }
+
+    try {
+
+        const session =
+            await stripe.checkout.sessions.retrieve(
+                session_id
             );
 
+        if (
+            session.payment_status !== "paid"
+        ) {
 
-            res
-                .status(500)
-                .json({
+            return res.json({
 
-                    erro:
-                        error.message
+                pago: false,
 
-                });
+                status:
+                    session.payment_status
 
+            });
         }
 
-    }
-);
+        const metadata =
+            session.metadata || {};
 
+        const curso =
+            metadata.curso || "";
+
+        const pedidoId =
+            metadata.pedidoId || "";
+
+        const usuarioId =
+            metadata.usuarioId || "";
+
+        const cursoSelecionado =
+            cursos[curso];
+
+        if (!cursoSelecionado) {
+
+            return res.status(400).json({
+                erro: "Curso não encontrado."
+            });
+        }
+
+        res.json({
+
+            pago: true,
+
+            curso: curso,
+
+            valor:
+                cursoSelecionado.valor,
+
+            pedidoId:
+                pedidoId,
+
+            usuarioId:
+                usuarioId,
+
+            linkCurso:
+                cursoSelecionado.link,
+
+            pagamentoId:
+                session.id,
+
+            dataPagamento:
+                new Date().toISOString()
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Erro verificar pagamento:",
+            error.message
+        );
+
+        res.status(500).json({
+            erro: error.message
+        });
+    }
+});
 
 // =======================
 // TESTE DA API
 // =======================
 
-app.get(
-    "/",
-    (req, res) => {
+app.get("/", (req, res) => {
 
-        res.json({
+    res.json({
 
-            status:
-                "online",
+        status: "online",
 
-            mensagem:
-                "API Plataforma funcionando"
-
-        });
-
-    }
-);
-
+        mensagem:
+            "API Plataforma funcionando"
+    });
+});
 
 // =======================
 // SERVIDOR
@@ -336,7 +317,6 @@ app.get(
 
 const PORT =
     process.env.PORT || 3000;
-
 
 app.listen(
     PORT,
