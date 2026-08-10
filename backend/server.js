@@ -17,74 +17,45 @@ const {
 } = require("firebase-admin/database");
 
 // =====================================================
+// VALIDAR VARIÁVEIS DE AMBIENTE
+// =====================================================
+
+const FIREBASE_PROJECT_ID =
+    process.env.FIREBASE_PROJECT_ID;
+
+const FIREBASE_CLIENT_EMAIL =
+    process.env.FIREBASE_CLIENT_EMAIL;
+
+const FIREBASE_PRIVATE_KEY =
+    process.env.FIREBASE_PRIVATE_KEY
+        ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
+        : undefined;
+
+const STRIPE_SECRET_KEY =
+    process.env.STRIPE_SECRET_KEY;
+
+// =====================================================
 // FIREBASE
 // =====================================================
 
-const firebaseConfig = require("./firebase-admin.json");
-
-const serviceAccount = {
-    projectId: firebaseConfig.project_id,
-
-    privateKey: firebaseConfig.private_key
-        ? firebaseConfig.private_key.replace(/\\n/g, "\n")
-        : undefined,
-
-    clientEmail: firebaseConfig.client_email
-};
-
-// =====================================================
-// VALIDAR FIREBASE
-// =====================================================
-
-if (!serviceAccount.projectId) {
+if (!FIREBASE_PROJECT_ID) {
     console.error(
-        "ERRO: project_id não encontrado no firebase-admin.json."
+        "ERRO: FIREBASE_PROJECT_ID não encontrada."
     );
-
     process.exit(1);
 }
 
-if (!serviceAccount.privateKey) {
+if (!FIREBASE_CLIENT_EMAIL) {
     console.error(
-        "ERRO: private_key não encontrada no firebase-admin.json."
+        "ERRO: FIREBASE_CLIENT_EMAIL não encontrada."
     );
-
     process.exit(1);
 }
 
-if (!serviceAccount.clientEmail) {
+if (!FIREBASE_PRIVATE_KEY) {
     console.error(
-        "ERRO: client_email não encontrado no firebase-admin.json."
+        "ERRO: FIREBASE_PRIVATE_KEY não encontrada."
     );
-
-    process.exit(1);
-}
-
-// =====================================================
-// VALIDAR FORMATO DA CHAVE
-// =====================================================
-
-if (
-    !serviceAccount.privateKey.includes(
-        "-----BEGIN PRIVATE KEY-----"
-    )
-) {
-    console.error(
-        "ERRO: a private_key do Firebase não está no formato esperado."
-    );
-
-    process.exit(1);
-}
-
-if (
-    !serviceAccount.privateKey.includes(
-        "-----END PRIVATE KEY-----"
-    )
-) {
-    console.error(
-        "ERRO: a private_key do Firebase está incompleta."
-    );
-
     process.exit(1);
 }
 
@@ -92,24 +63,50 @@ if (
 // INICIALIZAR FIREBASE
 // =====================================================
 
-initializeApp({
-    credential: cert({
-        projectId: serviceAccount.projectId,
-        privateKey: serviceAccount.privateKey,
-        clientEmail: serviceAccount.clientEmail
-    }),
+const serviceAccount = {
+    projectId: FIREBASE_PROJECT_ID,
+    clientEmail: FIREBASE_CLIENT_EMAIL,
+    privateKey: FIREBASE_PRIVATE_KEY
+};
 
-    databaseURL:
-        "https://proje-79338-default-rtdb.firebaseio.com"
-});
+try {
 
-const db = getDatabase();
+    initializeApp({
+
+        credential:
+            cert(serviceAccount),
+
+        databaseURL:
+            "https://proje-79338-default-rtdb.firebaseio.com"
+
+    });
+
+    console.log(
+        "Firebase Admin inicializado."
+    );
+
+}
+catch (error) {
+
+    console.error(
+        "ERRO AO INICIALIZAR FIREBASE:"
+    );
+
+    console.error(
+        error
+    );
+
+    process.exit(1);
+}
+
+const db =
+    getDatabase();
 
 // =====================================================
 // STRIPE
 // =====================================================
 
-if (!process.env.STRIPE_SECRET_KEY) {
+if (!STRIPE_SECRET_KEY) {
 
     console.error(
         "ERRO: STRIPE_SECRET_KEY não encontrada."
@@ -120,7 +117,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 
 const stripe =
     Stripe(
-        process.env.STRIPE_SECRET_KEY
+        STRIPE_SECRET_KEY
     );
 
 // =====================================================
@@ -140,18 +137,6 @@ app.use(
 
 // =====================================================
 // CURSOS E PREÇOS FIXOS
-// =====================================================
-//
-// O preço oficial fica SOMENTE no backend.
-//
-// O frontend envia:
-//
-// - curso
-// - usuarioId
-// - pedidoId
-//
-// O frontend NÃO envia preço.
-//
 // =====================================================
 
 const cursos = {
@@ -313,7 +298,7 @@ app.post(
             }
 
             // -------------------------------------------------
-            // BUSCAR CURSO NO BACKEND
+            // BUSCAR CURSO
             // -------------------------------------------------
 
             const cursoSelecionado =
@@ -358,7 +343,7 @@ app.post(
                     .substring(2, 8)}`;
 
             // -------------------------------------------------
-            // CRIAR CHECKOUT STRIPE
+            // STRIPE CHECKOUT
             // -------------------------------------------------
 
             const session =
@@ -386,9 +371,6 @@ app.post(
                                             curso
 
                                     },
-
-                                    // PREÇO DEFINIDO
-                                    // SOMENTE PELO BACKEND
 
                                     unit_amount:
                                         Math.round(
@@ -434,10 +416,6 @@ app.post(
                             "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/cancelado.html"
 
                     });
-
-            // -------------------------------------------------
-            // RESPOSTA
-            // -------------------------------------------------
 
             return res.json({
 
@@ -497,7 +475,7 @@ app.get(
             } = req.query;
 
             // -------------------------------------------------
-            // VALIDAR SESSION ID
+            // VALIDAR SESSION
             // -------------------------------------------------
 
             if (!session_id) {
@@ -530,7 +508,7 @@ app.get(
             );
 
             // -------------------------------------------------
-            // VERIFICAR STATUS
+            // VERIFICAR PAGAMENTO
             // -------------------------------------------------
 
             if (
@@ -686,7 +664,7 @@ app.get(
             }
 
             // -------------------------------------------------
-            // CRIAR DADOS DO CURSO
+            // CRIAR DADOS
             // -------------------------------------------------
 
             const dadosCurso = {
@@ -724,9 +702,9 @@ app.get(
 
             };
 
-            // =================================================
+            // -------------------------------------------------
             // EAD
-            // =================================================
+            // -------------------------------------------------
 
             if (
                 cursoSelecionado.categoria ===
@@ -744,9 +722,9 @@ app.get(
 
             }
 
-            // =================================================
+            // -------------------------------------------------
             // PRESENCIAL
-            // =================================================
+            // -------------------------------------------------
 
             if (
                 cursoSelecionado.categoria ===
@@ -765,7 +743,7 @@ app.get(
             }
 
             // -------------------------------------------------
-            // SALVAR NO FIREBASE
+            // SALVAR FIREBASE
             // -------------------------------------------------
 
             await set(
@@ -865,7 +843,10 @@ app.get(
                 .json({
 
                     erro:
-                        "Erro ao verificar pagamento."
+                        "Erro ao verificar pagamento.",
+
+                    detalhe:
+                        error.message
 
                 });
         }
@@ -906,20 +887,12 @@ app.post(
                     });
             }
 
-            // -------------------------------------------------
-            // REFERÊNCIA
-            // -------------------------------------------------
-
             const pedidoRef =
                 ref(
                     db,
                     "solicitacoes_cursos/" +
                     pedidoId
                 );
-
-            // -------------------------------------------------
-            // BUSCAR CURSO
-            // -------------------------------------------------
 
             const snapshot =
                 await get(
@@ -942,10 +915,6 @@ app.post(
             const curso =
                 snapshot.val();
 
-            // -------------------------------------------------
-            // VERIFICAR CATEGORIA
-            // -------------------------------------------------
-
             if (
                 curso.categoria !==
                 "EAD"
@@ -961,10 +930,6 @@ app.post(
 
                 });
             }
-
-            // -------------------------------------------------
-            // VERIFICAR PAGAMENTO
-            // -------------------------------------------------
 
             if (
                 curso.pago !==
@@ -982,10 +947,6 @@ app.post(
                 });
             }
 
-            // -------------------------------------------------
-            // VERIFICAR SENHA
-            // -------------------------------------------------
-
             if (
                 curso.senhaCurso !==
                 senha
@@ -1001,10 +962,6 @@ app.post(
 
                 });
             }
-
-            // -------------------------------------------------
-            // VERIFICAR USOS
-            // -------------------------------------------------
 
             const usos =
                 Number(
@@ -1027,10 +984,6 @@ app.post(
                 });
             }
 
-            // -------------------------------------------------
-            // DIMINUIR USO
-            // -------------------------------------------------
-
             const novosUsos =
                 usos - 1;
 
@@ -1043,10 +996,6 @@ app.post(
 
                 }
             );
-
-            // -------------------------------------------------
-            // RETORNAR ACESSO
-            // -------------------------------------------------
 
             return res.json({
 
@@ -1105,10 +1054,6 @@ app.post(
                 horario
             } = req.body || {};
 
-            // -------------------------------------------------
-            // VALIDAR DADOS
-            // -------------------------------------------------
-
             if (
                 !pedidoId ||
                 !usuarioId ||
@@ -1126,20 +1071,12 @@ app.post(
                     });
             }
 
-            // -------------------------------------------------
-            // REFERÊNCIA
-            // -------------------------------------------------
-
             const pedidoRef =
                 ref(
                     db,
                     "solicitacoes_cursos/" +
                     pedidoId
                 );
-
-            // -------------------------------------------------
-            // BUSCAR PEDIDO
-            // -------------------------------------------------
 
             const snapshot =
                 await get(
@@ -1161,10 +1098,6 @@ app.post(
             const curso =
                 snapshot.val();
 
-            // -------------------------------------------------
-            // VERIFICAR USUÁRIO
-            // -------------------------------------------------
-
             if (
                 curso.usuarioId !==
                 usuarioId
@@ -1179,10 +1112,6 @@ app.post(
 
                     });
             }
-
-            // -------------------------------------------------
-            // VERIFICAR CATEGORIA
-            // -------------------------------------------------
 
             if (
                 curso.categoria !==
@@ -1199,10 +1128,6 @@ app.post(
                     });
             }
 
-            // -------------------------------------------------
-            // VERIFICAR PAGAMENTO
-            // -------------------------------------------------
-
             if (
                 curso.pago !==
                 true
@@ -1218,10 +1143,6 @@ app.post(
                     });
             }
 
-            // -------------------------------------------------
-            // IMPEDIR DUPLICAÇÃO
-            // -------------------------------------------------
-
             if (
                 curso.agendamento
             ) {
@@ -1235,10 +1156,6 @@ app.post(
 
                     });
             }
-
-            // -------------------------------------------------
-            // CRIAR AGENDAMENTO
-            // -------------------------------------------------
 
             const agendamento = {
 
@@ -1269,10 +1186,6 @@ app.post(
 
             };
 
-            // -------------------------------------------------
-            // SALVAR AGENDAMENTO
-            // -------------------------------------------------
-
             await set(
 
                 ref(
@@ -1284,10 +1197,6 @@ app.post(
                 agendamento
 
             );
-
-            // -------------------------------------------------
-            // ATUALIZAR PEDIDO
-            // -------------------------------------------------
 
             await update(
 
@@ -1301,10 +1210,6 @@ app.post(
                 }
 
             );
-
-            // -------------------------------------------------
-            // RESPOSTA
-            // -------------------------------------------------
 
             return res.json({
 
@@ -1393,7 +1298,7 @@ app.listen(
 
         console.log(
             "Firebase:",
-            serviceAccount.project_id
+            FIREBASE_PROJECT_ID
         );
 
         console.log(
@@ -1414,7 +1319,6 @@ app.listen(
 
         console.log(
             "======================================"
-
         );
 
     }
