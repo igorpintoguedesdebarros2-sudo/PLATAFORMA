@@ -1,9 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const Stripe = require("stripe");
-require("dotenv").config();
-
 const admin = require("firebase-admin");
+require("dotenv").config();
 
 // =====================================================
 // CONFIGURAÇÕES
@@ -40,11 +39,23 @@ if (!FIREBASE_DATABASE_URL) {
 }
 
 // =====================================================
-// FIREBASE ADMIN
+// CARREGAR SERVICE ACCOUNT
 // =====================================================
 
-const serviceAccount =
-    require("./firebase-admin.json");
+let serviceAccount;
+
+try {
+    serviceAccount =
+        require("./firebase-admin.json");
+} catch (error) {
+    console.error(
+        "ERRO: não foi possível carregar firebase-admin.json."
+    );
+
+    console.error(error.message);
+
+    process.exit(1);
+}
 
 // =====================================================
 // VALIDAR SERVICE ACCOUNT
@@ -83,11 +94,10 @@ if (
 // CORRIGIR PRIVATE KEY
 // =====================================================
 //
-// Caso a chave tenha sido salva no JSON como:
-// \\n
+// O JSON normalmente contém:
+// -----BEGIN PRIVATE KEY-----\nABC...\n-----END...
 //
-// transformamos em:
-// quebra de linha real
+// Precisamos transformar "\\n" em quebra de linha real.
 // =====================================================
 
 serviceAccount.private_key =
@@ -97,7 +107,7 @@ serviceAccount.private_key =
     );
 
 // =====================================================
-// INICIALIZAR FIREBASE
+// FIREBASE ADMIN
 // =====================================================
 
 if (!admin.apps.length) {
@@ -438,10 +448,6 @@ app.post(
 
                     });
 
-            // -------------------------------------------------
-            // RESPOSTA
-            // -------------------------------------------------
-
             return res.json({
 
                 sucesso:
@@ -624,7 +630,7 @@ app.get(
             }
 
             // -------------------------------------------------
-            // BUSCAR CONFIGURAÇÃO DO CURSO
+            // BUSCAR CURSO
             // -------------------------------------------------
 
             const cursoSelecionado =
@@ -937,10 +943,6 @@ app.get(
                 "======================================"
             );
 
-            // -------------------------------------------------
-            // ERRO STRIPE
-            // -------------------------------------------------
-
             if (
                 error.type ===
                 "StripeInvalidRequestError"
@@ -1190,10 +1192,6 @@ app.post(
                     });
             }
 
-            // -------------------------------------------------
-            // BUSCAR PEDIDO
-            // -------------------------------------------------
-
             const pedidoRef =
                 db.ref(
                     "solicitacoes_cursos/" +
@@ -1218,10 +1216,6 @@ app.post(
             const curso =
                 snapshot.val();
 
-            // -------------------------------------------------
-            // VALIDAR USUÁRIO
-            // -------------------------------------------------
-
             if (
                 String(curso.usuarioId) !==
                 String(usuarioId)
@@ -1236,10 +1230,6 @@ app.post(
 
                     });
             }
-
-            // -------------------------------------------------
-            // VALIDAR CATEGORIA
-            // -------------------------------------------------
 
             if (
                 curso.categoria !==
@@ -1256,10 +1246,6 @@ app.post(
                     });
             }
 
-            // -------------------------------------------------
-            // VALIDAR PAGAMENTO
-            // -------------------------------------------------
-
             if (
                 curso.pago !==
                 true
@@ -1275,10 +1261,6 @@ app.post(
                     });
             }
 
-            // -------------------------------------------------
-            // IMPEDIR DUPLICIDADE
-            // -------------------------------------------------
-
             if (
                 curso.agendamento
             ) {
@@ -1292,10 +1274,6 @@ app.post(
 
                     });
             }
-
-            // -------------------------------------------------
-            // CRIAR AGENDAMENTO
-            // -------------------------------------------------
 
             const agendamento = {
 
@@ -1326,10 +1304,6 @@ app.post(
 
             };
 
-            // -------------------------------------------------
-            // SALVAR AGENDAMENTO
-            // -------------------------------------------------
-
             const agendamentoRef =
                 db.ref(
                     "agendamentos/" +
@@ -1339,10 +1313,6 @@ app.post(
             await agendamentoRef.set(
                 agendamento
             );
-
-            // -------------------------------------------------
-            // ATUALIZAR PEDIDO
-            // -------------------------------------------------
 
             await pedidoRef.update({
 
@@ -1515,8 +1485,7 @@ app.listen(
         console.log(
             "Firebase:",
             process.env.FIREBASE_PROJECT_ID ||
-            serviceAccount.project_id ||
-            "Projeto definido pelo service account"
+            serviceAccount.project_id
         );
 
         console.log(
