@@ -28,6 +28,19 @@ if (!STRIPE_SECRET_KEY) {
 }
 
 // =====================================================
+// VALIDAR FIREBASE
+// =====================================================
+
+if (!FIREBASE_DATABASE_URL) {
+
+    console.error(
+        "ERRO: FIREBASE_DATABASE_URL não encontrada nas variáveis de ambiente."
+    );
+
+    process.exit(1);
+}
+
+// =====================================================
 // FIREBASE ADMIN
 // =====================================================
 
@@ -287,7 +300,7 @@ app.post(
             }
 
             // -------------------------------------------------
-            // PEDIDO
+            // GERAR PEDIDO
             // -------------------------------------------------
 
             const idPedido =
@@ -297,7 +310,7 @@ app.post(
                     .substring(2, 8)}`;
 
             // -------------------------------------------------
-            // STRIPE
+            // CRIAR CHECKOUT STRIPE
             // -------------------------------------------------
 
             const session =
@@ -370,6 +383,10 @@ app.post(
                             "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/cancelado.html"
 
                     });
+
+            // -------------------------------------------------
+            // RESPOSTA
+            // -------------------------------------------------
 
             return res.json({
 
@@ -452,7 +469,7 @@ app.get(
             );
 
             console.log(
-                "VERIFICANDO STRIPE"
+                "VERIFICANDO PAGAMENTO"
             );
 
             console.log(
@@ -461,7 +478,7 @@ app.get(
             );
 
             // -------------------------------------------------
-            // BUSCAR SESSION
+            // BUSCAR SESSION NO STRIPE
             // -------------------------------------------------
 
             const session =
@@ -497,7 +514,10 @@ app.get(
                         false,
 
                     status:
-                        session.payment_status
+                        session.payment_status,
+
+                    mensagem:
+                        "O pagamento ainda não foi confirmado."
 
                 });
             }
@@ -549,7 +569,7 @@ app.get(
             }
 
             // -------------------------------------------------
-            // BUSCAR CURSO
+            // BUSCAR CONFIGURAÇÃO DO CURSO
             // -------------------------------------------------
 
             const cursoSelecionado =
@@ -568,27 +588,25 @@ app.get(
             }
 
             // =================================================
-            // FIREBASE ADMIN
+            // FIREBASE ADMIN SDK
             // =================================================
             //
             // IMPORTANTE:
             //
+            // CORRETO:
+            //
+            // db.ref(...)
+            // pedidoRef.get()
+            // pedidoRef.set(...)
+            // pedidoRef.update(...)
+            //
             // NÃO usar:
             //
-            // ref()
-            // get()
-            // set()
-            // update()
+            // ref(db, ...)
+            // get(ref(...))
+            // set(ref(...))
             //
-            // Essas funções são do Firebase Web SDK.
-            //
-            // No Admin SDK usamos:
-            //
-            // db.ref()
-            // referencia.get()
-            // referencia.set()
-            // referencia.update()
-            //
+            // Essas funções pertencem ao Firebase Web SDK.
             // =================================================
 
             const pedidoRef =
@@ -610,8 +628,32 @@ app.get(
                     snapshot.val();
 
                 console.log(
-                    "Pedido já existe no Firebase."
+                    "Pedido encontrado no Firebase."
                 );
+
+                // -------------------------------------------------
+                // GARANTIR QUE PERTENCE AO MESMO USUÁRIO
+                // -------------------------------------------------
+
+                if (
+                    pedidoExistente.usuarioId &&
+                    pedidoExistente.usuarioId !==
+                    usuarioId
+                ) {
+
+                    return res
+                        .status(403)
+                        .json({
+
+                            erro:
+                                "Este pagamento pertence a outro usuário."
+
+                        });
+                }
+
+                // -------------------------------------------------
+                // PAGAMENTO JÁ PROCESSADO
+                // -------------------------------------------------
 
                 if (
                     pedidoExistente.pago ===
@@ -748,6 +790,10 @@ app.get(
             );
 
             console.log(
+                "======================================"
+            );
+
+            console.log(
                 "PAGAMENTO CONFIRMADO"
             );
 
@@ -776,7 +822,7 @@ app.get(
             );
 
             // -------------------------------------------------
-            // RESPOSTA
+            // RETORNAR AO FRONTEND
             // -------------------------------------------------
 
             return res.json({
@@ -834,12 +880,40 @@ app.get(
             );
 
             console.error(
-                error
+                "Mensagem:",
+                error.message
+            );
+
+            console.error(
+                "Stack:",
+                error.stack
             );
 
             console.error(
                 "======================================"
             );
+
+            // -------------------------------------------------
+            // ERRO ESPECÍFICO DO STRIPE
+            // -------------------------------------------------
+
+            if (
+                error.type ===
+                "StripeInvalidRequestError"
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        erro:
+                            "Sessão Stripe inválida ou inexistente.",
+
+                        detalhe:
+                            error.message
+
+                    });
+            }
 
             return res
                 .status(500)
@@ -1072,7 +1146,7 @@ app.post(
             }
 
             // -------------------------------------------------
-            // PEDIDO
+            // BUSCAR PEDIDO
             // -------------------------------------------------
 
             const pedidoRef =
@@ -1333,7 +1407,9 @@ app.listen(
 
         console.log(
             "Stripe:",
-            STRIPE_SECRET_KEY.startsWith("sk_test_")
+            STRIPE_SECRET_KEY.startsWith(
+                "sk_test_"
+            )
                 ? "MODO TESTE"
                 : "MODO PRODUÇÃO"
         );
@@ -1352,6 +1428,7 @@ app.listen(
 
         console.log(
             "======================================"
+
         );
 
     }
