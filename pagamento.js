@@ -33,15 +33,11 @@ const API_URL =
 // CURSOS DISPONÍVEIS
 // =====================================================
 //
-// IMPORTANTE:
+// O frontend NÃO define preço.
 //
-// O valor NÃO fica aqui.
+// O preço oficial fica no server.js.
 //
-// O preço oficial é definido no server.js.
-//
-// O frontend apenas informa qual curso
-// o usuário deseja comprar.
-//
+// Aqui ficam apenas informações visuais.
 // =====================================================
 
 const cursosDisponiveis = {
@@ -106,25 +102,14 @@ onAuthStateChanged(
             return;
         }
 
-        usuarioAtual =
-            usuario;
+        usuarioAtual = usuario;
 
         carregarCursosComprados();
-
     }
 );
 
 // =====================================================
-// CARREGAR CURSOS JÁ COMPRADOS
-// =====================================================
-//
-// Agora o Firebase contém somente cursos
-// que já passaram pelo pagamento.
-//
-// Não existe mais:
-// aguardando
-// aguardando_pagamento
-//
+// CARREGAR CURSOS COMPRADOS
 // =====================================================
 
 function carregarCursosComprados() {
@@ -139,18 +124,24 @@ function carregarCursosComprados() {
             "solicitacoes"
         );
 
+    // -------------------------------------------------
+    // NÃO EXISTE MAIS FLUXO DE SOLICITAÇÃO
+    // -------------------------------------------------
+
     if (solicitacoes) {
 
-        solicitacoes.innerHTML = "";
-
-        solicitacoes.innerHTML =
-            "<p>Os cursos são liberados automaticamente após o pagamento.</p>";
+        solicitacoes.innerHTML = `
+            <p>
+                Escolha um curso e realize o pagamento
+                para obter acesso.
+            </p>
+        `;
     }
 
     if (!cursosLiberados) {
 
         console.error(
-            "Elemento cursosLiberados não encontrado."
+            "Elemento #cursosLiberados não encontrado."
         );
 
         return;
@@ -165,8 +156,7 @@ function carregarCursosComprados() {
 
             cursosLiberados.innerHTML = "";
 
-            let encontrou =
-                false;
+            let encontrou = false;
 
             snapshot.forEach(
                 (item) => {
@@ -181,9 +171,9 @@ function carregarCursosComprados() {
                         return;
                     }
 
-                    // ---------------------------------------------
-                    // SOMENTE CURSOS DO USUÁRIO LOGADO
-                    // ---------------------------------------------
+                    // -----------------------------------------
+                    // SOMENTE USUÁRIO LOGADO
+                    // -----------------------------------------
 
                     if (
                         curso.usuarioId !==
@@ -192,9 +182,9 @@ function carregarCursosComprados() {
                         return;
                     }
 
-                    // ---------------------------------------------
-                    // SOMENTE CURSOS PAGOS
-                    // ---------------------------------------------
+                    // -----------------------------------------
+                    // SOMENTE PAGAMENTOS CONFIRMADOS
+                    // -----------------------------------------
 
                     if (
                         curso.pago !== true
@@ -237,7 +227,9 @@ function carregarCursosComprados() {
                                 </h3>
 
                                 <p>
-                                    <strong>Categoria:</strong>
+                                    <strong>
+                                        Categoria:
+                                    </strong>
                                     Presencial
                                 </p>
 
@@ -246,35 +238,52 @@ function carregarCursosComprados() {
                                 </p>
 
                                 <p>
-                                    <strong>Pagamento:</strong>
+                                    <strong>
+                                        Pagamento:
+                                    </strong>
                                     Confirmado
                                 </p>
 
                                 <p>
-                                    <strong>Valor pago:</strong>
-                                    R$ ${Number(
+                                    <strong>
+                                        Valor pago:
+                                    </strong>
+                                    R$
+                                    ${Number(
                                         curso.valor || 0
-                                    ).toFixed(2).replace(".", ",")}
+                                    )
+                                        .toFixed(2)
+                                        .replace(".", ",")}
                                 </p>
 
                                 ${
                                     curso.agendamento
                                     ? `
 
-                                        <p>
-                                            <strong>Data:</strong>
-                                            ${curso.agendamento.data}
-                                        </p>
+                                        <div class="agendamento-info">
 
-                                        <p>
-                                            <strong>Horário:</strong>
-                                            ${curso.agendamento.horario}
-                                        </p>
+                                            <p>
+                                                <strong>
+                                                    Data:
+                                                </strong>
+                                                ${curso.agendamento.data}
+                                            </p>
 
-                                        <p>
-                                            <strong>Status:</strong>
-                                            Agendado
-                                        </p>
+                                            <p>
+                                                <strong>
+                                                    Horário:
+                                                </strong>
+                                                ${curso.agendamento.horario}
+                                            </p>
+
+                                            <p>
+                                                <strong>
+                                                    Status:
+                                                </strong>
+                                                Agendado
+                                            </p>
+
+                                        </div>
 
                                     `
                                     : `
@@ -309,7 +318,9 @@ function carregarCursosComprados() {
                             </h3>
 
                             <p>
-                                <strong>Categoria:</strong>
+                                <strong>
+                                    Categoria:
+                                </strong>
                                 EAD
                             </p>
 
@@ -318,36 +329,50 @@ function carregarCursosComprados() {
                             </p>
 
                             <p>
-                                <strong>Pagamento:</strong>
+                                <strong>
+                                    Pagamento:
+                                </strong>
                                 Confirmado
                             </p>
 
                             <p>
-                                <strong>Valor pago:</strong>
-                                R$ ${Number(
+                                <strong>
+                                    Valor pago:
+                                </strong>
+                                R$
+                                ${Number(
                                     curso.valor || 0
-                                ).toFixed(2).replace(".", ",")}
+                                )
+                                    .toFixed(2)
+                                    .replace(".", ",")}
                             </p>
 
                             ${
                                 curso.senhaCurso
                                 ? `
 
-                                    <p>
-                                        <strong>
-                                            Senha do curso:
-                                        </strong>
+                                    <div class="senha-curso">
+
+                                        <p>
+                                            <strong>
+                                                Senha do curso:
+                                            </strong>
+                                        </p>
 
                                         <code>
                                             ${curso.senhaCurso}
                                         </code>
-                                    </p>
 
-                                    <p>
-                                        Esta senha possui
-                                        ${curso.usosRestantes ?? 0}
-                                        utilização(ões) restante(s).
-                                    </p>
+                                        <p>
+                                            Esta senha possui
+                                            <strong>
+                                                ${curso.usosRestantes ?? 0}
+                                            </strong>
+                                            utilização(ões)
+                                            restante(s).
+                                        </p>
+
+                                    </div>
 
                                 `
                                 : ""
@@ -388,33 +413,37 @@ function carregarCursosComprados() {
                 }
             );
 
+            // -------------------------------------------------
+            // NENHUM CURSO
+            // -------------------------------------------------
+
             if (!encontrou) {
 
-                cursosLiberados.innerHTML =
-                    "<p>Você ainda não possui cursos pagos.</p>";
+                cursosLiberados.innerHTML = `
+                    <p>
+                        Você ainda não possui cursos pagos.
+                    </p>
+                `;
             }
 
         }
     );
-
 }
 
 // =====================================================
 // COMPRAR CURSO
 // =====================================================
 //
-// NOVO FLUXO:
+// FLUXO:
 //
-// 1. Usuário escolhe curso
-// 2. Frontend envia apenas o nome do curso
-// 3. Backend encontra o preço fixo
-// 4. Stripe cria o pagamento
-// 5. Usuário vai para o Checkout
+// usuário escolhe
+//      ↓
+// /criar-pagamento
+//      ↓
+// Stripe
 //
-// NÃO cria solicitação.
-// NÃO cria status aguardando.
-// NÃO envia preço.
-// NÃO depende do administrador.
+// NÃO existe solicitação para administrador.
+//
 // =====================================================
 
 const botaoSolicitar =
@@ -429,10 +458,6 @@ if (botaoSolicitar) {
 
             try {
 
-                // ---------------------------------------------
-                // VERIFICAR LOGIN
-                // ---------------------------------------------
-
                 if (!usuarioAtual) {
 
                     alert(
@@ -441,10 +466,6 @@ if (botaoSolicitar) {
 
                     return;
                 }
-
-                // ---------------------------------------------
-                // SELECT
-                // ---------------------------------------------
 
                 const select =
                     document.getElementById(
@@ -472,16 +493,13 @@ if (botaoSolicitar) {
                     return;
                 }
 
-                // ---------------------------------------------
+                // -----------------------------------------
                 // VALIDAR CURSO
-                // ---------------------------------------------
+                // -----------------------------------------
 
-                const dadosCurso =
-                    cursosDisponiveis[
-                        curso
-                    ];
-
-                if (!dadosCurso) {
+                if (
+                    !cursosDisponiveis[curso]
+                ) {
 
                     alert(
                         "Curso não cadastrado."
@@ -490,29 +508,39 @@ if (botaoSolicitar) {
                     return;
                 }
 
-                // ---------------------------------------------
-                // GERAR ID DO PEDIDO
-                // ---------------------------------------------
+                // -----------------------------------------
+                // GERAR PEDIDO
+                // -----------------------------------------
 
                 const pedidoId =
                     `pedido_${Date.now()}_${Math.random()
                         .toString(36)
                         .substring(2, 8)}`;
 
-                // ---------------------------------------------
-                // CRIAR PAGAMENTO
-                // ---------------------------------------------
+                // -----------------------------------------
+                // DESABILITAR BOTÃO
+                // -----------------------------------------
+
+                botaoSolicitar.disabled = true;
+
+                const textoOriginal =
+                    botaoSolicitar.textContent;
+
+                botaoSolicitar.textContent =
+                    "Abrindo pagamento...";
+
+                // -----------------------------------------
+                // CHAMAR BACKEND
+                // -----------------------------------------
                 //
-                // IMPORTANTE:
+                // SOMENTE:
                 //
-                // Não enviamos:
+                // curso
+                // pedidoId
+                // usuarioId
                 //
-                // valor
-                // categoria
-                // descricao
-                //
-                // O backend é a fonte oficial.
-                // ---------------------------------------------
+                // O preço NÃO vem daqui.
+                // -----------------------------------------
 
                 const resposta =
                     await fetch(
@@ -524,70 +552,109 @@ if (botaoSolicitar) {
                                 "POST",
 
                             headers: {
-
                                 "Content-Type":
                                     "application/json"
-
                             },
 
                             body:
                                 JSON.stringify({
 
+                                    curso:
+                                        curso,
+
                                     pedidoId:
                                         pedidoId,
 
                                     usuarioId:
-                                        usuarioAtual.uid,
-
-                                    curso:
-                                        curso
+                                        usuarioAtual.uid
 
                                 })
-
                         }
                     );
 
-                // ---------------------------------------------
-                // VERIFICAR RESPOSTA
-                // ---------------------------------------------
+                // -----------------------------------------
+                // RESPOSTA DO SERVIDOR
+                // -----------------------------------------
 
-                if (!resposta.ok) {
+                const texto =
+                    await resposta.text();
 
-                    const texto =
-                        await resposta.text();
+                let dados;
+
+                try {
+
+                    dados =
+                        JSON.parse(texto);
+
+                }
+                catch (error) {
 
                     console.error(
-                        "Erro do servidor:",
+                        "Resposta inválida do servidor:",
                         texto
                     );
 
                     alert(
+                        "O servidor retornou uma resposta inválida."
+                    );
+
+                    botaoSolicitar.disabled =
+                        false;
+
+                    botaoSolicitar.textContent =
+                        textoOriginal;
+
+                    return;
+                }
+
+                if (!resposta.ok) {
+
+                    console.error(
+                        "Erro do servidor:",
+                        dados
+                    );
+
+                    alert(
+                        dados.erro ||
                         "Não foi possível iniciar o pagamento."
                     );
 
+                    botaoSolicitar.disabled =
+                        false;
+
+                    botaoSolicitar.textContent =
+                        textoOriginal;
+
                     return;
                 }
 
-                const dados =
-                    await resposta.json();
-
-                console.log(
-                    "Resposta do pagamento:",
-                    dados
-                );
-
-                // ---------------------------------------------
-                // REDIRECIONAR PARA STRIPE
-                // ---------------------------------------------
+                // -----------------------------------------
+                // VERIFICAR SESSION ID
+                // -----------------------------------------
 
                 if (!dados.id) {
 
-                    alert(
-                        "Sessão de pagamento não criada."
+                    console.error(
+                        "Session ID não recebido:",
+                        dados
                     );
+
+                    alert(
+                        "A sessão do Stripe não foi criada."
+                    );
+
+                    botaoSolicitar.disabled =
+                        false;
+
+                    botaoSolicitar.textContent =
+                        textoOriginal;
 
                     return;
                 }
+
+                // -----------------------------------------
+                // REDIRECIONAR STRIPE
+                // -----------------------------------------
 
                 const checkout =
                     await stripe.redirectToCheckout({
@@ -602,10 +669,20 @@ if (botaoSolicitar) {
                     checkout.error
                 ) {
 
+                    console.error(
+                        "Erro Stripe:",
+                        checkout.error
+                    );
+
                     alert(
                         checkout.error.message
                     );
 
+                    botaoSolicitar.disabled =
+                        false;
+
+                    botaoSolicitar.textContent =
+                        textoOriginal;
                 }
 
             }
@@ -620,19 +697,18 @@ if (botaoSolicitar) {
                     "Erro ao iniciar pagamento."
                 );
 
+                botaoSolicitar.disabled =
+                    false;
+
+                botaoSolicitar.textContent =
+                    "Comprar curso";
             }
 
         };
-
 }
 
 // =====================================================
-// AGENDAMENTO PRESENCIAL
-// =====================================================
-//
-// O curso já está pago.
-// O usuário somente escolhe data e horário.
-//
+// AGENDAR CURSO PRESENCIAL
 // =====================================================
 
 window.abrirAgendamento =
@@ -658,10 +734,7 @@ window.abrirAgendamento =
                     )
                 );
 
-            const curso =
-                resultado.val();
-
-            if (!curso) {
+            if (!resultado.exists()) {
 
                 alert(
                     "Curso não encontrado."
@@ -670,9 +743,12 @@ window.abrirAgendamento =
                 return;
             }
 
-            // ---------------------------------------------
+            const curso =
+                resultado.val();
+
+            // -----------------------------------------
             // VERIFICAR USUÁRIO
-            // ---------------------------------------------
+            // -----------------------------------------
 
             if (
                 curso.usuarioId !==
@@ -686,9 +762,9 @@ window.abrirAgendamento =
                 return;
             }
 
-            // ---------------------------------------------
+            // -----------------------------------------
             // VERIFICAR PAGAMENTO
-            // ---------------------------------------------
+            // -----------------------------------------
 
             if (
                 curso.pago !== true
@@ -701,9 +777,9 @@ window.abrirAgendamento =
                 return;
             }
 
-            // ---------------------------------------------
+            // -----------------------------------------
             // VERIFICAR CATEGORIA
-            // ---------------------------------------------
+            // -----------------------------------------
 
             const categoria =
                 curso.categoria ||
@@ -724,9 +800,9 @@ window.abrirAgendamento =
                 return;
             }
 
-            // ---------------------------------------------
-            // IMPEDIR NOVO AGENDAMENTO
-            // ---------------------------------------------
+            // -----------------------------------------
+            // IMPEDIR DUPLICAÇÃO
+            // -----------------------------------------
 
             if (
                 curso.agendamento
@@ -739,9 +815,9 @@ window.abrirAgendamento =
                 return;
             }
 
-            // ---------------------------------------------
+            // -----------------------------------------
             // DATA
-            // ---------------------------------------------
+            // -----------------------------------------
 
             const data =
                 prompt(
@@ -752,9 +828,9 @@ window.abrirAgendamento =
                 return;
             }
 
-            // ---------------------------------------------
+            // -----------------------------------------
             // HORÁRIO
-            // ---------------------------------------------
+            // -----------------------------------------
 
             const horario =
                 prompt(
@@ -765,18 +841,9 @@ window.abrirAgendamento =
                 return;
             }
 
-            // ---------------------------------------------
+            // -----------------------------------------
             // ENVIAR PARA BACKEND
-            // ---------------------------------------------
-            //
-            // O backend valida:
-            //
-            // - pedido
-            // - usuário
-            // - pagamento
-            // - categoria
-            //
-            // ---------------------------------------------
+            // -----------------------------------------
 
             const resposta =
                 await fetch(
@@ -788,10 +855,8 @@ window.abrirAgendamento =
                             "POST",
 
                         headers: {
-
                             "Content-Type":
                                 "application/json"
-
                         },
 
                         body:
@@ -810,7 +875,6 @@ window.abrirAgendamento =
                                     horario
 
                             })
-
                     }
                 );
 
@@ -836,7 +900,6 @@ window.abrirAgendamento =
                 "Curso agendado com sucesso."
             );
 
-            // Atualizar tela
             carregarCursosComprados();
 
         }
@@ -850,9 +913,7 @@ window.abrirAgendamento =
             alert(
                 "Não foi possível realizar o agendamento."
             );
-
         }
-
     };
 
 // =====================================================
@@ -887,5 +948,4 @@ if (botaoSair) {
             }
 
         };
-
 }
