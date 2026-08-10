@@ -1,19 +1,15 @@
-import { auth, db } from "./firebase.js";
+import { auth } from "./firebase.js";
 
 import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-import {
-    ref,
-    get
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
 // =====================================================
 // CONFIGURAÇÃO
 // =====================================================
 
-const API_URL = "https://plataforma-56gy.onrender.com";
+const API_URL =
+    "https://plataforma-56gy.onrender.com";
 
 // =====================================================
 // ELEMENTOS
@@ -72,15 +68,20 @@ function mostrarStatus(mensagem) {
 
 }
 
+// =====================================================
+
 function limparCursos() {
 
     if (cursosComprados) {
 
-        cursosComprados.innerHTML = "";
+        cursosComprados.innerHTML =
+            "";
 
     }
 
 }
+
+// =====================================================
 
 function criarElemento(
     tag,
@@ -127,7 +128,9 @@ function criarCardEAD(
             "Curso"
         );
 
-    card.appendChild(titulo);
+    card.appendChild(
+        titulo
+    );
 
     // =================================================
     // CATEGORIA
@@ -139,7 +142,9 @@ function criarCardEAD(
             "Categoria: EAD"
         );
 
-    card.appendChild(categoria);
+    card.appendChild(
+        categoria
+    );
 
     // =================================================
     // DESCRIÇÃO
@@ -152,7 +157,9 @@ function criarCardEAD(
             "Curso adquirido na plataforma."
         );
 
-    card.appendChild(descricao);
+    card.appendChild(
+        descricao
+    );
 
     // =================================================
     // PAGAMENTO
@@ -164,7 +171,9 @@ function criarCardEAD(
             "Pagamento confirmado."
         );
 
-    card.appendChild(pagamento);
+    card.appendChild(
+        pagamento
+    );
 
     // =================================================
     // VALOR
@@ -234,6 +243,28 @@ function criarCardEAD(
 
         card.appendChild(
             aviso
+        );
+
+    }
+
+    // =================================================
+    // USOS RESTANTES
+    // =================================================
+
+    if (
+        curso.usosRestantes !== undefined &&
+        curso.usosRestantes !== null
+    ) {
+
+        const usos =
+            criarElemento(
+                "p",
+                "Acessos restantes: " +
+                curso.usosRestantes
+            );
+
+        card.appendChild(
+            usos
         );
 
     }
@@ -313,9 +344,11 @@ function criarCardPresencial(
 
     cursosPresenciais.push({
 
-        id: id,
+        id:
+            id,
 
-        curso: curso
+        curso:
+            curso
 
     });
 
@@ -411,18 +444,64 @@ function criarCardPresencial(
     }
 
     // =================================================
-    // AVISO
+    // AGENDAMENTO
     // =================================================
 
-    const aviso =
-        criarElemento(
-            "p",
-            "Escolha abaixo a data e o horário da aula."
+    if (curso.agendamento) {
+
+        const agendamento =
+            curso.agendamento;
+
+        const aviso =
+            criarElemento(
+                "p",
+                "Curso já agendado."
+            );
+
+        card.appendChild(
+            aviso
         );
 
-    card.appendChild(
-        aviso
-    );
+        const data =
+            criarElemento(
+                "p",
+                "Data: " +
+                agendamento.data
+            );
+
+        const horario =
+            criarElemento(
+                "p",
+                "Horário: " +
+                agendamento.horario
+            );
+
+        card.appendChild(
+            data
+        );
+
+        card.appendChild(
+            horario
+        );
+
+    }
+    else {
+
+        const aviso =
+            criarElemento(
+                "p",
+                "Escolha abaixo a data e o horário da aula."
+            );
+
+        card.appendChild(
+            aviso
+        );
+
+    }
+
+    // =================================================
+    // ADICIONAR
+    // =================================================
 
     if (cursosComprados) {
 
@@ -431,6 +510,10 @@ function criarCardPresencial(
         );
 
     }
+
+    // =================================================
+    // MOSTRAR ÁREA PRESENCIAL
+    // =================================================
 
     if (areaPresencial) {
 
@@ -451,7 +534,9 @@ function mostrarCurso(
 ) {
 
     if (!curso) {
+
         return;
+
     }
 
     const categoria =
@@ -461,7 +546,8 @@ function mostrarCurso(
         ).toLowerCase();
 
     if (
-        categoria === "ead"
+        categoria ===
+        "ead"
     ) {
 
         criarCardEAD(
@@ -474,7 +560,8 @@ function mostrarCurso(
     }
 
     if (
-        categoria === "presencial"
+        categoria ===
+        "presencial"
     ) {
 
         criarCardPresencial(
@@ -509,6 +596,16 @@ async function verificarPagamento() {
 
     }
 
+    if (!usuarioAtual) {
+
+        mostrarStatus(
+            "Usuário ainda não identificado."
+        );
+
+        return;
+
+    }
+
     mostrarStatus(
         "Verificando pagamento..."
     );
@@ -516,31 +613,63 @@ async function verificarPagamento() {
     try {
 
         // =================================================
+        // MONTAR URL
+        // =================================================
+
+        const url =
+            API_URL +
+            "/verificar-pagamento?session_id=" +
+            encodeURIComponent(
+                sessionId
+            );
+
+        console.log(
+            "Consultando backend:",
+            url
+        );
+
+        // =================================================
         // CONSULTAR BACKEND
         // =================================================
 
         const resposta =
             await fetch(
+                url,
+                {
+                    method:
+                        "GET",
 
-                API_URL +
-                "/verificar-pagamento?session_id=" +
-                encodeURIComponent(
-                    sessionId
-                )
+                    headers: {
 
+                        "Accept":
+                            "application/json"
+
+                    }
+                }
             );
 
-        if (!resposta.ok) {
+        // =================================================
+        // LER RESPOSTA
+        // =================================================
 
-            throw new Error(
-                "Erro HTTP " +
-                resposta.status
-            );
+        let dados = null;
+
+        try {
+
+            dados =
+                await resposta.json();
+
+        }
+        catch {
+
+            dados = null;
 
         }
 
-        const dados =
-            await resposta.json();
+        console.log(
+            "HTTP:",
+            resposta.status
+        );
 
         console.log(
             "Resposta do backend:",
@@ -548,13 +677,31 @@ async function verificarPagamento() {
         );
 
         // =================================================
+        // ERRO HTTP
+        // =================================================
+
+        if (!resposta.ok) {
+
+            const mensagem =
+                dados?.detalhe ||
+                dados?.erro ||
+                "Erro HTTP " +
+                resposta.status;
+
+            throw new Error(
+                mensagem
+            );
+
+        }
+
+        // =================================================
         // PAGAMENTO NÃO CONFIRMADO
         // =================================================
 
-        if (!dados.pago) {
+        if (!dados?.pago) {
 
             mostrarStatus(
-                dados.mensagem ||
+                dados?.mensagem ||
                 "O pagamento ainda não foi confirmado."
             );
 
@@ -563,7 +710,7 @@ async function verificarPagamento() {
                 cursosComprados.innerHTML =
                     "<p>Status: " +
                     (
-                        dados.status ||
+                        dados?.status ||
                         "processando"
                     ) +
                     "</p>";
@@ -585,7 +732,14 @@ async function verificarPagamento() {
         ) {
 
             console.error(
-                "Pagamento pertence a outro usuário."
+                "Pagamento pertence a outro usuário.",
+                {
+                    pagamento:
+                        dados.usuarioId,
+
+                    usuarioAtual:
+                        usuarioAtual.uid
+                }
             );
 
             mostrarStatus(
@@ -597,7 +751,7 @@ async function verificarPagamento() {
         }
 
         // =================================================
-        // CURSO RECEBIDO DO BACKEND
+        // CURSO RECEBIDO
         // =================================================
 
         const curso = {
@@ -634,26 +788,47 @@ async function verificarPagamento() {
                 dados.senhaCurso ||
                 "",
 
+            usosRestantes:
+                dados.usosRestantes,
+
             dataPagamento:
                 dados.dataPagamento,
 
             pedidoId:
-                dados.pedidoId
+                dados.pedidoId,
+
+            agendamento:
+                dados.agendamento ||
+                null
 
         };
 
         // =================================================
-        // MOSTRAR
+        // LIMPAR
         // =================================================
 
         limparCursos();
 
         cursosPresenciais = [];
 
+        if (areaPresencial) {
+
+            areaPresencial.style.display =
+                "none";
+
+        }
+
+        // =================================================
+        // MOSTRAR
+        // =================================================
+
         mostrarCurso(
+
             curso,
+
             dados.pedidoId ||
             sessionId
+
         );
 
         // =================================================
@@ -683,9 +858,28 @@ async function verificarPagamento() {
 
         if (cursosComprados) {
 
-            cursosComprados.innerHTML =
-                "<p>Não foi possível confirmar o pagamento.</p>" +
-                "<p>Verifique se o servidor está online.</p>";
+            cursosComprados.innerHTML = "";
+
+            const titulo =
+                criarElemento(
+                    "p",
+                    "Não foi possível confirmar o pagamento."
+                );
+
+            const detalhe =
+                criarElemento(
+                    "p",
+                    erro.message ||
+                    "Erro desconhecido."
+                );
+
+            cursosComprados.appendChild(
+                titulo
+            );
+
+            cursosComprados.appendChild(
+                detalhe
+            );
 
         }
 
@@ -731,7 +925,7 @@ if (dataCurso) {
 }
 
 // =====================================================
-// AGENDAR CURSOS PRESENCIAIS
+// AGENDAR CURSO PRESENCIAL
 // =====================================================
 
 if (botaoAgendar) {
@@ -739,8 +933,19 @@ if (botaoAgendar) {
     botaoAgendar.onclick =
         async function () {
 
+            if (!usuarioAtual) {
+
+                alert(
+                    "Usuário não autenticado."
+                );
+
+                return;
+
+            }
+
             if (
-                cursosPresenciais.length === 0
+                cursosPresenciais.length ===
+                0
             ) {
 
                 alert(
@@ -781,56 +986,102 @@ if (botaoAgendar) {
 
             }
 
+            botaoAgendar.disabled =
+                true;
+
+            const textoOriginal =
+                botaoAgendar.textContent;
+
+            botaoAgendar.textContent =
+                "Agendando...";
+
             try {
+
+                // =================================================
+                // AGENDAR CADA CURSO PELO BACKEND
+                // =================================================
 
                 for (
                     const item
                     of cursosPresenciais
                 ) {
 
-                    await set(
+                    const resposta =
+                        await fetch(
+                            API_URL +
+                            "/agendar-curso",
+                            {
 
-                        ref(
-                            db,
-                            "agendamentos/" +
-                            item.id
-                        ),
+                                method:
+                                    "POST",
 
-                        {
+                                headers: {
 
-                            usuarioId:
-                                usuarioAtual.uid,
+                                    "Content-Type":
+                                        "application/json",
 
-                            pedidoId:
-                                item.id,
+                                    "Accept":
+                                        "application/json"
 
-                            curso:
-                                item.curso.curso,
+                                },
 
-                            categoria:
-                                "Presencial",
+                                body:
+                                    JSON.stringify({
 
-                            data:
-                                data,
+                                        pedidoId:
+                                            item.id,
 
-                            horario:
-                                horario,
+                                        usuarioId:
+                                            usuarioAtual.uid,
 
-                            status:
-                                "agendado",
+                                        data:
+                                            data,
 
-                            criadoEm:
-                                new Date()
-                                    .toISOString()
+                                        horario:
+                                            horario
 
-                        }
+                                    })
 
-                    );
+                            }
+                        );
+
+                    let dados =
+                        null;
+
+                    try {
+
+                        dados =
+                            await resposta.json();
+
+                    }
+                    catch {
+
+                        dados =
+                            null;
+
+                    }
+
+                    if (!resposta.ok) {
+
+                        throw new Error(
+
+                            dados?.erro ||
+                            dados?.detalhe ||
+                            "Erro HTTP " +
+                            resposta.status
+
+                        );
+
+                    }
 
                 }
 
+                // =================================================
+                // SUCESSO
+                // =================================================
+
                 mostrarStatus(
-                    "Pagamento confirmado e cursos presenciais agendados."
+                    "Pagamento confirmado e curso presencial agendado."
                 );
 
                 if (areaPresencial) {
@@ -841,7 +1092,7 @@ if (botaoAgendar) {
                     const titulo =
                         criarElemento(
                             "h2",
-                            "Cursos agendados"
+                            "Curso agendado"
                         );
 
                     areaPresencial.appendChild(
@@ -912,7 +1163,7 @@ if (botaoAgendar) {
                     const aviso =
                         criarElemento(
                             "p",
-                            "Os agendamentos foram salvos no sistema."
+                            "O agendamento foi salvo no sistema."
                         );
 
                     areaPresencial.appendChild(
@@ -930,8 +1181,18 @@ if (botaoAgendar) {
                 );
 
                 alert(
+                    erro.message ||
                     "Erro ao salvar o agendamento."
                 );
+
+            }
+            finally {
+
+                botaoAgendar.disabled =
+                    false;
+
+                botaoAgendar.textContent =
+                    textoOriginal;
 
             }
 
@@ -961,6 +1222,16 @@ onAuthStateChanged(
 
         usuarioAtual =
             usuario;
+
+        console.log(
+            "Usuário autenticado:",
+            usuario.uid
+        );
+
+        console.log(
+            "Stripe session:",
+            sessionId
+        );
 
         await verificarPagamento();
 
