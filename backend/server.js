@@ -87,8 +87,6 @@ if (getApps().length === 0) {
 
 }
 
-const db = getDatabase(firebaseApp);
-
 console.log("Firebase Admin inicializado.");
 console.log("Firebase Realtime Database conectado.");
 
