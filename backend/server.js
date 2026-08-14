@@ -53,12 +53,10 @@ const {
 } = require("firebase-admin/app");
 
 const {
-    getDatabase,
-    ref,
-    get,
-    set,
-    update
+    getDatabase
 } = require("firebase-admin/database");
+
+const db = getDatabase(firebaseApp);
 
 // ==========================================
 // SERVICE ACCOUNT A PARTIR DO .ENV
@@ -652,10 +650,7 @@ app.get(
             // BUSCAR PEDIDO
             // =================================================
 
-            const snapshot =
-                await get(
-                    pedidoRef
-                );
+        const snapshot = await pedidoRef.once("value");
 
             if (
                 snapshot.exists()
@@ -833,10 +828,7 @@ app.get(
             // SALVAR FIREBASE
             // =================================================
 
-            await set(
-                pedidoRef,
-                dadosCurso
-            );
+            await pedidoRef.set(dadosCurso);
 
             console.log(
                 "======================================"
@@ -1152,15 +1144,9 @@ app.post(
             // ATUALIZAR
             // =================================================
 
-            await update(
-                pedidoRef,
-                {
-
-                    usosRestantes:
-                        novosUsos
-
-                }
-            );
+            await pedidoRef.update({
+    usosRestantes: novosUsos
+});
 
             // =================================================
             // RETORNO
@@ -1254,12 +1240,9 @@ app.post(
             // PEDIDO
             // =================================================
 
-            const pedidoRef =
-                ref(
-                    db,
-                    "solicitacoes_cursos/" +
-                    pedidoId
-                );
+            const pedidoRef = db.ref(
+    "solicitacoes_cursos/" + pedidoId
+);
 
             const snapshot =
                 await get(
@@ -1546,11 +1529,9 @@ app.get(
                 typeof set
             );
 
-            const testeRef =
-                ref(
-                    db,
-                    "teste_servidor"
-                );
+               const testeRef = db.ref(
+    "teste_servidor"
+);
 
             await set(
                 testeRef,
