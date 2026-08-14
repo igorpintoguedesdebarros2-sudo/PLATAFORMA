@@ -42,9 +42,9 @@ if (
     process.exit(1);
 }
 
-// ==========================================
+// =====================================================
 // FIREBASE ADMIN
-// ==========================================
+// =====================================================
 
 const {
     getApps,
@@ -56,11 +56,64 @@ const {
     getDatabase
 } = require("firebase-admin/database");
 
-const db = getDatabase(firebaseApp);
+// =====================================================
+// CONFIGURAÇÕES FIREBASE
+// =====================================================
 
-// ==========================================
-// SERVICE ACCOUNT A PARTIR DO .ENV
-// ==========================================
+const FIREBASE_PROJECT_ID =
+    process.env.FIREBASE_PROJECT_ID;
+
+const FIREBASE_CLIENT_EMAIL =
+    process.env.FIREBASE_CLIENT_EMAIL;
+
+const FIREBASE_PRIVATE_KEY =
+    process.env.FIREBASE_PRIVATE_KEY
+        ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
+        : undefined;
+
+const FIREBASE_DATABASE_URL =
+    process.env.FIREBASE_DATABASE_URL;
+
+// =====================================================
+// VALIDAR FIREBASE
+// =====================================================
+
+if (
+    !FIREBASE_PROJECT_ID ||
+    !FIREBASE_CLIENT_EMAIL ||
+    !FIREBASE_PRIVATE_KEY ||
+    !FIREBASE_DATABASE_URL
+) {
+    console.error(
+        "ERRO: credenciais Firebase incompletas."
+    );
+
+    console.error(
+        "Verifique:"
+    );
+
+    console.error(
+        "FIREBASE_PROJECT_ID"
+    );
+
+    console.error(
+        "FIREBASE_CLIENT_EMAIL"
+    );
+
+    console.error(
+        "FIREBASE_PRIVATE_KEY"
+    );
+
+    console.error(
+        "FIREBASE_DATABASE_URL"
+    );
+
+    process.exit(1);
+}
+
+// =====================================================
+// SERVICE ACCOUNT
+// =====================================================
 
 const serviceAccount = {
     project_id: FIREBASE_PROJECT_ID,
@@ -68,9 +121,9 @@ const serviceAccount = {
     private_key: FIREBASE_PRIVATE_KEY
 };
 
-// ==========================================
-// INICIALIZAR FIREBASE
-// ==========================================
+// =====================================================
+// FIREBASE APP
+// =====================================================
 
 let firebaseApp;
 
@@ -81,14 +134,28 @@ if (getApps().length === 0) {
         databaseURL: FIREBASE_DATABASE_URL
     });
 
+    console.log(
+        "Firebase Admin inicializado."
+    );
+
 } else {
 
     firebaseApp = getApps()[0];
 
+    console.log(
+        "Firebase Admin já estava inicializado."
+    );
 }
 
-console.log("Firebase Admin inicializado.");
-console.log("Firebase Realtime Database conectado.");
+// =====================================================
+// FIREBASE DATABASE
+// =====================================================
+
+const db = getDatabase(firebaseApp);
+
+console.log(
+    "Firebase Realtime Database conectado."
+);
 
 // =====================================================
 // DIAGNÓSTICO FIREBASE
