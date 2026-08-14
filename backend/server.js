@@ -64,11 +64,9 @@ if (!FIREBASE_DATABASE_URL) {
 // =====================================================
 
 const serviceAccount = {
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY
-        .replace(/\\n/g, "\n")
-        .trim()
+    project_id: FIREBASE_PROJECT_ID,
+    client_email: FIREBASE_CLIENT_EMAIL,
+    private_key: FIREBASE_PRIVATE_KEY
 };
 
 initializeApp({
@@ -80,34 +78,27 @@ initializeApp({
 // VALIDAR CREDENCIAIS FIREBASE
 // =====================================================
 
+const FIREBASE_PROJECT_ID =
+    process.env.FIREBASE_PROJECT_ID?.trim();
+
+const FIREBASE_CLIENT_EMAIL =
+    process.env.FIREBASE_CLIENT_EMAIL?.trim();
+
+const FIREBASE_PRIVATE_KEY =
+    process.env.FIREBASE_PRIVATE_KEY
+        ?.replace(/\\n/g, "\n")
+        .trim();
+
 if (
-    !serviceAccount.project_id ||
-    !serviceAccount.client_email ||
-    !serviceAccount.private_key
+    !FIREBASE_PROJECT_ID ||
+    !FIREBASE_CLIENT_EMAIL ||
+    !FIREBASE_PRIVATE_KEY
 ) {
-
-    console.error(
-        "ERRO: credenciais Firebase incompletas."
-    );
-
-    console.error(
-        "Verifique as seguintes variáveis no .env:"
-    );
-
-    console.error(
-        "FIREBASE_PROJECT_ID"
-    );
-
-    console.error(
-        "FIREBASE_CLIENT_EMAIL"
-    );
-
-    console.error(
-        "FIREBASE_PRIVATE_KEY"
-    );
-
+    console.error("ERRO: credenciais Firebase incompletas.");
     process.exit(1);
 }
+
+console.log("Credenciais Firebase carregadas.");
 
 // =====================================================
 // FIREBASE ADMIN
