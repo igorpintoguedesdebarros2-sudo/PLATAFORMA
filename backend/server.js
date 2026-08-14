@@ -64,14 +64,17 @@ if (!FIREBASE_DATABASE_URL) {
 // =====================================================
 
 const serviceAccount = {
-    project_id: process.env.FIREBASE_PROJECT_ID,
-
-    client_email: process.env.FIREBASE_CLIENT_EMAIL,
-
-    private_key: process.env.FIREBASE_PRIVATE_KEY
-        ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
-        : undefined
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    privateKey: process.env.FIREBASE_PRIVATE_KEY
+        .replace(/\\n/g, "\n")
+        .trim()
 };
+
+initializeApp({
+    credential: cert(serviceAccount),
+    databaseURL: process.env.FIREBASE_DATABASE_URL
+});
 
 // =====================================================
 // VALIDAR CREDENCIAIS FIREBASE
