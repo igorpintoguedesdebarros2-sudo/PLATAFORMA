@@ -57,24 +57,6 @@ const {
 } = require("firebase-admin/database");
 
 // =====================================================
-// CONFIGURAÇÕES FIREBASE
-// =====================================================
-
-const FIREBASE_PROJECT_ID =
-    process.env.FIREBASE_PROJECT_ID;
-
-const FIREBASE_CLIENT_EMAIL =
-    process.env.FIREBASE_CLIENT_EMAIL;
-
-const FIREBASE_PRIVATE_KEY =
-    process.env.FIREBASE_PRIVATE_KEY
-        ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
-        : undefined;
-
-const FIREBASE_DATABASE_URL =
-    process.env.FIREBASE_DATABASE_URL;
-
-// =====================================================
 // VALIDAR FIREBASE
 // =====================================================
 
