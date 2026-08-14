@@ -1,250 +1,489 @@
 import {
     auth,
     db
-}
-from "./firebase.js";
-
-
+} from "./firebase.js";
 
 import {
     onAuthStateChanged,
     signOut
-}
-from
-"https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 import {
     ref,
-    get
-}
-from
-"https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    get,
+    onValue
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 
+/* =====================================================
+   AUTENTICAÇÃO
+===================================================== */
 
+onAuthStateChanged(auth, async (usuario) => {
 
+    if (!usuario) {
 
-onAuthStateChanged(
-    auth,
-    async(usuario)=>{
+        window.location.href = "index.html";
 
+        return;
+    }
 
-        if(!usuario){
+    console.log("Usuário autenticado:", usuario.uid);
 
+    try {
 
-            window.location = "index.html";
-
-
-            return;
-
-
-        }
-
-
-
-        const usuarioRef =
-        ref(
+        const usuarioRef = ref(
             db,
             "usuarios/" + usuario.uid
         );
 
+        const snapshot = await get(usuarioRef);
 
+        if (snapshot.exists()) {
 
-        const dados =
-        await get(usuarioRef);
+            const user = snapshot.val();
 
+            document.getElementById("nome").textContent =
+                user.nome ||
+                usuario.displayName ||
+                "Usuário";
 
+            document.getElementById("email").textContent =
+                user.email ||
+                usuario.email ||
+                "";
 
-        if(dados.exists()){
+        } else {
 
+            document.getElementById("nome").textContent =
+                usuario.displayName ||
+                "Usuário";
 
-            const user =
-            dados.val();
-
-
-
-            document
-            .getElementById("nome")
-            .innerHTML =
-            user.nome || usuario.displayName;
-
-
-
-            document
-            .getElementById("email")
-            .innerHTML =
-            user.email || usuario.email;
-
-
-
-            carregarCursos(user.cursos);
-
-
-
-            carregarPagamentos(user.pagamentos);
-
-
-
-        }
-        else{
-
-
-            document
-            .getElementById("nome")
-            .innerHTML =
-            usuario.displayName || "Usuário";
-
-
-
-            document
-            .getElementById("email")
-            .innerHTML =
-            usuario.email;
-
-
+            document.getElementById("email").textContent =
+                usuario.email ||
+                "";
 
         }
 
+        /*
+         * IMPORTANTE:
+         * Os pagamentos confirmados pelo servidor
+         * ficam inicialmente em:
+         *
+         * solicitacoes_cursos/{pedidoId}
+         *
+         * Portanto carregamos diretamente essa coleção
+         * e filtramos pelo UID do usuário.
+         */
 
+        carregarCursosEPagamentos(usuario.uid);
 
     }
-);
+    catch (error) {
 
-
-
-
-
-
-
-function carregarCursos(cursos){
-
-
-    const tabela =
-    document.getElementById("cursos");
-
-
-
-    if(!tabela) return;
-
-
-
-    tabela.innerHTML = "";
-
-
-
-    if(!cursos){
-
-
-        tabela.innerHTML =
-        "<tr><td>Nenhum curso realizado</td></tr>";
-
-
-        return;
-
+        console.error(
+            "Erro ao carregar perfil:",
+            error
+        );
 
     }
 
+});
 
 
-    Object.values(cursos)
-    .forEach((curso)=>{
+/* =====================================================
+   CARREGAR CURSOS E PAGAMENTOS
+===================================================== */
+
+function carregarCursosEPagamentos(usuarioId) {
+
+    const solicitacoesRef = ref(
+        db,
+        "solicitacoes_cursos"
+    );
+
+    onValue(
+        solicitacoesRef,
+        (snapshot) => {
+
+            const dados = snapshot.val();
+
+            console.log(
+                "Dados de solicitacoes_cursos:",
+                dados
+            );
+
+            const cursos = [];
+            const pagamentos = [];
+
+            if (dados) {
+
+                Object.entries(dados)
+                .forEach(([pedidoId, pedido]) => {
+
+                    if (!pedido) {
+                        return;
+                    }
+
+                    /*
+                     * Só mostra pedidos do usuário
+                     * atualmente autenticado.
+                     */
+
+                    if (
+                        String(pedido.usuarioId) !==
+                        String(usuarioId)
+                    ) {
+
+                        return;
+                    }
 
 
-        tabela.innerHTML += `
+                    /* =====================================
+                       CURSO PAGO
+                    ===================================== */
 
-        <tr>
+                    if (
+                        pedido.pago === true
+                    ) {
 
-        <td>${curso.nome}</td>
+                        cursos.push({
 
-        <td>${curso.status}</td>
+                            pedidoId:
+                                pedidoId,
 
-        </tr>
+                            nome:
+                                pedido.curso ||
+                                "Curso",
 
-        `;
+                            status:
+                                pedido.status ||
+                                "liberado",
+
+                            categoria:
+                                pedido.categoria ||
+                                "",
+
+                            linkCurso:
+                                pedido.linkCurso ||
+                                "",
+
+                            senhaCurso:
+                                pedido.senhaCurso ||
+                                null,
+
+                            usosRestantes:
+                                pedido.usosRestantes ??
+                                null
+
+                        });
 
 
-    });
+                        /* =================================
+                           PAGAMENTO
+                        ================================= */
 
+                        pagamentos.push({
+
+                            pedidoId:
+                                pedidoId,
+
+                            curso:
+                                pedido.curso ||
+                                "Curso",
+
+                            valor:
+                                pedido.valor ??
+                                0,
+
+                            data:
+                                pedido.dataPagamento ||
+                                ""
+
+                        });
+
+                    }
+
+                });
+
+            }
+
+
+            /*
+             * Mostrar na tela
+             */
+
+            carregarCursos(cursos);
+
+            carregarPagamentos(pagamentos);
+
+        },
+        (error) => {
+
+            console.error(
+                "Erro ao carregar cursos/pagamentos:",
+                error
+            );
+
+        }
+    );
 
 }
 
 
+/* =====================================================
+   CURSOS
+===================================================== */
 
-
-
-
-
-function carregarPagamentos(pagamentos){
-
+function carregarCursos(cursos) {
 
     const tabela =
-    document.getElementById("pagamentos");
+        document.getElementById("cursos");
 
+    if (!tabela) {
 
+        console.warn(
+            "Elemento #cursos não encontrado."
+        );
 
-    if(!tabela) return;
-
-
+        return;
+    }
 
     tabela.innerHTML = "";
 
 
+    if (
+        !cursos ||
+        cursos.length === 0
+    ) {
 
-    if(!pagamentos){
-
-
-        tabela.innerHTML =
-        "<tr><td>Nenhum pagamento encontrado</td></tr>";
-
+        tabela.innerHTML = `
+            <tr>
+                <td colspan="4">
+                    Nenhum curso realizado
+                </td>
+            </tr>
+        `;
 
         return;
-
-
     }
 
 
+    cursos.forEach((curso) => {
 
-    Object.values(pagamentos)
-    .forEach((pagamento)=>{
+        const linha =
+            document.createElement("tr");
 
 
-        tabela.innerHTML += `
+        const nome =
+            document.createElement("td");
 
-        <tr>
+        nome.textContent =
+            curso.nome;
 
-        <td>${pagamento.curso}</td>
 
-        <td>R$ ${pagamento.valor}</td>
+        const status =
+            document.createElement("td");
 
-        <td>${pagamento.data}</td>
+        status.textContent =
+            curso.status;
 
-        </tr>
 
-        `;
+        const categoria =
+            document.createElement("td");
 
+        categoria.textContent =
+            curso.categoria ||
+            "-";
+
+
+        const acesso =
+            document.createElement("td");
+
+
+        if (curso.linkCurso) {
+
+            const link =
+                document.createElement("a");
+
+            link.href =
+                curso.linkCurso;
+
+            link.target =
+                "_blank";
+
+            link.rel =
+                "noopener noreferrer";
+
+            link.textContent =
+                "Acessar curso";
+
+            acesso.appendChild(link);
+
+        }
+        else {
+
+            acesso.textContent =
+                "Sem link";
+
+        }
+
+
+        linha.appendChild(nome);
+        linha.appendChild(status);
+        linha.appendChild(categoria);
+        linha.appendChild(acesso);
+
+
+        tabela.appendChild(linha);
 
     });
-
 
 }
 
 
+/* =====================================================
+   PAGAMENTOS
+===================================================== */
+
+function carregarPagamentos(pagamentos) {
+
+    const tabela =
+        document.getElementById("pagamentos");
+
+    if (!tabela) {
+
+        console.warn(
+            "Elemento #pagamentos não encontrado."
+        );
+
+        return;
+    }
+
+    tabela.innerHTML = "";
 
 
+    if (
+        !pagamentos ||
+        pagamentos.length === 0
+    ) {
+
+        tabela.innerHTML = `
+            <tr>
+                <td colspan="3">
+                    Nenhum pagamento encontrado
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
 
 
+    pagamentos.forEach((pagamento) => {
 
-document
-.getElementById("sair")
-.onclick = ()=>{
-
-
-    signOut(auth);
+        const linha =
+            document.createElement("tr");
 
 
-    window.location = "index.html";
+        const curso =
+            document.createElement("td");
+
+        curso.textContent =
+            pagamento.curso;
 
 
-};
+        const valor =
+            document.createElement("td");
+
+        const valorNumerico =
+            Number(pagamento.valor);
+
+
+        valor.textContent =
+            Number.isFinite(valorNumerico)
+                ? `R$ ${valorNumerico.toFixed(2).replace(".", ",")}`
+                : "R$ 0,00";
+
+
+        const data =
+            document.createElement("td");
+
+
+        if (pagamento.data) {
+
+            const dataObj =
+                new Date(pagamento.data);
+
+
+            if (!isNaN(dataObj.getTime())) {
+
+                data.textContent =
+                    dataObj.toLocaleString(
+                        "pt-BR"
+                    );
+
+            }
+            else {
+
+                data.textContent =
+                    pagamento.data;
+
+            }
+
+        }
+        else {
+
+            data.textContent =
+                "-";
+
+        }
+
+
+        linha.appendChild(curso);
+        linha.appendChild(valor);
+        linha.appendChild(data);
+
+
+        tabela.appendChild(linha);
+
+    });
+
+}
+
+
+/* =====================================================
+   SAIR
+===================================================== */
+
+const botaoSair =
+    document.getElementById("sair");
+
+
+if (botaoSair) {
+
+    botaoSair.addEventListener(
+        "click",
+        async () => {
+
+            try {
+
+                await signOut(auth);
+
+                window.location.href =
+                    "index.html";
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Erro ao sair:",
+                    error
+                );
+
+            }
+
+        }
+    );
+
+}
