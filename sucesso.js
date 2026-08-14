@@ -1,39 +1,61 @@
 import { auth, db } from "./firebase.js";
 
 import {
-onAuthStateChanged
+    onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 import {
-ref,
-onValue,
-set
+    ref,
+    onValue,
+    set,
+    query,
+    orderByChild,
+    equalTo
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
 
 // =====================================================
 // ELEMENTOS DA PÁGINA
 // =====================================================
 
-const statusPagamento = document.getElementById("statusPagamento");
-const cursosComprados = document.getElementById("cursosComprados");
-const areaPresencial = document.getElementById("areaPresencial");
-const dataCurso = document.getElementById("dataCurso");
-const horarioCurso = document.getElementById("horarioCurso");
-const botaoAgendar = document.getElementById("agendarCurso");
+const statusPagamento =
+    document.getElementById("statusPagamento");
+
+const cursosComprados =
+    document.getElementById("cursosComprados");
+
+const areaPresencial =
+    document.getElementById("areaPresencial");
+
+const dataCurso =
+    document.getElementById("dataCurso");
+
+const horarioCurso =
+    document.getElementById("horarioCurso");
+
+const botaoAgendar =
+    document.getElementById("agendarCurso");
+
 
 // =====================================================
 // SESSION ID DA STRIPE
 // =====================================================
 
-const parametros = new URLSearchParams(window.location.search);
-const sessionId = parametros.get("session_id");
+const parametros =
+    new URLSearchParams(window.location.search);
+
+const sessionId =
+    parametros.get("session_id");
+
 
 // =====================================================
 // ESTADO
 // =====================================================
 
 let usuarioAtual = null;
+
 let cursosPresenciais = [];
+
 
 // =====================================================
 // VERIFICAR SESSION ID
@@ -41,228 +63,411 @@ let cursosPresenciais = [];
 
 if (!sessionId) {
 
-if (statusPagamento) {
-    statusPagamento.textContent =
-        "Não foi possível identificar o pagamento.";
-}
-if (cursosComprados) {
-    cursosComprados.innerHTML =
-        "<p>Sessão de pagamento não encontrada.</p>";
+    if (statusPagamento) {
+        statusPagamento.textContent =
+            "Não foi possível identificar o pagamento.";
+    }
+
+    if (cursosComprados) {
+        cursosComprados.innerHTML =
+            "<p>Sessão de pagamento não encontrada.</p>";
+    }
 }
 
-}
 
 // =====================================================
 // AUTENTICAÇÃO
 // =====================================================
 
-onAuthStateChanged(auth, (usuario) => {
+onAuthStateChanged(
+    auth,
+    (usuario) => {
 
-if (!usuario) {
-    if (statusPagamento) {
-        statusPagamento.textContent =
-            "Usuário não autenticado.";
-    }
-    return;
-}
-usuarioAtual = usuario;
-if (sessionId) {
-    procurarPagamento();
-}
+        if (!usuario) {
 
-});
-
-// =====================================================
-// PROCURAR PAGAMENTO NO FIREBASE
-// =====================================================
-
-function procurarPagamento() {
-
-if (!usuarioAtual || !sessionId) {
-    return;
-}
-onValue(
-    ref(db, "solicitacoes_cursos"),
-    (snapshot) => {
-        let encontrou = false;
-        cursosPresenciais = [];
-        if (cursosComprados) {
-            cursosComprados.innerHTML = "";
-        }
-        snapshot.forEach((item) => {
-            const curso = item.val();
-            const id = item.key;
-            if (!curso) {
-                return;
-            }
-            // Verifica o usuário
-            if (curso.usuarioId !== usuarioAtual.uid) {
-                return;
-            }
-            // Verifica a sessão Stripe
-            if (curso.pagamentoId !== sessionId) {
-                return;
-            }
-            // Só mostra curso realmente liberado
-            if (curso.status !== "liberado") {
-                return;
-            }
-            encontrou = true;
-            mostrarCurso(curso, id);
-        });
-        // =================================================
-        // RESULTADO
-        // =================================================
-        if (encontrou) {
             if (statusPagamento) {
                 statusPagamento.textContent =
-                    "Pagamento confirmado.";
+                    "Usuário não autenticado.";
             }
-        } else {
-            if (statusPagamento) {
-                statusPagamento.textContent =
-                    "Pagamento recebido. Aguardando confirmação do servidor...";
-            }
-            if (cursosComprados) {
-                cursosComprados.innerHTML = `
-                    <p>
-                        O pagamento está sendo processado.
-                    </p>
-                    <p>
-                        Aguarde alguns segundos e atualize a página.
-                    </p>
-                `;
-            }
+
+            return;
         }
-    },
-    (error) => {
-        console.error(
-            "Erro ao consultar pagamento:",
-            error
-        );
-        if (statusPagamento) {
-            statusPagamento.textContent =
-                "Erro ao consultar o pagamento.";
+
+        usuarioAtual = usuario;
+
+        if (sessionId) {
+            procurarPagamento();
         }
     }
 );
 
+
+// =====================================================
+// PROCURAR PAGAMENTO
+// =====================================================
+
+function procurarPagamento() {
+
+    if (!usuarioAtual || !sessionId) {
+        return;
+    }
+
+
+    /*
+     * IMPORTANTE:
+     *
+     * A consulta agora é filtrada pelo usuarioId.
+     *
+     * Isso permite que as Rules de produção
+     * controlem o acesso corretamente.
+     */
+
+    const consulta = query(
+        ref(db, "solicitacoes_cursos"),
+        orderByChild("usuarioId"),
+        equalTo(usuarioAtual.uid)
+    );
+
+
+    onValue(
+        consulta,
+        (snapshot) => {
+
+            let encontrou = false;
+
+            cursosPresenciais = [];
+
+
+            if (cursosComprados) {
+                cursosComprados.innerHTML = "";
+            }
+
+
+            snapshot.forEach(
+                (item) => {
+
+                    const curso =
+                        item.val();
+
+                    const id =
+                        item.key;
+
+
+                    if (!curso) {
+                        return;
+                    }
+
+
+                    /*
+                     * A consulta já filtra pelo usuário.
+                     *
+                     * Ainda fazemos esta verificação
+                     * no código como camada adicional.
+                     */
+
+                    if (
+                        curso.usuarioId !==
+                        usuarioAtual.uid
+                    ) {
+                        return;
+                    }
+
+
+                    /*
+                     * Verifica se o pagamento
+                     * corresponde à sessão atual
+                     * da Stripe.
+                     */
+
+                    if (
+                        curso.pagamentoId !==
+                        sessionId
+                    ) {
+                        return;
+                    }
+
+
+                    /*
+                     * Somente cursos liberados
+                     * depois da confirmação do pagamento.
+                     */
+
+                    if (
+                        curso.status !==
+                        "liberado"
+                    ) {
+                        return;
+                    }
+
+
+                    encontrou = true;
+
+
+                    mostrarCurso(
+                        curso,
+                        id
+                    );
+                }
+            );
+
+
+            // =================================================
+            // RESULTADO
+            // =================================================
+
+            if (encontrou) {
+
+                if (statusPagamento) {
+                    statusPagamento.textContent =
+                        "Pagamento confirmado.";
+                }
+
+            } else {
+
+                if (statusPagamento) {
+                    statusPagamento.textContent =
+                        "Pagamento recebido. Aguardando confirmação do servidor...";
+                }
+
+                if (cursosComprados) {
+
+                    cursosComprados.innerHTML = `
+                        <p>
+                            O pagamento está sendo processado.
+                        </p>
+
+                        <p>
+                            Aguarde alguns segundos e atualize a página.
+                        </p>
+                    `;
+                }
+            }
+        },
+
+        (error) => {
+
+            console.error(
+                "Erro ao consultar pagamento:",
+                error
+            );
+
+            if (statusPagamento) {
+                statusPagamento.textContent =
+                    "Erro ao consultar o pagamento.";
+            }
+
+            if (cursosComprados) {
+                cursosComprados.innerHTML = `
+                    <p>
+                        Não foi possível consultar
+                        os dados do pagamento.
+                    </p>
+                `;
+            }
+        }
+    );
 }
+
 
 // =====================================================
 // MOSTRAR CURSO
 // =====================================================
 
-function mostrarCurso(curso, id) {
+function mostrarCurso(
+    curso,
+    id
+) {
 
-const categoria =
-    curso.categoria || "EAD";
-const descricao =
-    curso.descricao ||
-    "Curso adquirido na plataforma.";
-const categoriaNormalizada =
-    categoria.trim().toLowerCase();
-// =================================================
-// CURSO EAD
-// =================================================
-if (categoriaNormalizada === "ead") {
-    let senha = curso.senhaAcesso;
-    // -------------------------------------------------
-    // Se ainda não existe senha, cria uma.
-    // -------------------------------------------------
-    if (!senha) {
-        senha = gerarSenhaUnica();
-        salvarSenha(id, senha);
+    const categoria =
+        curso.categoria || "EAD";
+
+
+    const descricao =
+        curso.descricao ||
+        "Curso adquirido na plataforma.";
+
+
+    const categoriaNormalizada =
+        categoria
+            .trim()
+            .toLowerCase();
+
+
+    // =================================================
+    // CURSO EAD
+    // =================================================
+
+    if (
+        categoriaNormalizada ===
+        "ead"
+    ) {
+
+        let senha =
+            curso.senhaAcesso;
+
+
+        /*
+         * Se o servidor ainda não criou
+         * uma senha, criamos uma.
+         */
+
+        if (!senha) {
+
+            senha =
+                gerarSenhaUnica();
+
+            salvarSenha(
+                id,
+                senha
+            );
+        }
+
+
+        const link =
+            curso.linkCurso || "";
+
+
+        if (cursosComprados) {
+
+            let html = `
+
+                <div class="curso-card">
+
+                    <h3>
+                        ${escaparHTML(curso.curso)}
+                    </h3>
+
+                    <p>
+                        <strong>Categoria:</strong>
+                        EAD
+                    </p>
+
+                    <p>
+                        ${escaparHTML(descricao)}
+                    </p>
+
+                    <p>
+                        <strong>Pagamento:</strong>
+                        Confirmado
+                    </p>
+
+                    <p>
+                        <strong>Senha de acesso:</strong>
+                        ${escaparHTML(senha)}
+                    </p>
+
+                    <p>
+                        Utilize essa senha para acessar
+                        o curso.
+                    </p>
+            `;
+
+
+            if (link) {
+
+                html += `
+
+                    <a
+                        href="${escaparAtributo(link)}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+
+                        <button type="button">
+                            Acessar curso
+                        </button>
+
+                    </a>
+
+                `;
+
+            } else {
+
+                html += `
+
+                    <p>
+                        O link do curso ainda não foi configurado.
+                    </p>
+
+                `;
+            }
+
+
+            html += `
+
+                </div>
+
+            `;
+
+
+            cursosComprados.innerHTML +=
+                html;
+        }
+
+
+        return;
     }
-    const link =
-        curso.linkCurso || "#";
-    if (cursosComprados) {
-        cursosComprados.innerHTML += `
-            <div class="curso-card">
-                <h3>
-                    ${escaparHTML(curso.curso)}
-                </h3>
-                <p>
-                    <strong>Categoria:</strong>
-                    EAD
-                </p>
-                <p>
-                    ${escaparHTML(descricao)}
-                </p>
-                <p>
-                    <strong>Pagamento:</strong>
-                    Confirmado
-                </p>
-                <p>
-                    <strong>Senha de acesso:</strong>
-                    ${escaparHTML(senha)}
-                </p>
-                <p>
-                    Utilize essa senha para acessar
-                    o curso.
-                </p>
-                ${
-                    link !== "#"
-                        ? `
-                            <a
-                                href="${escaparAtributo(link)}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                <button type="button">
-                                    Acessar curso
-                                </button>
-                            </a>
-                        `
-                        : `
-                            <p>
-                                O link do curso ainda não foi configurado.
-                            </p>
-                        `
-                }
-            </div>
-        `;
-    }
-    return;
-}
-// =================================================
-// CURSO PRESENCIAL
-// =================================================
-if (categoriaNormalizada === "presencial") {
-    cursosPresenciais.push({
-        ...curso,
-        id: id
-    });
-    if (cursosComprados) {
-        cursosComprados.innerHTML += `
-            <div class="curso-card">
-                <h3>
-                    ${escaparHTML(curso.curso)}
-                </h3>
-                <p>
-                    <strong>Categoria:</strong>
-                    Presencial
-                </p>
-                <p>
-                    ${escaparHTML(descricao)}
-                </p>
-                <p>
-                    <strong>Pagamento:</strong>
-                    Confirmado
-                </p>
-                <p>
-                    Escolha abaixo a data e o horário
-                    da aula.
-                </p>
-            </div>
-        `;
-    }
-    if (areaPresencial) {
-        areaPresencial.style.display = "block";
+
+
+    // =================================================
+    // CURSO PRESENCIAL
+    // =================================================
+
+    if (
+        categoriaNormalizada ===
+        "presencial"
+    ) {
+
+        cursosPresenciais.push({
+
+            ...curso,
+
+            id: id
+        });
+
+
+        if (cursosComprados) {
+
+            cursosComprados.innerHTML += `
+
+                <div class="curso-card">
+
+                    <h3>
+                        ${escaparHTML(curso.curso)}
+                    </h3>
+
+                    <p>
+                        <strong>Categoria:</strong>
+                        Presencial
+                    </p>
+
+                    <p>
+                        ${escaparHTML(descricao)}
+                    </p>
+
+                    <p>
+                        <strong>Pagamento:</strong>
+                        Confirmado
+                    </p>
+
+                    <p>
+                        Escolha abaixo a data
+                        e o horário da aula.
+                    </p>
+
+                </div>
+
+            `;
+        }
+
+
+        if (areaPresencial) {
+            areaPresencial.style.display =
+                "block";
+        }
     }
 }
 
-}
 
 // =====================================================
 // GERAR SENHA ÚNICA
@@ -270,44 +475,67 @@ if (categoriaNormalizada === "presencial") {
 
 function gerarSenhaUnica() {
 
-const caracteres =
-    "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-let senha = "";
-for (let i = 0; i < 10; i++) {
-    const indice =
-        Math.floor(
-            Math.random() * caracteres.length
-        );
-    senha += caracteres[indice];
-}
-return senha;
+    const caracteres =
+        "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
 
+
+    let senha = "";
+
+
+    for (
+        let i = 0;
+        i < 10;
+        i++
+    ) {
+
+        const indice =
+            Math.floor(
+                Math.random() *
+                caracteres.length
+            );
+
+
+        senha +=
+            caracteres[indice];
+    }
+
+
+    return senha;
 }
+
 
 // =====================================================
 // SALVAR SENHA DO EAD
 // =====================================================
 
-async function salvarSenha(id, senha) {
+async function salvarSenha(
+    id,
+    senha
+) {
 
-try {
-    await set(
-        ref(
-            db,
-            "solicitacoes_cursos/" +
-            id +
-            "/senhaAcesso"
-        ),
-        senha
-    );
-} catch (error) {
-    console.error(
-        "Erro ao salvar senha:",
-        error
-    );
+    try {
+
+        await set(
+
+            ref(
+                db,
+                "solicitacoes_cursos/" +
+                id +
+                "/senhaAcesso"
+            ),
+
+            senha
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Erro ao salvar senha:",
+            error
+        );
+    }
 }
 
-}
 
 // =====================================================
 // CONFIGURAR DATA MÍNIMA
@@ -315,21 +543,36 @@ try {
 
 if (dataCurso) {
 
-const hoje = new Date();
-const ano =
-    hoje.getFullYear();
-const mes =
-    String(
-        hoje.getMonth() + 1
-    ).padStart(2, "0");
-const dia =
-    String(
-        hoje.getDate()
-    ).padStart(2, "0");
-dataCurso.min =
-    `${ano}-${mes}-${dia}`;
+    const hoje =
+        new Date();
 
+
+    const ano =
+        hoje.getFullYear();
+
+
+    const mes =
+        String(
+            hoje.getMonth() + 1
+        ).padStart(
+            2,
+            "0"
+        );
+
+
+    const dia =
+        String(
+            hoje.getDate()
+        ).padStart(
+            2,
+            "0"
+        );
+
+
+    dataCurso.min =
+        `${ano}-${mes}-${dia}`;
 }
+
 
 // =====================================================
 // AGENDAR CURSOS PRESENCIAIS
@@ -337,144 +580,215 @@ dataCurso.min =
 
 if (botaoAgendar) {
 
-botaoAgendar.onclick = async () => {
-    // -------------------------------------------------
-    // Verificar usuário
-    // -------------------------------------------------
-    if (!usuarioAtual) {
-        alert(
-            "Usuário não autenticado."
-        );
-        return;
-    }
-    // -------------------------------------------------
-    // Verificar cursos
-    // -------------------------------------------------
-    if (cursosPresenciais.length === 0) {
-        alert(
-            "Nenhum curso presencial encontrado."
-        );
-        return;
-    }
-    // -------------------------------------------------
-    // Data
-    // -------------------------------------------------
-    const data =
-        dataCurso
-            ? dataCurso.value
-            : "";
-    // -------------------------------------------------
-    // Horário
-    // -------------------------------------------------
-    const horario =
-        horarioCurso
-            ? horarioCurso.value
-            : "";
-    if (!data) {
-        alert(
-            "Selecione uma data."
-        );
-        return;
-    }
-    if (!horario) {
-        alert(
-            "Selecione um horário."
-        );
-        return;
-    }
-    try {
-        // -------------------------------------------------
-        // Salvar cada curso presencial
-        // -------------------------------------------------
-        for (
-            const curso
-            of cursosPresenciais
-        ) {
-            await set(
-                ref(
-                    db,
-                    "agendamentos/" +
-                    curso.id
-                ),
-                {
-                    usuarioId:
-                        usuarioAtual.uid,
-                    pedidoId:
-                        curso.id,
-                    curso:
-                        curso.curso,
-                    categoria:
-                        "Presencial",
-                    data:
-                        data,
-                    horario:
-                        horario,
-                    status:
-                        "agendado",
-                    criadoEm:
-                        new Date().toISOString()
-                }
-            );
-        }
-        // -------------------------------------------------
-        // Atualizar status
-        // -------------------------------------------------
-        if (statusPagamento) {
-            statusPagamento.textContent =
-                "Pagamento confirmado e cursos presenciais agendados.";
-        }
-        // -------------------------------------------------
-        // Mostrar confirmação
-        // -------------------------------------------------
-        if (areaPresencial) {
-            let html = `
-                <h2>
-                    Cursos agendados
-                </h2>
-            `;
-            cursosPresenciais.forEach(
-                (curso) => {
-                    html += `
-                        <div class="curso-card">
-                            <h3>
-                                ${escaparHTML(curso.curso)}
-                            </h3>
-                            <p>
-                                <strong>Data:</strong>
-                                ${escaparHTML(data)}
-                            </p>
-                            <p>
-                                <strong>Horário:</strong>
-                                ${escaparHTML(horario)}
-                            </p>
-                            <p>
-                                Agendamento salvo com sucesso.
-                            </p>
-                        </div>
-                    `;
-                }
-            );
-            html += `
-                <p>
-                    O agendamento foi registrado
-                    na plataforma.
-                </p>
-            `;
-            areaPresencial.innerHTML =
-                html;
-        }
-    } catch (error) {
-        console.error(
-            "Erro ao agendar:",
-            error
-        );
-        alert(
-            "Erro ao salvar o agendamento."
-        );
-    }
-};
+    botaoAgendar.onclick =
+        async () => {
 
+            // =============================================
+            // VERIFICAR USUÁRIO
+            // =============================================
+
+            if (!usuarioAtual) {
+
+                alert(
+                    "Usuário não autenticado."
+                );
+
+                return;
+            }
+
+
+            // =============================================
+            // VERIFICAR CURSOS
+            // =============================================
+
+            if (
+                cursosPresenciais.length === 0
+            ) {
+
+                alert(
+                    "Nenhum curso presencial encontrado."
+                );
+
+                return;
+            }
+
+
+            // =============================================
+            // DATA
+            // =============================================
+
+            const data =
+                dataCurso
+                    ? dataCurso.value
+                    : "";
+
+
+            // =============================================
+            // HORÁRIO
+            // =============================================
+
+            const horario =
+                horarioCurso
+                    ? horarioCurso.value
+                    : "";
+
+
+            if (!data) {
+
+                alert(
+                    "Selecione uma data."
+                );
+
+                return;
+            }
+
+
+            if (!horario) {
+
+                alert(
+                    "Selecione um horário."
+                );
+
+                return;
+            }
+
+
+            // =============================================
+            // SALVAR AGENDAMENTOS
+            // =============================================
+
+            try {
+
+                for (
+                    const curso
+                    of cursosPresenciais
+                ) {
+
+                    await set(
+
+                        ref(
+                            db,
+                            "agendamentos/" +
+                            curso.id
+                        ),
+
+                        {
+
+                            usuarioId:
+                                usuarioAtual.uid,
+
+                            pedidoId:
+                                curso.id,
+
+                            curso:
+                                curso.curso,
+
+                            categoria:
+                                "Presencial",
+
+                            data:
+                                data,
+
+                            horario:
+                                horario,
+
+                            status:
+                                "agendado",
+
+                            criadoEm:
+                                new Date()
+                                    .toISOString()
+                        }
+                    );
+                }
+
+
+                // =========================================
+                // STATUS
+                // =========================================
+
+                if (statusPagamento) {
+
+                    statusPagamento.textContent =
+                        "Pagamento confirmado e cursos presenciais agendados.";
+                }
+
+
+                // =========================================
+                // CONFIRMAÇÃO
+                // =========================================
+
+                if (areaPresencial) {
+
+                    let html = `
+
+                        <h2>
+                            Cursos agendados
+                        </h2>
+
+                    `;
+
+
+                    cursosPresenciais.forEach(
+                        (curso) => {
+
+                            html += `
+
+                                <div class="curso-card">
+
+                                    <h3>
+                                        ${escaparHTML(curso.curso)}
+                                    </h3>
+
+                                    <p>
+                                        <strong>Data:</strong>
+                                        ${escaparHTML(data)}
+                                    </p>
+
+                                    <p>
+                                        <strong>Horário:</strong>
+                                        ${escaparHTML(horario)}
+                                    </p>
+
+                                    <p>
+                                        Agendamento salvo com sucesso.
+                                    </p>
+
+                                </div>
+
+                            `;
+                        }
+                    );
+
+
+                    html += `
+
+                        <p>
+                            O agendamento foi registrado
+                            na plataforma.
+                        </p>
+
+                    `;
+
+
+                    areaPresencial.innerHTML =
+                        html;
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Erro ao agendar:",
+                    error
+                );
+
+                alert(
+                    "Erro ao salvar o agendamento."
+                );
+            }
+        };
 }
+
 
 // =====================================================
 // ESCAPAR HTML
@@ -482,14 +796,36 @@ botaoAgendar.onclick = async () => {
 
 function escaparHTML(valor) {
 
-return String(valor ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    return String(
+        valor ?? ""
+    )
 
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 }
+
 
 // =====================================================
 // ESCAPAR ATRIBUTO HTML
@@ -497,10 +833,27 @@ return String(valor ?? "")
 
 function escaparAtributo(valor) {
 
-return String(valor ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    return String(
+        valor ?? ""
+    )
 
-} 
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        );
+}
