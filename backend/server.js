@@ -60,81 +60,51 @@ if (!FIREBASE_DATABASE_URL) {
 }
 
 // =====================================================
-// CARREGAR SERVICE ACCOUNT
+// FIREBASE ADMIN - CREDENCIAIS PELO .ENV
 // =====================================================
 
-let serviceAccount;
+const serviceAccount = {
+    project_id: process.env.FIREBASE_PROJECT_ID,
 
-try {
+    client_email: process.env.FIREBASE_CLIENT_EMAIL,
 
-    serviceAccount =
-        require("./firebase-admin.json");
-
-}
-catch (error) {
-
-    console.error(
-        "ERRO: não foi possível carregar firebase-admin.json."
-    );
-
-    console.error(
-        error.message
-    );
-
-    process.exit(1);
-}
+    private_key: process.env.FIREBASE_PRIVATE_KEY
+        ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
+        : undefined
+};
 
 // =====================================================
-// VALIDAR SERVICE ACCOUNT
+// VALIDAR CREDENCIAIS FIREBASE
 // =====================================================
 
 if (
-    !serviceAccount ||
     !serviceAccount.project_id ||
     !serviceAccount.client_email ||
     !serviceAccount.private_key
 ) {
 
     console.error(
-        "ERRO: firebase-admin.json está inválido."
+        "ERRO: credenciais Firebase incompletas."
     );
 
     console.error(
-        "O arquivo precisa conter:"
+        "Verifique as seguintes variáveis no .env:"
     );
 
     console.error(
-        "project_id"
+        "FIREBASE_PROJECT_ID"
     );
 
     console.error(
-        "client_email"
+        "FIREBASE_CLIENT_EMAIL"
     );
 
     console.error(
-        "private_key"
+        "FIREBASE_PRIVATE_KEY"
     );
 
     process.exit(1);
 }
-
-// =====================================================
-// CORRIGIR PRIVATE KEY
-// =====================================================
-//
-// O JSON normalmente possui:
-//
-// -----BEGIN PRIVATE KEY-----\nABC...\n-----END...
-//
-// Transformamos \\n em quebra de linha real.
-//
-// =====================================================
-
-serviceAccount.private_key =
-    serviceAccount.private_key.replace(
-        /\\n/g,
-        "\n"
-    );
 
 // =====================================================
 // FIREBASE ADMIN
