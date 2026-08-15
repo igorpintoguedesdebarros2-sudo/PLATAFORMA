@@ -35,17 +35,18 @@ const CURSO = {
 // MATERIAIS DO CURSO
 // =====================================================
 //
-// Você pode adicionar quantos quiser.
+// Pode adicionar quantos materiais quiser.
 //
 // tipo:
 // "pdf"
 // "video"
 //
-// Para PDF:
-// arquivo = caminho ou URL do PDF
+// arquivo:
+// Caminho relativo:
+// "videos/aula1.mp4"
 //
-// Para vídeo:
-// arquivo = URL do vídeo
+// ou URL completa:
+// "https://site.com/video.mp4"
 //
 // =====================================================
 
@@ -191,20 +192,60 @@ const fecharModal =
         "fecharModal"
     );
 
+const tituloCurso =
+    document.getElementById(
+        "tituloCurso"
+    );
+
+const descricaoCurso =
+    document.getElementById(
+        "descricaoCurso"
+    );
+
+const btnSair =
+    document.getElementById(
+        "btnSair"
+    );
+
+
+// =====================================================
+// VERIFICAR ELEMENTOS
+// =====================================================
+
+if (!telaSenha ||
+    !conteudoCurso ||
+    !senhaInput ||
+    !btnEntrar ||
+    !mensagem ||
+    !listaMateriais ||
+    !modal ||
+    !modalTitulo ||
+    !modalCorpo ||
+    !fecharModal ||
+    !tituloCurso ||
+    !descricaoCurso ||
+    !btnSair
+) {
+
+    console.error(
+        "Erro: um ou mais elementos do HTML não foram encontrados."
+    );
+
+    throw new Error(
+        "Estrutura HTML do curso incompleta."
+    );
+
+}
+
 
 // =====================================================
 // PREENCHER CURSO
 // =====================================================
 
-document.getElementById(
-    "tituloCurso"
-).textContent =
+tituloCurso.textContent =
     CURSO.nome;
 
-
-document.getElementById(
-    "descricaoCurso"
-).textContent =
+descricaoCurso.textContent =
     CURSO.descricao;
 
 
@@ -216,7 +257,35 @@ let usuarioAtual = null;
 
 
 // =====================================================
-// VERIFICAR LOGIN
+// PEDIDO ATUAL
+// =====================================================
+
+const pedidoId =
+    obterPedidoId();
+
+
+// =====================================================
+// VERIFICAR PEDIDO NA URL
+// =====================================================
+
+if (!pedidoId) {
+
+    mostrarMensagem(
+        "Pedido do curso não informado.",
+        "erro"
+    );
+
+    btnEntrar.disabled = true;
+
+    console.error(
+        "URL sem pedidoId."
+    );
+
+}
+
+
+// =====================================================
+// AUTENTICAÇÃO
 // =====================================================
 
 onAuthStateChanged(
@@ -229,17 +298,28 @@ onAuthStateChanged(
                 "index.html";
 
             return;
+
         }
 
         usuarioAtual =
             usuario;
+
+        console.log(
+            "Usuário autenticado:",
+            usuario.uid
+        );
+
+        console.log(
+            "Pedido do curso:",
+            pedidoId
+        );
 
     }
 );
 
 
 // =====================================================
-// ACESSAR CURSO
+// BOTÃO ACESSAR
 // =====================================================
 
 btnEntrar.onclick =
@@ -247,7 +327,7 @@ btnEntrar.onclick =
 
 
 // =====================================================
-// ENTER NO CAMPO DE SENHA
+// ENTER NA SENHA
 // =====================================================
 
 senhaInput.addEventListener(
@@ -258,6 +338,8 @@ senhaInput.addEventListener(
             event.key === "Enter"
         ) {
 
+            event.preventDefault();
+
             acessarCurso();
 
         }
@@ -267,7 +349,7 @@ senhaInput.addEventListener(
 
 
 // =====================================================
-// VALIDAR SENHA NO SERVIDOR
+// ACESSAR CURSO
 // =====================================================
 
 async function acessarCurso() {
@@ -276,6 +358,26 @@ async function acessarCurso() {
         senhaInput.value.trim();
 
 
+    // -----------------------------------------
+    // VERIFICAR PEDIDO
+    // -----------------------------------------
+
+    if (!pedidoId) {
+
+        mostrarMensagem(
+            "Pedido do curso não encontrado.",
+            "erro"
+        );
+
+        return;
+
+    }
+
+
+    // -----------------------------------------
+    // VERIFICAR SENHA
+    // -----------------------------------------
+
     if (!senha) {
 
         mostrarMensagem(
@@ -283,9 +385,16 @@ async function acessarCurso() {
             "erro"
         );
 
+        senhaInput.focus();
+
         return;
+
     }
 
+
+    // -----------------------------------------
+    // VERIFICAR USUÁRIO
+    // -----------------------------------------
 
     if (!usuarioAtual) {
 
@@ -295,17 +404,52 @@ async function acessarCurso() {
         );
 
         return;
+
     }
 
 
+    // -----------------------------------------
+    // BLOQUEAR BOTÃO
+    // -----------------------------------------
+
     btnEntrar.disabled =
         true;
+
+    const textoOriginal =
+        btnEntrar.textContent;
 
     btnEntrar.textContent =
         "Verificando...";
 
 
     try {
+
+        console.log(
+            "======================================"
+        );
+
+        console.log(
+            "VALIDANDO SENHA DO CURSO"
+        );
+
+        console.log(
+            "Pedido:",
+            pedidoId
+        );
+
+        console.log(
+            "Usuário:",
+            usuarioAtual.uid
+        );
+
+        console.log(
+            "======================================"
+        );
+
+
+        // -----------------------------------------
+        // ENVIAR PARA O BACKEND
+        // -----------------------------------------
 
         const resposta =
             await fetch(
@@ -325,9 +469,8 @@ async function acessarCurso() {
                     body:
                         JSON.stringify({
 
-                            // Pedido do curso
                             pedidoId:
-                                obterPedidoId(),
+                                pedidoId,
 
                             senha:
                                 senha
@@ -338,8 +481,30 @@ async function acessarCurso() {
             );
 
 
-        const dados =
-            await resposta.json();
+        // -----------------------------------------
+        // LER RESPOSTA
+        // -----------------------------------------
+
+        let dados;
+
+        try {
+
+            dados =
+                await resposta.json();
+
+        }
+        catch (erroJSON) {
+
+            console.error(
+                "Resposta do servidor não é JSON:",
+                erroJSON
+            );
+
+            throw new Error(
+                "O servidor retornou uma resposta inválida."
+            );
+
+        }
 
 
         console.log(
@@ -347,6 +512,10 @@ async function acessarCurso() {
             dados
         );
 
+
+        // -----------------------------------------
+        // ERRO HTTP
+        // -----------------------------------------
 
         if (!resposta.ok) {
 
@@ -358,6 +527,10 @@ async function acessarCurso() {
         }
 
 
+        // -----------------------------------------
+        // SENHA INCORRETA / BLOQUEADA
+        // -----------------------------------------
+
         if (!dados.valido) {
 
             mostrarMensagem(
@@ -366,23 +539,65 @@ async function acessarCurso() {
                 "erro"
             );
 
+            senhaInput.select();
+
             return;
+
         }
 
 
-        // =================================================
-        // SENHA VALIDADA
-        // =================================================
+        // -----------------------------------------
+        // ACESSO AUTORIZADO
+        // -----------------------------------------
 
-        mostrarMensagem(
-            "Acesso autorizado.",
-            "sucesso"
-        );
+        const usosRestantes =
+            Number(
+                dados.usosRestantes
+            );
 
 
-        // Pequeno intervalo visual
+        if (
+            Number.isFinite(
+                usosRestantes
+            )
+        ) {
+
+            if (
+                usosRestantes > 0
+            ) {
+
+                mostrarMensagem(
+                    `Acesso autorizado. Restam ${usosRestantes} uso(s) da senha.`,
+                    "sucesso"
+                );
+
+            }
+            else {
+
+                mostrarMensagem(
+                    "Acesso autorizado. Este foi o último uso da senha.",
+                    "sucesso"
+                );
+
+            }
+
+        }
+        else {
+
+            mostrarMensagem(
+                "Acesso autorizado.",
+                "sucesso"
+            );
+
+        }
+
+
+        // -----------------------------------------
+        // PEQUENO INTERVALO VISUAL
+        // -----------------------------------------
+
         await new Promise(
-            resolve =>
+            (resolve) =>
                 setTimeout(
                     resolve,
                     500
@@ -390,7 +605,12 @@ async function acessarCurso() {
         );
 
 
+        // -----------------------------------------
+        // LIBERAR CURSO
+        // -----------------------------------------
+
         liberarCurso();
+
 
     }
     catch (error) {
@@ -399,7 +619,6 @@ async function acessarCurso() {
             "ERRO AO VALIDAR SENHA:",
             error
         );
-
 
         mostrarMensagem(
             error.message ||
@@ -414,7 +633,7 @@ async function acessarCurso() {
             false;
 
         btnEntrar.textContent =
-            "Acessar curso";
+            textoOriginal;
 
     }
 
@@ -422,7 +641,7 @@ async function acessarCurso() {
 
 
 // =====================================================
-// OBTER PEDIDO
+// OBTER PEDIDO ID
 // =====================================================
 
 function obterPedidoId() {
@@ -432,14 +651,9 @@ function obterPedidoId() {
             window.location.search
         );
 
-
-    const pedidoId =
-        parametros.get(
-            "pedidoId"
-        );
-
-
-    return pedidoId;
+    return parametros.get(
+        "pedidoId"
+    );
 
 }
 
@@ -456,7 +670,6 @@ function liberarCurso() {
     conteudoCurso.style.display =
         "block";
 
-
     carregarMateriais();
 
 }
@@ -470,6 +683,34 @@ function carregarMateriais() {
 
     listaMateriais.innerHTML =
         "";
+
+
+    if (
+        !Array.isArray(
+            MATERIAIS
+        ) ||
+        MATERIAIS.length === 0
+    ) {
+
+        listaMateriais.innerHTML = `
+
+            <div class="sem-materiais">
+
+                <h3>
+                    Nenhum material disponível
+                </h3>
+
+                <p>
+                    Os materiais deste curso ainda não foram adicionados.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
 
 
     MATERIAIS.forEach(
@@ -491,6 +732,24 @@ function carregarMateriais() {
                     : "Vídeo";
 
 
+            const botao =
+                document.createElement(
+                    "button"
+                );
+
+
+            botao.className =
+                "btn-material";
+
+
+            botao.textContent =
+                `Abrir ${tipoTexto}`;
+
+
+            botao.dataset.indice =
+                indice;
+
+
             card.innerHTML = `
 
                 <div class="tipo">
@@ -498,55 +757,41 @@ function carregarMateriais() {
                 </div>
 
                 <h3>
-                    ${material.titulo}
+                    ${escaparHTML(
+                        material.titulo
+                    )}
                 </h3>
 
                 <p>
-                    ${material.descricao}
+                    ${escaparHTML(
+                        material.descricao
+                    )}
                 </p>
 
-                <button
-                    class="btn-material"
-                    data-indice="${indice}"
-                >
-                    Abrir ${tipoTexto}
-                </button>
-
             `;
+
+
+            card.appendChild(
+                botao
+            );
 
 
             listaMateriais.appendChild(
                 card
             );
 
+
+            botao.onclick =
+                () => {
+
+                    abrirMaterial(
+                        material
+                    );
+
+                };
+
         }
     );
-
-
-    document
-        .querySelectorAll(
-            ".btn-material"
-        )
-        .forEach(
-            (botao) => {
-
-                botao.onclick =
-                    () => {
-
-                        const indice =
-                            Number(
-                                botao.dataset.indice
-                            );
-
-
-                        abrirMaterial(
-                            MATERIAIS[indice]
-                        );
-
-                    };
-
-            }
-        );
 
 }
 
@@ -558,6 +803,22 @@ function carregarMateriais() {
 function abrirMaterial(
     material
 ) {
+
+    if (
+        !material ||
+        !material.tipo ||
+        !material.arquivo
+    ) {
+
+        console.error(
+            "Material inválido:",
+            material
+        );
+
+        return;
+
+    }
+
 
     modalTitulo.textContent =
         material.titulo;
@@ -589,6 +850,16 @@ function abrirMaterial(
             material.titulo;
 
 
+        iframe.loading =
+            "lazy";
+
+
+        iframe.setAttribute(
+            "allowfullscreen",
+            ""
+        );
+
+
         modalCorpo.appendChild(
             iframe
         );
@@ -618,6 +889,16 @@ function abrirMaterial(
             "metadata";
 
 
+        video.playsInline =
+            true;
+
+
+        video.setAttribute(
+            "controlsList",
+            "nodownload"
+        );
+
+
         const source =
             document.createElement(
                 "source"
@@ -644,8 +925,42 @@ function abrirMaterial(
     }
 
 
+    // =================================================
+    // TIPO INVÁLIDO
+    // =================================================
+
+    else {
+
+        modalCorpo.innerHTML = `
+
+            <div class="erro-material">
+
+                <h3>
+                    Tipo de material inválido
+                </h3>
+
+                <p>
+                    O tipo "${material.tipo}" não é suportado.
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+
+    // =================================================
+    // ABRIR MODAL
+    // =================================================
+
     modal.classList.add(
         "ativo"
+    );
+
+
+    document.body.classList.add(
+        "modal-aberto"
     );
 
 }
@@ -656,7 +971,7 @@ function abrirMaterial(
 // =====================================================
 
 fecharModal.onclick =
-    fechar;
+    fecharModalCurso;
 
 
 modal.onclick =
@@ -666,21 +981,51 @@ modal.onclick =
             event.target === modal
         ) {
 
-            fechar();
+            fecharModalCurso();
 
         }
 
     };
 
 
-function fechar() {
+document.addEventListener(
+    "keydown",
+    (event) => {
+
+        if (
+            event.key === "Escape" &&
+            modal.classList.contains(
+                "ativo"
+            )
+        ) {
+
+            fecharModalCurso();
+
+        }
+
+    }
+);
+
+
+// =====================================================
+// FECHAR MODAL
+// =====================================================
+
+function fecharModalCurso() {
 
     modal.classList.remove(
         "ativo"
     );
 
 
-    // Para o vídeo quando fechar
+    document.body.classList.remove(
+        "modal-aberto"
+    );
+
+
+    // Remove o vídeo/iframe.
+    // Isso também interrompe o vídeo.
+
     modalCorpo.innerHTML =
         "";
 
@@ -701,7 +1046,41 @@ function mostrarMensagem(
 
 
     mensagem.className =
-        "mensagem " + tipo;
+        "mensagem " +
+        tipo;
+
+}
+
+
+// =====================================================
+// ESCAPAR HTML
+// =====================================================
+
+function escaparHTML(
+    texto
+) {
+
+    if (
+        texto === null ||
+        texto === undefined
+    ) {
+
+        return "";
+
+    }
+
+
+    const elemento =
+        document.createElement(
+            "div"
+        );
+
+
+    elemento.textContent =
+        String(texto);
+
+
+    return elemento.innerHTML;
 
 }
 
@@ -710,14 +1089,24 @@ function mostrarMensagem(
 // SAIR
 // =====================================================
 
-document
-    .getElementById(
-        "btnSair"
-    )
-    .onclick =
+btnSair.onclick =
     async () => {
 
-        await signOut(auth);
+        try {
+
+            await signOut(
+                auth
+            );
+
+        }
+        catch (error) {
+
+            console.error(
+                "Erro ao sair:",
+                error
+            );
+
+        }
 
         window.location =
             "index.html";
