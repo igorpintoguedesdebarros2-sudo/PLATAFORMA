@@ -191,7 +191,7 @@ const cursos = {
         valor: 49.90,
         categoria: "EAD",
         link:
-            "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/NR1.html"
+            "http://127.0.0.1:5500/NRS/NR1/NR1.html"
     },
 
     "CSS Completo": {
