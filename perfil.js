@@ -10,7 +10,6 @@ import {
 
 import {
     ref,
-    get,
     onValue
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
@@ -19,131 +18,112 @@ import {
 // AUTENTICAÇÃO
 // =====================================================
 
-onAuthStateChanged(auth, async (usuario) => {
+onAuthStateChanged(auth, (usuario) => {
 
     if (!usuario) {
-
         window.location.href = "index.html";
-
         return;
     }
 
-    console.log(
-        "Usuário autenticado:",
-        usuario.uid
-    );
+    console.log("Usuário autenticado:", usuario.uid);
 
-    try {
-
-        // =================================================
-        // DADOS DO USUÁRIO
-        // =================================================
-
-        const usuarioRef = ref(
-            db,
-            "usuarios/" + usuario.uid
-        );
-
-        const snapshot =
-            await get(usuarioRef);
-
-        if (snapshot.exists()) {
-
-            const user =
-                snapshot.val();
-
-            const nome =
-                document.getElementById("nome");
-
-            const email =
-                document.getElementById("email");
-
-            if (nome) {
-
-                nome.textContent =
-                    user.nome ||
-                    usuario.displayName ||
-                    "Usuário";
-            }
-
-            if (email) {
-
-                email.textContent =
-                    user.email ||
-                    usuario.email ||
-                    "";
-            }
-
-        }
-        else {
-
-            const nome =
-                document.getElementById("nome");
-
-            const email =
-                document.getElementById("email");
-
-            if (nome) {
-
-                nome.textContent =
-                    usuario.displayName ||
-                    "Usuário";
-            }
-
-            if (email) {
-
-                email.textContent =
-                    usuario.email ||
-                    "";
-            }
-        }
-
-
-        // =================================================
-        // CARREGAR CURSOS
-        // =================================================
-
-        carregarCursos(
-            usuario.uid
-        );
-
-
-        // =================================================
-        // CARREGAR PAGAMENTOS
-        // =================================================
-
-        carregarPagamentos(
-            usuario.uid
-        );
-
-    }
-    catch (error) {
-
-        console.error(
-            "Erro ao carregar perfil:",
-            error
-        );
-
-    }
+    carregarPerfil(usuario);
+    carregarCursos(usuario.uid);
+    carregarPagamentos(usuario.uid);
 
 });
 
 
 // =====================================================
-// CURSOS DO USUÁRIO
+// PERFIL
 // =====================================================
 
-function carregarCursos(usuarioId) {
+function carregarPerfil(usuario) {
+
+    const usuarioRef = ref(
+        db,
+        "usuarios/" + usuario.uid
+    );
+
+    onValue(
+        usuarioRef,
+        (snapshot) => {
+
+            const dados = snapshot.val() || {};
+
+            const nome =
+                document.getElementById("nome");
+
+            const email =
+                document.getElementById("email");
+
+            if (nome) {
+
+                nome.textContent =
+                    dados.nome ||
+                    usuario.displayName ||
+                    "Usuário";
+
+            }
+
+            if (email) {
+
+                email.textContent =
+                    dados.email ||
+                    usuario.email ||
+                    "";
+
+            }
+
+        },
+        (error) => {
+
+            console.error(
+                "Erro ao carregar perfil:",
+                error
+            );
+
+            // Mesmo que a leitura do perfil seja bloqueada,
+            // usamos os dados do Firebase Authentication.
+
+            const nome =
+                document.getElementById("nome");
+
+            const email =
+                document.getElementById("email");
+
+            if (nome) {
+
+                nome.textContent =
+                    usuario.displayName ||
+                    "Usuário";
+
+            }
+
+            if (email) {
+
+                email.textContent =
+                    usuario.email ||
+                    "";
+
+            }
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// CURSOS
+// =====================================================
+
+function carregarCursos(uid) {
 
     const tabela =
         document.getElementById("cursos");
 
     if (!tabela) {
-
-        console.warn(
-            "Elemento #cursos não encontrado."
-        );
-
         return;
     }
 
@@ -151,21 +131,20 @@ function carregarCursos(usuarioId) {
         ref(
             db,
             "usuarios/" +
-            usuarioId +
+            uid +
             "/cursos"
         );
 
     onValue(
         cursosRef,
-
         (snapshot) => {
 
             tabela.innerHTML = "";
 
-            const dados =
+            const cursos =
                 snapshot.val();
 
-            if (!dados) {
+            if (!cursos) {
 
                 tabela.innerHTML = `
                     <tr>
@@ -178,26 +157,19 @@ function carregarCursos(usuarioId) {
                 return;
             }
 
-
-            const cursos =
-                Object.entries(dados);
-
-
-            cursos.forEach(
-                ([pedidoId, curso]) => {
+            Object.entries(cursos)
+                .forEach(([id, curso]) => {
 
                     if (!curso) {
                         return;
                     }
 
-
                     const linha =
                         document.createElement("tr");
 
-
-                    // =================================================
+                    // -------------------------------
                     // NOME
-                    // =================================================
+                    // -------------------------------
 
                     const nome =
                         document.createElement("td");
@@ -207,38 +179,34 @@ function carregarCursos(usuarioId) {
                         curso.curso ||
                         "Curso";
 
-
-                    // =================================================
+                    // -------------------------------
                     // STATUS
-                    // =================================================
+                    // -------------------------------
 
                     const status =
                         document.createElement("td");
 
                     status.textContent =
                         curso.status ||
-                        "Liberado";
+                        "Concluído";
 
-
-                    // =================================================
+                    // -------------------------------
                     // CATEGORIA
-                    // =================================================
+                    // -------------------------------
 
                     const categoria =
                         document.createElement("td");
 
                     categoria.textContent =
                         curso.categoria ||
-                        "-";
+                        "EAD";
 
-
-                    // =================================================
+                    // -------------------------------
                     // ACESSO
-                    // =================================================
+                    // -------------------------------
 
                     const acesso =
                         document.createElement("td");
-
 
                     if (curso.linkCurso) {
 
@@ -257,37 +225,26 @@ function carregarCursos(usuarioId) {
                         link.textContent =
                             "Acessar curso";
 
-                        acesso.appendChild(
-                            link
-                        );
+                        acesso.appendChild(link);
 
                     }
                     else {
 
                         acesso.textContent =
-                            "Sem link disponível";
+                            "Curso sem link";
 
                     }
 
-
                     linha.appendChild(nome);
-
                     linha.appendChild(status);
-
                     linha.appendChild(categoria);
-
                     linha.appendChild(acesso);
 
+                    tabela.appendChild(linha);
 
-                    tabela.appendChild(
-                        linha
-                    );
-
-                }
-            );
+                });
 
         },
-
         (error) => {
 
             console.error(
@@ -305,24 +262,20 @@ function carregarCursos(usuarioId) {
 
         }
     );
+
 }
 
 
 // =====================================================
-// PAGAMENTOS DO USUÁRIO
+// PAGAMENTOS
 // =====================================================
 
-function carregarPagamentos(usuarioId) {
+function carregarPagamentos(uid) {
 
     const tabela =
         document.getElementById("pagamentos");
 
     if (!tabela) {
-
-        console.warn(
-            "Elemento #pagamentos não encontrado."
-        );
-
         return;
     }
 
@@ -330,21 +283,20 @@ function carregarPagamentos(usuarioId) {
         ref(
             db,
             "usuarios/" +
-            usuarioId +
+            uid +
             "/pagamentos"
         );
 
     onValue(
         pagamentosRef,
-
         (snapshot) => {
 
             tabela.innerHTML = "";
 
-            const dados =
+            const pagamentos =
                 snapshot.val();
 
-            if (!dados) {
+            if (!pagamentos) {
 
                 tabela.innerHTML = `
                     <tr>
@@ -357,75 +309,57 @@ function carregarPagamentos(usuarioId) {
                 return;
             }
 
-
-            Object.entries(dados)
-            .forEach(
-                ([pedidoId, pagamento]) => {
+            Object.entries(pagamentos)
+                .forEach(([id, pagamento]) => {
 
                     if (!pagamento) {
                         return;
                     }
 
-
                     const linha =
                         document.createElement("tr");
 
-
-                    // =================================================
+                    // -------------------------------
                     // CURSO
-                    // =================================================
+                    // -------------------------------
 
                     const curso =
                         document.createElement("td");
 
                     curso.textContent =
                         pagamento.curso ||
-                        pagamento.nome ||
                         "Curso";
 
-
-                    // =================================================
+                    // -------------------------------
                     // VALOR
-                    // =================================================
+                    // -------------------------------
 
                     const valor =
                         document.createElement("td");
 
-                    const valorNumerico =
+                    const numero =
                         Number(
                             pagamento.valor || 0
                         );
 
                     valor.textContent =
-                        Number.isFinite(
-                            valorNumerico
-                        )
-                            ? `R$ ${valorNumerico
-                                .toFixed(2)
-                                .replace(".", ",")}`
-                            : "R$ 0,00";
+                        `R$ ${numero
+                            .toFixed(2)
+                            .replace(".", ",")}`;
 
-
-                    // =================================================
+                    // -------------------------------
                     // DATA
-                    // =================================================
+                    // -------------------------------
 
                     const data =
                         document.createElement("td");
 
-                    const dataPagamento =
-                        pagamento.dataPagamento ||
-                        pagamento.data ||
-                        "";
-
-
-                    if (dataPagamento) {
+                    if (pagamento.data) {
 
                         const dataObj =
                             new Date(
-                                dataPagamento
+                                pagamento.data
                             );
-
 
                         if (
                             !isNaN(
@@ -442,7 +376,7 @@ function carregarPagamentos(usuarioId) {
                         else {
 
                             data.textContent =
-                                dataPagamento;
+                                pagamento.data;
 
                         }
 
@@ -454,23 +388,15 @@ function carregarPagamentos(usuarioId) {
 
                     }
 
-
                     linha.appendChild(curso);
-
                     linha.appendChild(valor);
-
                     linha.appendChild(data);
 
+                    tabela.appendChild(linha);
 
-                    tabela.appendChild(
-                        linha
-                    );
-
-                }
-            );
+                });
 
         },
-
         (error) => {
 
             console.error(
@@ -488,6 +414,7 @@ function carregarPagamentos(usuarioId) {
 
         }
     );
+
 }
 
 
@@ -523,4 +450,5 @@ if (botaoSair) {
 
         }
     );
+
 }
