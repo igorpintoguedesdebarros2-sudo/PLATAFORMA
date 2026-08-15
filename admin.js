@@ -1,198 +1,363 @@
 import {
     auth,
     db
-}
-from "./firebase.js";
-
-
+} from "./firebase.js";
 
 import {
     onAuthStateChanged,
     signOut
-}
-from
-"https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 import {
     ref,
-    get
-}
-from
-"https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    get,
+    set
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 
+// =====================================================
+// ADMINISTRADORES AUTORIZADOS
+// =====================================================
+
+const ADMIN_EMAILS = [
+
+    "ipgbtechadm@gmail.com",
+
+    "salustianocfaob@gmail.com",
+
+    "admzulmircfao@gmail.com"
+
+];
 
 
+// =====================================================
+// VERIFICAR ADMINISTRADOR
+// =====================================================
 
 onAuthStateChanged(
     auth,
-    async(usuario)=>{
+    async (usuario) => {
 
+        // =================================================
+        // NÃO ESTÁ LOGADO
+        // =================================================
 
-        if(!usuario){
+        if (!usuario) {
 
-
-            window.location = "index.html";
-
+            window.location.href =
+                "index.html";
 
             return;
-
-
         }
 
 
+        // =================================================
+        // E-MAIL DO USUÁRIO
+        // =================================================
+
+        const email =
+            usuario.email
+                ?.trim()
+                .toLowerCase();
+
+
+        // =================================================
+        // VERIFICAR E-MAIL ADMIN
+        // =================================================
+
+        if (
+            !ADMIN_EMAILS.includes(email)
+        ) {
+
+            alert(
+                "Acesso negado. Este usuário não é administrador."
+            );
+
+            await signOut(auth);
+
+            window.location.href =
+                "perfil.html";
+
+            return;
+        }
+
+
+        // =================================================
+        // REFERÊNCIA DO USUÁRIO
+        // =================================================
 
         const adminRef =
-        ref(
-            db,
-            "usuarios/" + usuario.uid
-        );
+            ref(
+                db,
+                "usuarios/" + usuario.uid
+            );
 
 
+        try {
 
-        const adminDados =
-        await get(adminRef);
-
-
-
-        if(adminDados.exists()){
+            const adminDados =
+                await get(adminRef);
 
 
-            const perfil =
-            adminDados.val();
+            // =================================================
+            // ADMIN JÁ EXISTE NO DATABASE
+            // =================================================
+
+            if (adminDados.exists()) {
+
+                const perfil =
+                    adminDados.val();
 
 
+                // -----------------------------------------
+                // GARANTIR TIPO ADMIN
+                // -----------------------------------------
 
-            if(perfil.tipo !== "admin"){
+                if (
+                    perfil.tipo !== "admin"
+                ) {
+
+                    await set(
+                        adminRef,
+                        {
+                            ...perfil,
+
+                            nome:
+                                perfil.nome ||
+                                usuario.displayName ||
+                                email,
+
+                            email:
+                                email,
+
+                            tipo:
+                                "admin"
+                        }
+                    );
+
+                }
 
 
-                alert("Acesso negado");
+                // -----------------------------------------
+                // MOSTRAR DADOS
+                // -----------------------------------------
+
+                document
+                    .getElementById("nome")
+                    .textContent =
+                    perfil.nome ||
+                    usuario.displayName ||
+                    email;
 
 
-                window.location = "perfil.html";
-
-
-                return;
-
+                document
+                    .getElementById("email")
+                    .textContent =
+                    email;
 
             }
 
 
+            // =================================================
+            // ADMIN AINDA NÃO EXISTE
+            // =================================================
 
-            document
-            .getElementById("nome")
-            .innerHTML =
-            perfil.nome;
+            else {
+
+                const novoAdministrador = {
+
+                    uid:
+                        usuario.uid,
+
+                    nome:
+                        usuario.displayName ||
+                        email,
+
+                    email:
+                        email,
+
+                    tipo:
+                        "admin"
+
+                };
 
 
+                await set(
+                    adminRef,
+                    novoAdministrador
+                );
 
-            document
-            .getElementById("email")
-            .innerHTML =
-            perfil.email;
+
+                console.log(
+                    "Administrador criado no Realtime Database:",
+                    novoAdministrador
+                );
 
 
+                // -----------------------------------------
+                // MOSTRAR DADOS
+                // -----------------------------------------
+
+                document
+                    .getElementById("nome")
+                    .textContent =
+                    novoAdministrador.nome;
+
+
+                document
+                    .getElementById("email")
+                    .textContent =
+                    novoAdministrador.email;
+
+            }
+
+
+            // =================================================
+            // CARREGAR USUÁRIOS
+            // =================================================
+
+            await carregarUsuarios();
 
         }
-        else{
+        catch (error) {
+
+            console.error(
+                "ERRO AO VERIFICAR ADMINISTRADOR:",
+                error
+            );
 
 
-            alert("Administrador não encontrado");
-
-
-            window.location="index.html";
-
-
-            return;
-
+            alert(
+                "Não foi possível verificar os dados do administrador.\n\n" +
+                error.message
+            );
 
         }
-
-
-
-        carregarUsuarios();
-
 
     }
 );
 
 
+// =====================================================
+// CARREGAR USUÁRIOS
+// =====================================================
+
+async function carregarUsuarios() {
+
+    try {
+
+        const usuariosRef =
+            ref(
+                db,
+                "usuarios"
+            );
 
 
+        const dados =
+            await get(
+                usuariosRef
+            );
 
 
-
-async function carregarUsuarios(){
-
-
-    const usuariosRef =
-    ref(
-        db,
-        "usuarios"
-    );
+        const tabela =
+            document.getElementById(
+                "usuarios"
+            );
 
 
+        if (!tabela) {
 
-    const dados =
-    await get(usuariosRef);
+            console.error(
+                "Elemento #usuarios não encontrado."
+            );
 
-
-
-    const tabela =
-    document.getElementById("usuarios");
-
-
-
-    tabela.innerHTML = "";
+            return;
+        }
 
 
-
-    dados.forEach((item)=>{
-
-
-        const usuario =
-        item.val();
+        tabela.innerHTML = "";
 
 
+        if (!dados.exists()) {
 
-        tabela.innerHTML += `
+            tabela.innerHTML = `
+                <tr>
+                    <td colspan="3">
+                        Nenhum usuário encontrado.
+                    </td>
+                </tr>
+            `;
 
-        <tr>
-
-            <td>${usuario.nome || "Sem nome"}</td>
-
-            <td>${usuario.email || "Sem email"}</td>
-
-            <td>${usuario.tipo || "usuario"}</td>
-
-        </tr>
-
-        `;
+            return;
+        }
 
 
-    });
+        dados.forEach(
+            (item) => {
+
+                const usuario =
+                    item.val();
 
 
+                tabela.innerHTML += `
+
+                    <tr>
+
+                        <td>
+                            ${usuario.nome || "Sem nome"}
+                        </td>
+
+                        <td>
+                            ${usuario.email || "Sem email"}
+                        </td>
+
+                        <td>
+                            ${usuario.tipo || "usuario"}
+                        </td>
+
+                    </tr>
+
+                `;
+
+            }
+        );
+
+    }
+    catch (error) {
+
+        console.error(
+            "ERRO AO CARREGAR USUÁRIOS:",
+            error
+        );
+
+    }
 
 }
 
 
-
-
-
-
+// =====================================================
+// SAIR
+// =====================================================
 
 document
-.getElementById("sair")
-.onclick = ()=>{
+    .getElementById("sair")
+    .onclick = async () => {
 
+        try {
 
-    signOut(auth);
+            await signOut(auth);
 
+            window.location.href =
+                "index.html";
 
-    window.location="index.html";
+        }
+        catch (error) {
 
+            console.error(
+                "Erro ao sair:",
+                error
+            );
 
-};
+        }
+
+    };
