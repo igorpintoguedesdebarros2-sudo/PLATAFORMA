@@ -96,7 +96,7 @@ if (!STRIPE_SECRET_KEY) {
 }
 
 // =====================================================
-// FIREBASE ADMIN MODULAR
+// FIREBASE ADMIN
 // =====================================================
 
 const {
@@ -106,11 +106,7 @@ const {
 } = require("firebase-admin/app");
 
 const {
-    getDatabase,
-    ref,
-    get,
-    set,
-    update
+    getDatabase
 } = require("firebase-admin/database");
 
 // =====================================================
@@ -153,7 +149,8 @@ if (getApps().length === 0) {
 // DATABASE
 // =====================================================
 
-const db = getDatabase(firebaseApp);
+const db =
+    getDatabase(firebaseApp);
 
 console.log(
     "Firebase Realtime Database conectado."
@@ -163,9 +160,8 @@ console.log(
 // STRIPE
 // =====================================================
 
-const stripe = Stripe(
-    STRIPE_SECRET_KEY
-);
+const stripe =
+    Stripe(STRIPE_SECRET_KEY);
 
 console.log(
     "Stripe inicializado."
@@ -175,7 +171,8 @@ console.log(
 // EXPRESS
 // =====================================================
 
-const app = express();
+const app =
+    express();
 
 app.use(
     cors({
@@ -184,7 +181,9 @@ app.use(
 );
 
 app.use(
-    express.json()
+    express.json({
+        limit: "1mb"
+    })
 );
 
 // =====================================================
@@ -194,44 +193,68 @@ app.use(
 const cursos = {
 
     "NR1": {
+
         valor: 49.90,
+
         categoria: "EAD",
+
         link:
             "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/NR1.html"
+
     },
 
     "CSS Completo": {
+
         valor: 39.90,
+
         categoria: "EAD",
+
         link:
             "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/css.html"
+
     },
 
     "JavaScript": {
+
         valor: 59.90,
+
         categoria: "EAD",
+
         link:
             "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/javascript.html"
+
     },
 
     "Python": {
+
         valor: 69.90,
+
         categoria: "EAD",
+
         link:
             "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/python.html"
+
     },
 
     "Firebase": {
+
         valor: 79.90,
+
         categoria: "EAD",
+
         link:
             "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/firebase.html"
+
     },
 
     "Python Presencial": {
+
         valor: 99.90,
+
         categoria: "Presencial",
+
         link: ""
+
     }
 
 };
@@ -247,7 +270,11 @@ function gerarSenhaCurso() {
 
     let senha = "";
 
-    for (let i = 0; i < 12; i++) {
+    for (
+        let i = 0;
+        i < 12;
+        i++
+    ) {
 
         const indice =
             Math.floor(
@@ -255,10 +282,27 @@ function gerarSenhaCurso() {
                 caracteres.length
             );
 
-        senha += caracteres[indice];
+        senha +=
+            caracteres[indice];
     }
 
     return senha;
+}
+
+// =====================================================
+// GERAR ID DO PEDIDO
+// =====================================================
+
+function gerarPedidoId() {
+
+    return (
+        "pedido_" +
+        Date.now() +
+        "_" +
+        Math.random()
+            .toString(36)
+            .substring(2, 10)
+    );
 }
 
 // =====================================================
@@ -291,8 +335,12 @@ app.post(
             if (!curso) {
 
                 return res.status(400).json({
+
                     sucesso: false,
-                    erro: "Curso não informado."
+
+                    erro:
+                        "Curso não informado."
+
                 });
 
             }
@@ -303,8 +351,12 @@ app.post(
             if (!cursoSelecionado) {
 
                 return res.status(400).json({
+
                     sucesso: false,
-                    erro: "Curso inválido."
+
+                    erro:
+                        "Curso inválido."
+
                 });
 
             }
@@ -313,34 +365,113 @@ app.post(
             // VALIDAR USUÁRIO
             // -------------------------------------------------
 
-            if (!usuarioId) {
+            if (
+                !usuarioId ||
+                String(usuarioId).trim() === ""
+            ) {
 
                 return res.status(400).json({
+
                     sucesso: false,
-                    erro: "Usuário não informado."
+
+                    erro:
+                        "Usuário não informado."
+
                 });
 
             }
 
             // -------------------------------------------------
-            // ID DO PEDIDO
+            // GERAR PEDIDO
             // -------------------------------------------------
 
             const idPedido =
                 pedidoId ||
-                `pedido_${Date.now()}_${Math.random()
-                    .toString(36)
-                    .substring(2, 8)}`;
+                gerarPedidoId();
 
             // -------------------------------------------------
-            // REFERÊNCIA DO PEDIDO
+            // REFERÊNCIA
+            // API TRADICIONAL DO FIREBASE ADMIN
             // -------------------------------------------------
 
             const pedidoRef =
-                ref(
-                    db,
+                db.ref(
                     `solicitacoes_cursos/${idPedido}`
                 );
+
+            // -------------------------------------------------
+            // VERIFICAR PEDIDO EXISTENTE
+            // -------------------------------------------------
+
+            const pedidoExistenteSnapshot =
+                await pedidoRef.once("value");
+
+            if (
+                pedidoExistenteSnapshot.exists()
+            ) {
+
+                const pedidoExistente =
+                    pedidoExistenteSnapshot.val();
+
+                if (
+                    pedidoExistente.pago === true
+                ) {
+
+                    return res.json({
+
+                        sucesso: true,
+
+                        jaPago: true,
+
+                        pedidoId:
+                            idPedido,
+
+                        curso:
+                            pedidoExistente.curso,
+
+                        valor:
+                            pedidoExistente.valor,
+
+                        categoria:
+                            pedidoExistente.categoria,
+
+                        pagamentoId:
+                            pedidoExistente.pagamentoId
+
+                    });
+
+                }
+
+                if (
+                    pedidoExistente.pagamentoId
+                ) {
+
+                    return res.json({
+
+                        sucesso: true,
+
+                        jaCriado: true,
+
+                        id:
+                            pedidoExistente.pagamentoId,
+
+                        pedidoId:
+                            idPedido,
+
+                        curso:
+                            pedidoExistente.curso,
+
+                        valor:
+                            pedidoExistente.valor,
+
+                        categoria:
+                            pedidoExistente.categoria
+
+                    });
+
+                }
+
+            }
 
             // -------------------------------------------------
             // PEDIDO INICIAL
@@ -352,7 +483,7 @@ app.post(
                     idPedido,
 
                 usuarioId:
-                    usuarioId,
+                    String(usuarioId),
 
                 curso:
                     curso,
@@ -382,93 +513,101 @@ app.post(
                     null,
 
                 dataPagamento:
-                    null
+                    null,
+
+                criadoEm:
+                    new Date().toISOString()
 
             };
 
-            await set(
-                pedidoRef,
+            await pedidoRef.set(
                 pedidoInicial
             );
 
             // -------------------------------------------------
-            // CRIAR CHECKOUT STRIPE
+            // STRIPE CHECKOUT
             // -------------------------------------------------
 
             const session =
-                await stripe
-                    .checkout
-                    .sessions
-                    .create({
+                await stripe.checkout.sessions.create({
 
-                        payment_method_types: [
-                            "card"
-                        ],
+                    payment_method_types: [
+                        "card"
+                    ],
 
-                        line_items: [
+                    line_items: [
 
-                            {
-                                price_data: {
+                        {
 
-                                    currency:
-                                        "brl",
+                            price_data: {
 
-                                    product_data: {
+                                currency:
+                                    "brl",
 
-                                        name:
-                                            curso
+                                product_data: {
 
-                                    },
-
-                                    unit_amount:
-                                        Math.round(
-                                            cursoSelecionado.valor *
-                                            100
-                                        )
+                                    name:
+                                        curso
 
                                 },
 
-                                quantity:
-                                    1
-                            }
+                                unit_amount:
+                                    Math.round(
+                                        cursoSelecionado.valor *
+                                        100
+                                    )
 
-                        ],
+                            },
 
-                        mode:
-                            "payment",
+                            quantity: 1
 
-                        metadata: {
+                        }
 
-                            pedidoId:
-                                String(idPedido),
+                    ],
 
-                            usuarioId:
-                                String(usuarioId),
+                    mode:
+                        "payment",
 
-                            curso:
-                                String(curso)
+                    metadata: {
 
-                        },
+                        pedidoId:
+                            String(idPedido),
 
-                        success_url:
-                            "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/sucesso.html?session_id={CHECKOUT_SESSION_ID}",
+                        usuarioId:
+                            String(usuarioId),
 
-                        cancel_url:
-                            "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/cancelado.html"
+                        curso:
+                            String(curso)
 
-                    });
+                    },
+
+                    success_url:
+                        "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/sucesso.html?session_id={CHECKOUT_SESSION_ID}",
+
+                    cancel_url:
+                        "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/cancelado.html"
+
+                });
 
             // -------------------------------------------------
             // SALVAR SESSION ID
             // -------------------------------------------------
 
-            await update(
-                pedidoRef,
-                {
-                    pagamentoId:
-                        session.id
-                }
-            );
+            await pedidoRef.update({
+
+                pagamentoId:
+                    session.id,
+
+                status:
+                    "aguardando_pagamento"
+
+            });
+
+            console.log("======================================");
+            console.log("CHECKOUT CRIADO");
+            console.log("Session:", session.id);
+            console.log("Pedido:", idPedido);
+            console.log("======================================");
 
             // -------------------------------------------------
             // RESPOSTA
@@ -542,6 +681,10 @@ app.get(
             console.log("Session:", session_id);
             console.log("======================================");
 
+            // -------------------------------------------------
+            // VALIDAR SESSION
+            // -------------------------------------------------
+
             if (!session_id) {
 
                 return res.status(400).json({
@@ -557,7 +700,7 @@ app.get(
             }
 
             // -------------------------------------------------
-            // CONSULTAR STRIPE
+            // STRIPE
             // -------------------------------------------------
 
             const session =
@@ -565,7 +708,7 @@ app.get(
                     .checkout
                     .sessions
                     .retrieve(
-                        session_id
+                        String(session_id)
                     );
 
             console.log(
@@ -653,23 +796,26 @@ app.get(
             }
 
             // -------------------------------------------------
-            // REFERÊNCIA DO PEDIDO
+            // PEDIDO
             // -------------------------------------------------
 
             const pedidoRef =
-                ref(
-                    db,
+                db.ref(
                     `solicitacoes_cursos/${pedidoId}`
                 );
 
             const snapshot =
-                await get(pedidoRef);
+                await pedidoRef.once(
+                    "value"
+                );
 
             // -------------------------------------------------
-            // SE JÁ FOI PROCESSADO
+            // VERIFICAR SE JÁ FOI PROCESSADO
             // -------------------------------------------------
 
-            if (snapshot.exists()) {
+            if (
+                snapshot.exists()
+            ) {
 
                 const pedido =
                     snapshot.val();
@@ -730,7 +876,7 @@ app.get(
             }
 
             // -------------------------------------------------
-            // DATA
+            // DATA DO PAGAMENTO
             // -------------------------------------------------
 
             const dataPagamento =
@@ -743,10 +889,10 @@ app.get(
             const dadosCurso = {
 
                 usuarioId:
-                    usuarioId,
+                    String(usuarioId),
 
                 pedidoId:
-                    pedidoId,
+                    String(pedidoId),
 
                 curso:
                     curso,
@@ -821,94 +967,85 @@ app.get(
             // SALVAR PEDIDO
             // -------------------------------------------------
 
-            await set(
-                pedidoRef,
+            await pedidoRef.set(
                 dadosCurso
             );
 
             // -------------------------------------------------
-            // CURSO DO USUÁRIO
+            // SALVAR CURSO NO USUÁRIO
             // -------------------------------------------------
 
             const usuarioCursoRef =
-                ref(
-                    db,
+                db.ref(
                     `usuarios/${usuarioId}/cursos/${pedidoId}`
                 );
 
-            await set(
-                usuarioCursoRef,
-                {
+            await usuarioCursoRef.set({
 
-                    pedidoId:
-                        pedidoId,
+                pedidoId:
+                    pedidoId,
 
-                    nome:
-                        curso,
+                nome:
+                    curso,
 
-                    curso:
-                        curso,
+                curso:
+                    curso,
 
-                    status:
-                        "pago",
+                status:
+                    "pago",
 
-                    categoria:
-                        dadosCurso.categoria,
+                categoria:
+                    dadosCurso.categoria,
 
-                    valor:
-                        dadosCurso.valor,
+                valor:
+                    dadosCurso.valor,
 
-                    linkCurso:
-                        dadosCurso.linkCurso,
+                linkCurso:
+                    dadosCurso.linkCurso,
 
-                    senhaCurso:
-                        dadosCurso.senhaCurso ||
-                        null,
+                senhaCurso:
+                    dadosCurso.senhaCurso ||
+                    null,
 
-                    usosRestantes:
-                        dadosCurso.usosRestantes ??
-                        null,
+                usosRestantes:
+                    dadosCurso.usosRestantes ??
+                    null,
 
-                    pagamentoId:
-                        session.id,
+                pagamentoId:
+                    session.id,
 
-                    dataPagamento:
-                        dataPagamento
+                dataPagamento:
+                    dataPagamento
 
-                }
-            );
+            });
 
             // -------------------------------------------------
-            // PAGAMENTO DO USUÁRIO
+            // SALVAR PAGAMENTO
             // -------------------------------------------------
 
             const pagamentoRef =
-                ref(
-                    db,
+                db.ref(
                     `usuarios/${usuarioId}/pagamentos/${pedidoId}`
                 );
 
-            await set(
-                pagamentoRef,
-                {
+            await pagamentoRef.set({
 
-                    pedidoId:
-                        pedidoId,
+                pedidoId:
+                    pedidoId,
 
-                    curso:
-                        curso,
+                curso:
+                    curso,
 
-                    valor:
-                        dadosCurso.valor,
+                valor:
+                    dadosCurso.valor,
 
-                    pagamentoId:
-                        session.id,
+                pagamentoId:
+                    session.id,
 
-                    dataPagamento:
-                        dataPagamento
+                dataPagamento:
+                    dataPagamento
 
-                }
-            );
+            });
 
             // -------------------------------------------------
             // LOG
@@ -1040,7 +1177,7 @@ app.get(
                     .checkout
                     .sessions
                     .retrieve(
-                        session_id
+                        String(session_id)
                     );
 
             return res.json({
@@ -1091,11 +1228,10 @@ app.get(
 //     "senha": "XXXXXXXXXXXX"
 // }
 //
-// Procura em:
+// Cada senha começa com 2 usos.
 //
-// solicitacoes_cursos
-//
-// Cada senha possui 2 usos.
+// O decremento é feito com transaction()
+// para evitar consumo simultâneo incorreto.
 // =====================================================
 
 app.post(
@@ -1109,7 +1245,7 @@ app.post(
             } = req.body || {};
 
             // -------------------------------------------------
-            // VALIDAR SENHA RECEBIDA
+            // VALIDAR SENHA
             // -------------------------------------------------
 
             if (
@@ -1142,17 +1278,18 @@ app.post(
             console.log("======================================");
 
             // -------------------------------------------------
-            // BUSCAR SOLICITAÇÕES
+            // BUSCAR PEDIDOS
             // -------------------------------------------------
 
             const pedidosRef =
-                ref(
-                    db,
+                db.ref(
                     "solicitacoes_cursos"
                 );
 
             const snapshot =
-                await get(pedidosRef);
+                await pedidosRef.once(
+                    "value"
+                );
 
             if (!snapshot.exists()) {
 
@@ -1208,7 +1345,9 @@ app.post(
             // SENHA NÃO ENCONTRADA
             // -------------------------------------------------
 
-            if (!pedidoEncontrado) {
+            if (
+                !pedidoEncontrado
+            ) {
 
                 console.log(
                     "Senha inválida ou inexistente."
@@ -1227,7 +1366,7 @@ app.post(
             }
 
             // -------------------------------------------------
-            // VERIFICAR PAGAMENTO
+            // PAGAMENTO
             // -------------------------------------------------
 
             if (
@@ -1248,7 +1387,7 @@ app.post(
             }
 
             // -------------------------------------------------
-            // VERIFICAR CATEGORIA
+            // CATEGORIA
             // -------------------------------------------------
 
             if (
@@ -1269,22 +1408,154 @@ app.post(
             }
 
             // -------------------------------------------------
-            // VERIFICAR USOS
+            // REFERÊNCIA
             // -------------------------------------------------
 
-            const usos =
-                Number(
-                    pedidoEncontrado.usosRestantes
+            const pedidoRef =
+                db.ref(
+                    `solicitacoes_cursos/${pedidoEncontrado.id}`
                 );
+
+            // -------------------------------------------------
+            // TRANSACTION
+            // -------------------------------------------------
+
+            let usosAntes =
+                null;
+
+            let usosDepois =
+                null;
+
+            const resultado =
+                await pedidoRef.transaction(
+                    (pedidoAtual) => {
+
+                        if (
+                            pedidoAtual === null
+                        ) {
+
+                            return;
+
+                        }
+
+                        if (
+                            pedidoAtual.senhaCurso ===
+                            undefined ||
+                            pedidoAtual.senhaCurso ===
+                            null
+                        ) {
+
+                            return;
+
+                        }
+
+                        if (
+                            String(
+                                pedidoAtual.senhaCurso
+                            ).trim() !==
+                            senhaNormalizada
+                        ) {
+
+                            return;
+
+                        }
+
+                        if (
+                            pedidoAtual.pago !==
+                            true
+                        ) {
+
+                            return;
+
+                        }
+
+                        if (
+                            pedidoAtual.categoria !==
+                            "EAD"
+                        ) {
+
+                            return;
+
+                        }
+
+                        const usos =
+                            Number(
+                                pedidoAtual.usosRestantes
+                            );
+
+                        if (
+                            !Number.isFinite(usos) ||
+                            usos <= 0
+                        ) {
+
+                            return;
+
+                        }
+
+                        usosAntes =
+                            usos;
+
+                        usosDepois =
+                            usos - 1;
+
+                        pedidoAtual.usosRestantes =
+                            usosDepois;
+
+                        return pedidoAtual;
+
+                    }
+                );
+
+            // -------------------------------------------------
+            // TRANSACTION NÃO COMMITOU
+            // -------------------------------------------------
 
             if (
-                !Number.isFinite(usos) ||
-                usos <= 0
+                !resultado.committed
             ) {
 
-                console.log(
-                    "Senha esgotada."
-                );
+                const estadoAtual =
+                    resultado.snapshot.val();
+
+                if (
+                    !estadoAtual
+                ) {
+
+                    return res.json({
+
+                        valido:
+                            false,
+
+                        erro:
+                            "Curso não encontrado."
+
+                    });
+
+                }
+
+                const usosAtuais =
+                    Number(
+                        estadoAtual.usosRestantes
+                    );
+
+                if (
+                    !Number.isFinite(
+                        usosAtuais
+                    ) ||
+                    usosAtuais <= 0
+                ) {
+
+                    return res.json({
+
+                        valido:
+                            false,
+
+                        erro:
+                            "Esta senha já foi utilizada 2 vezes e não possui mais usos."
+
+                    });
+
+                }
 
                 return res.json({
 
@@ -1292,42 +1563,11 @@ app.post(
                         false,
 
                     erro:
-                        "Esta senha já foi utilizada 2 vezes e não possui mais usos."
+                        "Não foi possível consumir o uso da senha. Tente novamente."
 
                 });
 
             }
-
-            // -------------------------------------------------
-            // DIMINUIR USO
-            // -------------------------------------------------
-
-            const novosUsos =
-                usos - 1;
-
-            // -------------------------------------------------
-            // REFERÊNCIA DO PEDIDO
-            // -------------------------------------------------
-
-            const pedidoRef =
-                ref(
-                    db,
-                    `solicitacoes_cursos/${pedidoEncontrado.id}`
-                );
-
-            // -------------------------------------------------
-            // ATUALIZAR PEDIDO
-            // -------------------------------------------------
-
-            await update(
-                pedidoRef,
-                {
-
-                    usosRestantes:
-                        novosUsos
-
-                }
-            );
 
             // -------------------------------------------------
             // ATUALIZAR CURSO DO USUÁRIO
@@ -1338,20 +1578,16 @@ app.post(
             ) {
 
                 const usuarioCursoRef =
-                    ref(
-                        db,
+                    db.ref(
                         `usuarios/${pedidoEncontrado.usuarioId}/cursos/${pedidoEncontrado.id}`
                     );
 
-                await update(
-                    usuarioCursoRef,
-                    {
+                await usuarioCursoRef.update({
 
-                        usosRestantes:
-                            novosUsos
+                    usosRestantes:
+                        usosDepois
 
-                    }
-                );
+                });
 
             }
 
@@ -1379,12 +1615,12 @@ app.post(
 
             console.log(
                 "Usos anteriores:",
-                usos
+                usosAntes
             );
 
             console.log(
                 "Usos restantes:",
-                novosUsos
+                usosDepois
             );
 
             console.log("======================================");
@@ -1417,7 +1653,7 @@ app.post(
                     pedidoEncontrado.linkCurso,
 
                 usosRestantes:
-                    novosUsos
+                    usosDepois
 
             });
 
@@ -1466,7 +1702,7 @@ app.post(
             } = req.body || {};
 
             // -------------------------------------------------
-            // VALIDAR DADOS
+            // VALIDAR
             // -------------------------------------------------
 
             if (
@@ -1489,19 +1725,22 @@ app.post(
             }
 
             // -------------------------------------------------
-            // BUSCAR PEDIDO
+            // PEDIDO
             // -------------------------------------------------
 
             const pedidoRef =
-                ref(
-                    db,
+                db.ref(
                     `solicitacoes_cursos/${pedidoId}`
                 );
 
             const snapshot =
-                await get(pedidoRef);
+                await pedidoRef.once(
+                    "value"
+                );
 
-            if (!snapshot.exists()) {
+            if (
+                !snapshot.exists()
+            ) {
 
                 return res.status(404).json({
 
@@ -1519,16 +1758,12 @@ app.post(
                 snapshot.val();
 
             // -------------------------------------------------
-            // VERIFICAR USUÁRIO
+            // USUÁRIO
             // -------------------------------------------------
 
             if (
-                String(
-                    curso.usuarioId
-                ) !==
-                String(
-                    usuarioId
-                )
+                String(curso.usuarioId) !==
+                String(usuarioId)
             ) {
 
                 return res.status(403).json({
@@ -1544,7 +1779,7 @@ app.post(
             }
 
             // -------------------------------------------------
-            // VERIFICAR CATEGORIA
+            // CATEGORIA
             // -------------------------------------------------
 
             if (
@@ -1565,7 +1800,7 @@ app.post(
             }
 
             // -------------------------------------------------
-            // VERIFICAR PAGAMENTO
+            // PAGAMENTO
             // -------------------------------------------------
 
             if (
@@ -1586,7 +1821,7 @@ app.post(
             }
 
             // -------------------------------------------------
-            // VERIFICAR AGENDAMENTO
+            // AGENDAMENTO EXISTENTE
             // -------------------------------------------------
 
             if (
@@ -1606,16 +1841,16 @@ app.post(
             }
 
             // -------------------------------------------------
-            // CRIAR AGENDAMENTO
+            // AGENDAMENTO
             // -------------------------------------------------
 
             const agendamento = {
 
                 usuarioId:
-                    usuarioId,
+                    String(usuarioId),
 
                 pedidoId:
-                    pedidoId,
+                    String(pedidoId),
 
                 curso:
                     curso.curso,
@@ -1642,13 +1877,11 @@ app.post(
             // -------------------------------------------------
 
             const agendamentoRef =
-                ref(
-                    db,
+                db.ref(
                     `agendamentos/${pedidoId}`
                 );
 
-            await set(
-                agendamentoRef,
+            await agendamentoRef.set(
                 agendamento
             );
 
@@ -1656,15 +1889,12 @@ app.post(
             // ATUALIZAR PEDIDO
             // -------------------------------------------------
 
-            await update(
-                pedidoRef,
-                {
+            await pedidoRef.update({
 
-                    agendamento:
-                        agendamento
+                agendamento:
+                    agendamento
 
-                }
-            );
+            });
 
             // -------------------------------------------------
             // RESPOSTA
@@ -1733,7 +1963,7 @@ app.get(
                 false,
 
             fluxo:
-                "Escolher curso → Pagar → Senha gerada → Acessar curso"
+                "Escolher curso → Pagar → Pagamento confirmado → Senha gerada → Acessar curso"
 
         });
 
@@ -1751,8 +1981,7 @@ app.get(
         try {
 
             const testeRef =
-                ref(
-                    db,
+                db.ref(
                     "teste_servidor"
                 );
 
@@ -1766,14 +1995,13 @@ app.get(
 
             };
 
-            await set(
-                testeRef,
+            await testeRef.set(
                 dadosTeste
             );
 
             const snapshot =
-                await get(
-                    testeRef
+                await testeRef.once(
+                    "value"
                 );
 
             return res.json({
@@ -1806,6 +2034,33 @@ app.get(
             });
 
         }
+
+    }
+);
+
+// =====================================================
+// HEALTH CHECK
+// =====================================================
+
+app.get(
+    "/health",
+    (req, res) => {
+
+        res.json({
+
+            online:
+                true,
+
+            firebase:
+                true,
+
+            stripe:
+                true,
+
+            timestamp:
+                new Date().toISOString()
+
+        });
 
     }
 );
@@ -1871,11 +2126,18 @@ app.listen(
 
         console.log("======================================");
         console.log("API PLATAFORMA ONLINE");
-        console.log("Porta:", PORT);
+        console.log("======================================");
+
+        console.log(
+            "Porta:",
+            PORT
+        );
+
         console.log(
             "Firebase:",
             FIREBASE_PROJECT_ID
         );
+
         console.log(
             "Database:",
             FIREBASE_DATABASE_URL
