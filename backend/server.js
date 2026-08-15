@@ -169,6 +169,84 @@ console.log(
 );
 
 // =====================================================
+// SALVAR CURSO NO PERFIL DO USUÁRIO
+// =====================================================
+
+const cursoUsuarioRef =
+    db.ref(
+        "usuarios/" +
+        usuarioId +
+        "/cursos/" +
+        pedidoId
+    );
+
+await cursoUsuarioRef.set({
+
+    pedidoId:
+        pedidoId,
+
+    nome:
+        curso,
+
+    curso:
+        curso,
+
+    status:
+        "Liberado",
+
+    categoria:
+        cursoSelecionado.categoria,
+
+    valor:
+        cursoSelecionado.valor,
+
+    linkCurso:
+        cursoSelecionado.link,
+
+    senhaCurso:
+        dadosCurso.senhaCurso || null,
+
+    usosRestantes:
+        dadosCurso.usosRestantes ?? null,
+
+    dataPagamento:
+        dadosCurso.dataPagamento
+
+});
+
+
+// =====================================================
+// SALVAR PAGAMENTO NO PERFIL
+// =====================================================
+
+const pagamentoUsuarioRef =
+    db.ref(
+        "usuarios/" +
+        usuarioId +
+        "/pagamentos/" +
+        pedidoId
+    );
+
+await pagamentoUsuarioRef.set({
+
+    pedidoId:
+        pedidoId,
+
+    curso:
+        curso,
+
+    valor:
+        cursoSelecionado.valor,
+
+    pagamentoId:
+        session.id,
+
+    dataPagamento:
+        dadosCurso.dataPagamento
+
+});
+
+// =====================================================
 // STRIPE
 // =====================================================
 
