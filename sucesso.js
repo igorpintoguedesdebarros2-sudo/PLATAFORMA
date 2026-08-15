@@ -1,17 +1,11 @@
-import { auth, db } from "./firebase.js";
+import { auth } from "./firebase.js";
 
 import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-import {
-    ref,
-    onValue,
-    set,
-    query,
-    orderByChild,
-  }  from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
+const API_URL =
+    "https://plataforma-56gy.onrender.com";
 
 // =====================================================
 // ELEMENTOS DA PÁGINA
@@ -105,161 +99,91 @@ onAuthStateChanged(
 // PROCURAR PAGAMENTO
 // =====================================================
 
-function procurarPagamento() {
+async function procurarPagamento() {
 
     if (!usuarioAtual || !sessionId) {
         return;
     }
 
+    try {
 
-    /*
-     * IMPORTANTE:
-     *
-     * A consulta agora é filtrada pelo usuarioId.
-     *
-     * Isso permite que as Rules de produção
-     * controlem o acesso corretamente.
-     */
+        if (statusPagamento) {
+            statusPagamento.textContent =
+                "Consultando pagamento...";
+        }
 
-    onValue(
-        consulta,
-        (snapshot) => {
+        const resposta = await fetch(
+            `${API_URL}/consultar-pagamento?session_id=${encodeURIComponent(sessionId)}`
+        );
 
-            let encontrou = false;
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+            throw new Error(
+                dados.erro ||
+                "Erro ao consultar pagamento."
+            );
+        }
+
+        if (
+            dados.usuarioId &&
+            dados.usuarioId !== usuarioAtual.uid
+        ) {
+            throw new Error(
+                "O pagamento não pertence ao usuário autenticado."
+            );
+        }
+
+        if (!dados.pago) {
+
+            if (statusPagamento) {
+                statusPagamento.textContent =
+                    "Pagamento ainda não confirmado.";
+            }
+
+            return;
+        }
+
+        if (statusPagamento) {
+            statusPagamento.textContent =
+                "Pagamento confirmado.";
+        }
+
+        if (dados.curso) {
 
             cursosPresenciais = [];
-
 
             if (cursosComprados) {
                 cursosComprados.innerHTML = "";
             }
 
-
-            snapshot.forEach(
-                (item) => {
-
-                    const curso =
-                        item.val();
-
-                    const id =
-                        item.key;
-
-
-                    if (!curso) {
-                        return;
-                    }
-
-
-                    /*
-                     * A consulta já filtra pelo usuário.
-                     *
-                     * Ainda fazemos esta verificação
-                     * no código como camada adicional.
-                     */
-
-                    if (
-                        curso.usuarioId !==
-                        usuarioAtual.uid
-                    ) {
-                        return;
-                    }
-
-
-                    /*
-                     * Verifica se o pagamento
-                     * corresponde à sessão atual
-                     * da Stripe.
-                     */
-
-                    if (
-                        curso.pagamentoId !==
-                        sessionId
-                    ) {
-                        return;
-                    }
-
-
-                    /*
-                     * Somente cursos liberados
-                     * depois da confirmação do pagamento.
-                     */
-
-                    if (
-                        curso.status !==
-                        "liberado"
-                    ) {
-                        return;
-                    }
-
-
-                    encontrou = true;
-
-
-                    mostrarCurso(
-                        curso,
-                        id
-                    );
-                }
+            mostrarCurso(
+                dados.curso,
+                dados.pedidoId
             );
-
-
-            // =================================================
-            // RESULTADO
-            // =================================================
-
-            if (encontrou) {
-
-                if (statusPagamento) {
-                    statusPagamento.textContent =
-                        "Pagamento confirmado.";
-                }
-
-            } else {
-
-                if (statusPagamento) {
-                    statusPagamento.textContent =
-                        "Pagamento recebido. Aguardando confirmação do servidor...";
-                }
-
-                if (cursosComprados) {
-
-                    cursosComprados.innerHTML = `
-                        <p>
-                            O pagamento está sendo processado.
-                        </p>
-
-                        <p>
-                            Aguarde alguns segundos e atualize a página.
-                        </p>
-                    `;
-                }
-            }
-        },
-
-        (error) => {
-
-            console.error(
-                "Erro ao consultar pagamento:",
-                error
-            );
-
-            if (statusPagamento) {
-                statusPagamento.textContent =
-                    "Erro ao consultar o pagamento.";
-            }
-
-            if (cursosComprados) {
-                cursosComprados.innerHTML = `
-                    <p>
-                        Não foi possível consultar
-                        os dados do pagamento.
-                    </p>
-                `;
-            }
         }
-    );
-}
 
+    } catch (error) {
+
+        console.error(
+            "Erro ao consultar pagamento:",
+            error
+        );
+
+        if (statusPagamento) {
+            statusPagamento.textContent =
+                "Erro ao consultar o pagamento.";
+        }
+
+        if (cursosComprados) {
+            cursosComprados.innerHTML = `
+                <p>
+                    Não foi possível consultar o pagamento.
+                </p>
+            `;
+        }
+    }
+}
 
 // =====================================================
 // MOSTRAR CURSO
