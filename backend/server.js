@@ -170,14 +170,14 @@ app.use(
 
 const cursos = {
 
-    "HTML Completo": {
+    "NR1": {
 
         valor: 49.90,
 
         categoria: "EAD",
 
         link:
-            "https://seusite.com/cursos/html"
+            "http://127.0.0.1:5500/NR1.html"
 
     },
 

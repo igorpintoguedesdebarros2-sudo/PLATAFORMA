@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Curso</title>
+
+    <link
+        rel="stylesheet"
+        href="NR1.css"
+    >
+
+</head>
+
+<body>
+
+
+    <!-- =====================================================
+         CABEÇALHO
+    ====================================================== -->
+
+    <header class="topo">
+
+        <div>
+
+            <h1 id="tituloCurso">
+                Curso
+            </h1>
+
+            <p id="descricaoCurso">
+                Conteúdo do curso
+            </p>
+
+        </div>
+
+        <button
+            id="btnSair"
+            class="btn-sair"
+        >
+            Sair
+        </button>
+
+    </header>
+
+
+
+    <!-- =====================================================
+         TELA DE SENHA
+    ====================================================== -->
+
+    <section
+        id="telaSenha"
+        class="tela-senha"
+    >
+
+        <div class="caixa-senha">
+
+            <div class="icone">
+                🔐
+            </div>
+
+            <h2>
+                Acesso ao curso
+            </h2>
+
+            <p>
+                Digite a senha recebida para acessar o conteúdo.
+            </p>
+
+            <input
+                type="password"
+                id="senhaCurso"
+                placeholder="Digite sua senha"
+                autocomplete="off"
+            >
+
+            <button
+                id="btnEntrarCurso"
+                class="btn-principal"
+            >
+                Acessar curso
+            </button>
+
+            <p
+                id="mensagemSenha"
+                class="mensagem"
+            ></p>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         CURSO
+    ====================================================== -->
+
+    <main
+        id="conteudoCurso"
+        class="conteudo"
+        style="display:none;"
+    >
+
+
+        <section class="introducao">
+
+            <h2>
+                Conteúdo do curso
+            </h2>
+
+            <p>
+                Selecione uma aula para visualizar o material.
+            </p>
+
+        </section>
+
+
+
+        <!-- =================================================
+             LISTA DE MATERIAIS
+        ================================================== -->
+
+        <section
+            id="listaMateriais"
+            class="materiais"
+        ></section>
+
+
+    </main>
+
+
+
+    <!-- =====================================================
+         MODAL
+    ====================================================== -->
+
+    <div
+        id="modal"
+        class="modal"
+    >
+
+        <div class="modal-conteudo">
+
+            <button
+                id="fecharModal"
+                class="fechar"
+            >
+                ×
+            </button>
+
+            <h2 id="modalTitulo">
+                Conteúdo
+            </h2>
+
+            <div
+                id="modalCorpo"
+                class="modal-corpo"
+            ></div>
+
+        </div>
+
+    </div>
+
+
+    <script
+        type="module"
+        src="NR1.js"
+    ></script>
+
+</body>
+
+</html>

@@ -42,10 +42,10 @@ const API_URL =
 
 const cursosDisponiveis = {
 
-    "HTML Completo": {
+    "NR1": {
         categoria: "EAD",
         descricao:
-            "Curso completo de HTML, do básico ao avançado."
+            "Curso completo de NR1."
     },
 
     "CSS Completo": {

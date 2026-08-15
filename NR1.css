@@ -1,0 +1,613 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+
+body {
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    background:
+        #f4f6f8;
+
+    color:
+        #222;
+
+    min-height:
+        100vh;
+}
+
+
+
+/* =====================================================
+   TOPO
+===================================================== */
+
+.topo {
+
+    background:
+        #111827;
+
+    color:
+        white;
+
+    padding:
+        20px 30px;
+
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        center;
+
+    gap:
+        20px;
+}
+
+
+.topo h1 {
+
+    font-size:
+        25px;
+
+    margin-bottom:
+        5px;
+}
+
+
+.topo p {
+
+    opacity:
+        .75;
+
+}
+
+
+
+/* =====================================================
+   BOTÕES
+===================================================== */
+
+button {
+
+    border:
+        none;
+
+    cursor:
+        pointer;
+
+    font-family:
+        inherit;
+}
+
+
+.btn-principal {
+
+    width:
+        100%;
+
+    padding:
+        13px;
+
+    border-radius:
+        8px;
+
+    background:
+        #2563eb;
+
+    color:
+        white;
+
+    font-size:
+        16px;
+
+    font-weight:
+        bold;
+
+    margin-top:
+        15px;
+
+    transition:
+        .2s;
+}
+
+
+.btn-principal:hover {
+
+    background:
+        #1d4ed8;
+
+}
+
+
+.btn-sair {
+
+    background:
+        #dc2626;
+
+    color:
+        white;
+
+    padding:
+        10px 18px;
+
+    border-radius:
+        7px;
+
+}
+
+
+.btn-sair:hover {
+
+    background:
+        #b91c1c;
+
+}
+
+
+
+/* =====================================================
+   TELA DE SENHA
+===================================================== */
+
+.tela-senha {
+
+    min-height:
+        calc(100vh - 100px);
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    padding:
+        20px;
+}
+
+
+.caixa-senha {
+
+    width:
+        100%;
+
+    max-width:
+        430px;
+
+    background:
+        white;
+
+    padding:
+        35px;
+
+    border-radius:
+        14px;
+
+    box-shadow:
+        0 10px 35px rgba(0,0,0,.1);
+
+    text-align:
+        center;
+}
+
+
+.icone {
+
+    font-size:
+        45px;
+
+    margin-bottom:
+        15px;
+}
+
+
+.caixa-senha h2 {
+
+    margin-bottom:
+        10px;
+
+}
+
+
+.caixa-senha p {
+
+    color:
+        #666;
+
+    line-height:
+        1.5;
+
+}
+
+
+#senhaCurso {
+
+    width:
+        100%;
+
+    margin-top:
+        20px;
+
+    padding:
+        13px;
+
+    border:
+        1px solid #ccc;
+
+    border-radius:
+        8px;
+
+    font-size:
+        16px;
+
+    outline:
+        none;
+}
+
+
+#senhaCurso:focus {
+
+    border-color:
+        #2563eb;
+
+}
+
+
+
+/* =====================================================
+   MENSAGEM
+===================================================== */
+
+.mensagem {
+
+    margin-top:
+        15px;
+
+    font-weight:
+        bold;
+
+}
+
+
+.mensagem.erro {
+
+    color:
+        #dc2626;
+
+}
+
+
+.mensagem.sucesso {
+
+    color:
+        #16a34a;
+
+}
+
+
+
+/* =====================================================
+   CONTEÚDO
+===================================================== */
+
+.conteudo {
+
+    max-width:
+        1100px;
+
+    margin:
+        auto;
+
+    padding:
+        35px 20px;
+}
+
+
+.introducao {
+
+    background:
+        white;
+
+    padding:
+        25px;
+
+    border-radius:
+        12px;
+
+    margin-bottom:
+        25px;
+
+    box-shadow:
+        0 4px 15px rgba(0,0,0,.05);
+}
+
+
+
+/* =====================================================
+   MATERIAIS
+===================================================== */
+
+.materiais {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(auto-fit, minmax(260px, 1fr));
+
+    gap:
+        20px;
+}
+
+
+.material {
+
+    background:
+        white;
+
+    border-radius:
+        12px;
+
+    padding:
+        20px;
+
+    box-shadow:
+        0 5px 18px rgba(0,0,0,.08);
+
+    transition:
+        transform .2s;
+}
+
+
+.material:hover {
+
+    transform:
+        translateY(-3px);
+
+}
+
+
+.material .tipo {
+
+    font-size:
+        12px;
+
+    font-weight:
+        bold;
+
+    color:
+        #2563eb;
+
+    text-transform:
+        uppercase;
+
+    margin-bottom:
+        8px;
+}
+
+
+.material h3 {
+
+    margin-bottom:
+        10px;
+
+}
+
+
+.material p {
+
+    color:
+        #666;
+
+    margin-bottom:
+        18px;
+
+}
+
+
+.btn-material {
+
+    width:
+        100%;
+
+    padding:
+        11px;
+
+    border-radius:
+        7px;
+
+    background:
+        #2563eb;
+
+    color:
+        white;
+
+    font-weight:
+        bold;
+
+}
+
+
+.btn-material:hover {
+
+    background:
+        #1d4ed8;
+
+}
+
+
+
+/* =====================================================
+   MODAL
+===================================================== */
+
+.modal {
+
+    position:
+        fixed;
+
+    inset:
+        0;
+
+    background:
+        rgba(0,0,0,.75);
+
+    display:
+        none;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    padding:
+        20px;
+
+    z-index:
+        1000;
+}
+
+
+.modal.ativo {
+
+    display:
+        flex;
+
+}
+
+
+.modal-conteudo {
+
+    width:
+        100%;
+
+    max-width:
+        1000px;
+
+    max-height:
+        90vh;
+
+    overflow:
+        auto;
+
+    background:
+        white;
+
+    border-radius:
+        12px;
+
+    padding:
+        25px;
+
+    position:
+        relative;
+}
+
+
+.fechar {
+
+    position:
+        absolute;
+
+    top:
+        10px;
+
+    right:
+        15px;
+
+    font-size:
+        30px;
+
+    background:
+        transparent;
+
+    color:
+        #555;
+}
+
+
+#modalTitulo {
+
+    margin-bottom:
+        20px;
+
+    padding-right:
+        40px;
+}
+
+
+.modal-corpo {
+
+    width:
+        100%;
+}
+
+
+.modal-corpo iframe {
+
+    width:
+        100%;
+
+    height:
+        70vh;
+
+    border:
+        none;
+}
+
+
+.modal-corpo video {
+
+    width:
+        100%;
+
+    max-height:
+        70vh;
+
+    background:
+        black;
+
+}
+
+
+
+/* =====================================================
+   RESPONSIVO
+===================================================== */
+
+@media (max-width: 600px) {
+
+    .topo {
+
+        padding:
+            15px;
+
+    }
+
+    .topo h1 {
+
+        font-size:
+            20px;
+
+    }
+
+    .caixa-senha {
+
+        padding:
+            25px;
+
+    }
+
+}
