@@ -74,9 +74,7 @@ if (
     !FIREBASE_DATABASE_URL
 ) {
     console.error("======================================");
-    console.error(
-        "ERRO: configuração do Firebase incompleta."
-    );
+    console.error("ERRO: configuração do Firebase incompleta.");
     console.error(
         "Verifique FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY e FIREBASE_DATABASE_URL."
     );
@@ -91,19 +89,25 @@ if (
 
 if (!STRIPE_SECRET_KEY) {
     console.error("======================================");
-    console.error(
-        "ERRO: STRIPE_SECRET_KEY não configurada."
-    );
+    console.error("ERRO: STRIPE_SECRET_KEY não configurada.");
     console.error("======================================");
 
     process.exit(1);
 }
 
 // =====================================================
-// FIREBASE ADMIN
+// FIREBASE ADMIN - API MODULAR
 // =====================================================
 
-const admin = require("firebase-admin");
+const {
+    getApps,
+    initializeApp,
+    cert
+} = require("firebase-admin/app");
+
+const {
+    getDatabase
+} = require("firebase-admin/database");
 
 // =====================================================
 // SERVICE ACCOUNT
@@ -119,14 +123,13 @@ const serviceAccount = {
 // INICIALIZAR FIREBASE
 // =====================================================
 
-if (!admin.apps.length) {
+let firebaseApp;
 
-    admin.initializeApp({
-        credential:
-            admin.credential.cert(serviceAccount),
+if (getApps().length === 0) {
 
-        databaseURL:
-            FIREBASE_DATABASE_URL
+    firebaseApp = initializeApp({
+        credential: cert(serviceAccount),
+        databaseURL: FIREBASE_DATABASE_URL
     });
 
     console.log(
@@ -134,6 +137,8 @@ if (!admin.apps.length) {
     );
 
 } else {
+
+    firebaseApp = getApps()[0];
 
     console.log(
         "Firebase Admin já estava inicializado."
@@ -144,7 +149,7 @@ if (!admin.apps.length) {
 // DATABASE
 // =====================================================
 
-const db = admin.database();
+const db = getDatabase(firebaseApp);
 
 console.log(
     "Firebase Realtime Database conectado."
@@ -154,8 +159,9 @@ console.log(
 // STRIPE
 // =====================================================
 
-const stripe =
-    Stripe(STRIPE_SECRET_KEY);
+const stripe = Stripe(
+    STRIPE_SECRET_KEY
+);
 
 console.log(
     "Stripe inicializado."
@@ -291,32 +297,12 @@ app.post(
                 usuarioId
             } = req.body || {};
 
-            console.log(
-                "======================================"
-            );
-
-            console.log(
-                "NOVO PAGAMENTO"
-            );
-
-            console.log(
-                "Curso:",
-                curso
-            );
-
-            console.log(
-                "Pedido:",
-                pedidoId
-            );
-
-            console.log(
-                "Usuário:",
-                usuarioId
-            );
-
-            console.log(
-                "======================================"
-            );
+            console.log("======================================");
+            console.log("NOVO PAGAMENTO");
+            console.log("Curso:", curso);
+            console.log("Pedido:", pedidoId);
+            console.log("Usuário:", usuarioId);
+            console.log("======================================");
 
             // -------------------------------------------------
             // VALIDAR CURSO
@@ -369,7 +355,7 @@ app.post(
             }
 
             // -------------------------------------------------
-            // ID DO PEDIDO
+            // GERAR PEDIDO
             // -------------------------------------------------
 
             const idPedido =
@@ -431,7 +417,7 @@ app.post(
                 );
 
             // -------------------------------------------------
-            // CRIAR CHECKOUT STRIPE
+            // STRIPE CHECKOUT
             // -------------------------------------------------
 
             const session =
@@ -506,7 +492,7 @@ app.post(
                     });
 
             // -------------------------------------------------
-            // SALVAR SESSION ID
+            // SALVAR SESSION
             // -------------------------------------------------
 
             await db
@@ -587,22 +573,10 @@ app.get(
                 session_id
             } = req.query;
 
-            console.log(
-                "======================================"
-            );
-
-            console.log(
-                "CONSULTAR PAGAMENTO"
-            );
-
-            console.log(
-                "Session:",
-                session_id
-            );
-
-            console.log(
-                "======================================"
-            );
+            console.log("======================================");
+            console.log("CONSULTAR PAGAMENTO");
+            console.log("Session:", session_id);
+            console.log("======================================");
 
             if (!session_id) {
 
@@ -619,7 +593,7 @@ app.get(
             }
 
             // -------------------------------------------------
-            // CONSULTAR STRIPE
+            // STRIPE
             // -------------------------------------------------
 
             const session =
@@ -636,7 +610,7 @@ app.get(
             );
 
             // -------------------------------------------------
-            // PAGAMENTO AINDA NÃO PAGO
+            // PAGAMENTO NÃO CONFIRMADO
             // -------------------------------------------------
 
             if (
@@ -729,7 +703,7 @@ app.get(
                 );
 
             // -------------------------------------------------
-            // JÁ PROCESSADO
+            // VERIFICAR SE JÁ FOI PROCESSADO
             // -------------------------------------------------
 
             if (snapshot.exists()) {
@@ -793,11 +767,15 @@ app.get(
             }
 
             // -------------------------------------------------
-            // DADOS DO CURSO PAGO
+            // DATA DO PAGAMENTO
             // -------------------------------------------------
 
             const dataPagamento =
                 new Date().toISOString();
+
+            // -------------------------------------------------
+            // DADOS DO CURSO PAGO
+            // -------------------------------------------------
 
             const dadosCurso = {
 
@@ -829,6 +807,15 @@ app.get(
                     dataPagamento,
 
                 agendamento:
+                    null,
+
+                status:
+                    "pago",
+
+                senhaCurso:
+                    null,
+
+                usosRestantes:
                     null
 
             };
@@ -841,9 +828,6 @@ app.get(
                 cursoSelecionado.categoria ===
                 "EAD"
             ) {
-
-                dadosCurso.status =
-                    "pago";
 
                 dadosCurso.senhaCurso =
                     gerarSenhaCurso();
@@ -861,9 +845,6 @@ app.get(
                 cursoSelecionado.categoria ===
                 "Presencial"
             ) {
-
-                dadosCurso.status =
-                    "pago";
 
                 dadosCurso.senhaCurso =
                     null;
@@ -955,44 +936,26 @@ app.get(
 
                 });
 
-            console.log(
-                "======================================"
-            );
+            // -------------------------------------------------
+            // LOG
+            // -------------------------------------------------
 
-            console.log(
-                "PAGAMENTO CONFIRMADO"
-            );
-
-            console.log(
-                "Pedido:",
-                pedidoId
-            );
-
-            console.log(
-                "Usuário:",
-                usuarioId
-            );
-
-            console.log(
-                "Curso:",
-                curso
-            );
-
+            console.log("======================================");
+            console.log("PAGAMENTO CONFIRMADO");
+            console.log("Pedido:", pedidoId);
+            console.log("Usuário:", usuarioId);
+            console.log("Curso:", curso);
             console.log(
                 "Senha gerada:",
                 dadosCurso.senhaCurso
                     ? "SIM"
                     : "NÃO"
             );
-
             console.log(
                 "Usos:",
                 dadosCurso.usosRestantes
             );
-
-            console.log(
-                "======================================"
-            );
+            console.log("======================================");
 
             // -------------------------------------------------
             // RESPOSTA
@@ -1044,21 +1007,10 @@ app.get(
 
         catch (error) {
 
-            console.error(
-                "======================================"
-            );
-
-            console.error(
-                "ERRO CONSULTAR PAGAMENTO"
-            );
-
-            console.error(
-                error
-            );
-
-            console.error(
-                "======================================"
-            );
+            console.error("======================================");
+            console.error("ERRO CONSULTAR PAGAMENTO");
+            console.error(error);
+            console.error("======================================");
 
             return res.status(500).json({
 
@@ -1150,18 +1102,24 @@ app.get(
         }
 
     }
-)
- 
+);
+
 // =====================================================
 // USAR SENHA DO CURSO
 // =====================================================
-// A senha é gerada automaticamente quando o pagamento
-// é confirmado.
 //
-// Cada senha possui 2 utilizações.
+// O usuário envia somente:
+// {
+//     "senha": "XXXXXXXXXXXX"
+// }
 //
-// O usuário NÃO precisa informar pedidoId.
-// Basta informar a senha recebida.
+// Não precisa enviar pedidoId.
+// Não precisa enviar usuarioId.
+//
+// A senha é procurada em:
+// solicitacoes_cursos
+//
+// Cada senha começa com 2 usos.
 // =====================================================
 
 app.post(
@@ -1174,15 +1132,16 @@ app.post(
                 senha
             } = req.body || {};
 
-            // =================================================
-            // VALIDAR SENHA RECEBIDA
-            // =================================================
+            // -------------------------------------------------
+            // VALIDAR SENHA
+            // -------------------------------------------------
 
             if (!senha) {
 
                 return res.status(400).json({
 
-                    valido: false,
+                    valido:
+                        false,
 
                     erro:
                         "Senha não informada."
@@ -1191,45 +1150,37 @@ app.post(
 
             }
 
-            console.log(
-                "======================================"
-            );
+            const senhaNormalizada =
+                String(senha).trim();
 
-            console.log(
-                "TENTATIVA DE ACESSO AO CURSO"
-            );
-
+            console.log("======================================");
+            console.log("TENTATIVA DE ACESSO AO CURSO");
             console.log(
                 "Senha recebida:",
-                senha
+                senhaNormalizada
             );
+            console.log("======================================");
 
-            console.log(
-                "======================================"
-            );
-
-
-            // =================================================
-            // BUSCAR TODOS OS PEDIDOS
-            // =================================================
+            // -------------------------------------------------
+            // BUSCAR PEDIDOS
+            // -------------------------------------------------
 
             const pedidosRef =
                 db.ref(
                     "solicitacoes_cursos"
                 );
 
-
             const snapshot =
                 await pedidosRef.once(
                     "value"
                 );
 
-
             if (!snapshot.exists()) {
 
                 return res.json({
 
-                    valido: false,
+                    valido:
+                        false,
 
                     erro:
                         "Nenhum curso encontrado."
@@ -1238,14 +1189,12 @@ app.post(
 
             }
 
-
-            // =================================================
-            // PROCURAR A SENHA
-            // =================================================
+            // -------------------------------------------------
+            // PROCURAR SENHA
+            // -------------------------------------------------
 
             let pedidoEncontrado =
                 null;
-
 
             snapshot.forEach(
                 (item) => {
@@ -1253,16 +1202,13 @@ app.post(
                     const pedido =
                         item.val();
 
-
                     if (
                         pedido &&
                         pedido.senhaCurso &&
                         String(
                             pedido.senhaCurso
-                        ) ===
-                        String(
-                            senha
-                        )
+                        ).trim() ===
+                        senhaNormalizada
                     ) {
 
                         pedidoEncontrado = {
@@ -1279,10 +1225,9 @@ app.post(
                 }
             );
 
-
-            // =================================================
+            // -------------------------------------------------
             // SENHA NÃO ENCONTRADA
-            // =================================================
+            // -------------------------------------------------
 
             if (!pedidoEncontrado) {
 
@@ -1292,7 +1237,8 @@ app.post(
 
                 return res.json({
 
-                    valido: false,
+                    valido:
+                        false,
 
                     erro:
                         "Senha inválida ou inexistente."
@@ -1301,18 +1247,19 @@ app.post(
 
             }
 
-
-            // =================================================
-            // VERIFICAR SE O PAGAMENTO FOI CONFIRMADO
-            // =================================================
+            // -------------------------------------------------
+            // VERIFICAR PAGAMENTO
+            // -------------------------------------------------
 
             if (
-                pedidoEncontrado.pago !== true
+                pedidoEncontrado.pago !==
+                true
             ) {
 
                 return res.json({
 
-                    valido: false,
+                    valido:
+                        false,
 
                     erro:
                         "Este curso ainda não foi pago."
@@ -1321,10 +1268,9 @@ app.post(
 
             }
 
-
-            // =================================================
+            // -------------------------------------------------
             // VERIFICAR CATEGORIA
-            // =================================================
+            // -------------------------------------------------
 
             if (
                 pedidoEncontrado.categoria !==
@@ -1333,7 +1279,8 @@ app.post(
 
                 return res.json({
 
-                    valido: false,
+                    valido:
+                        false,
 
                     erro:
                         "Esta senha não pertence a um curso EAD."
@@ -1342,16 +1289,14 @@ app.post(
 
             }
 
-
-            // =================================================
+            // -------------------------------------------------
             // VERIFICAR USOS
-            // =================================================
+            // -------------------------------------------------
 
             const usos =
                 Number(
                     pedidoEncontrado.usosRestantes
                 );
-
 
             if (
                 !Number.isFinite(usos) ||
@@ -1364,7 +1309,8 @@ app.post(
 
                 return res.json({
 
-                    valido: false,
+                    valido:
+                        false,
 
                     erro:
                         "Esta senha já foi utilizada 2 vezes e não possui mais usos."
@@ -1373,20 +1319,21 @@ app.post(
 
             }
 
-
-            // =================================================
-            // DIMINUIR UM USO
-            // =================================================
+            // -------------------------------------------------
+            // DIMINUIR USO
+            // -------------------------------------------------
 
             const novosUsos =
                 usos - 1;
 
+            // -------------------------------------------------
+            // ATUALIZAR PEDIDO
+            // -------------------------------------------------
 
             const pedidoRef =
                 db.ref(
                     `solicitacoes_cursos/${pedidoEncontrado.id}`
                 );
-
 
             await pedidoRef.update({
 
@@ -1395,10 +1342,9 @@ app.post(
 
             });
 
-
-            // =================================================
+            // -------------------------------------------------
             // ATUALIZAR CURSO DO USUÁRIO
-            // =================================================
+            // -------------------------------------------------
 
             if (
                 pedidoEncontrado.usuarioId
@@ -1409,7 +1355,6 @@ app.post(
                         `usuarios/${pedidoEncontrado.usuarioId}/cursos/${pedidoEncontrado.id}`
                     );
 
-
                 await usuarioCursoRef.update({
 
                     usosRestantes:
@@ -1419,56 +1364,42 @@ app.post(
 
             }
 
-
-            // =================================================
+            // -------------------------------------------------
             // LOG
-            // =================================================
+            // -------------------------------------------------
 
-            console.log(
-                "======================================"
-            );
-
-            console.log(
-                "ACESSO AUTORIZADO"
-            );
-
+            console.log("======================================");
+            console.log("ACESSO AUTORIZADO");
             console.log(
                 "Curso:",
                 pedidoEncontrado.curso
             );
-
             console.log(
                 "Pedido:",
                 pedidoEncontrado.id
             );
-
             console.log(
                 "Usuário:",
                 pedidoEncontrado.usuarioId
             );
-
             console.log(
                 "Usos anteriores:",
                 usos
             );
-
             console.log(
                 "Usos restantes:",
                 novosUsos
             );
+            console.log("======================================");
 
-            console.log(
-                "======================================"
-            );
-
-
-            // =================================================
+            // -------------------------------------------------
             // RESPOSTA
-            // =================================================
+            // -------------------------------------------------
 
             return res.json({
 
-                valido: true,
+                valido:
+                    true,
 
                 mensagem:
                     "Acesso autorizado.",
@@ -1497,26 +1428,15 @@ app.post(
 
         catch (error) {
 
-            console.error(
-                "======================================"
-            );
-
-            console.error(
-                "ERRO USAR SENHA"
-            );
-
-            console.error(
-                error
-            );
-
-            console.error(
-                "======================================"
-            );
-
+            console.error("======================================");
+            console.error("ERRO USAR SENHA");
+            console.error(error);
+            console.error("======================================");
 
             return res.status(500).json({
 
-                valido: false,
+                valido:
+                    false,
 
                 erro:
                     "Erro interno ao validar a senha.",
@@ -1548,6 +1468,10 @@ app.post(
                 horario
             } = req.body || {};
 
+            // -------------------------------------------------
+            // VALIDAR DADOS
+            // -------------------------------------------------
+
             if (
                 !pedidoId ||
                 !usuarioId ||
@@ -1566,6 +1490,10 @@ app.post(
                 });
 
             }
+
+            // -------------------------------------------------
+            // BUSCAR PEDIDO
+            // -------------------------------------------------
 
             const pedidoRef =
                 db.ref(
@@ -1594,6 +1522,10 @@ app.post(
             const curso =
                 snapshot.val();
 
+            // -------------------------------------------------
+            // VERIFICAR USUÁRIO
+            // -------------------------------------------------
+
             if (
                 String(
                     curso.usuarioId
@@ -1615,6 +1547,10 @@ app.post(
 
             }
 
+            // -------------------------------------------------
+            // VERIFICAR CATEGORIA
+            // -------------------------------------------------
+
             if (
                 curso.categoria !==
                 "Presencial"
@@ -1631,6 +1567,10 @@ app.post(
                 });
 
             }
+
+            // -------------------------------------------------
+            // VERIFICAR PAGAMENTO
+            // -------------------------------------------------
 
             if (
                 curso.pago !==
@@ -1649,6 +1589,10 @@ app.post(
 
             }
 
+            // -------------------------------------------------
+            // VERIFICAR AGENDAMENTO
+            // -------------------------------------------------
+
             if (
                 curso.agendamento
             ) {
@@ -1664,6 +1608,10 @@ app.post(
                 });
 
             }
+
+            // -------------------------------------------------
+            // CRIAR AGENDAMENTO
+            // -------------------------------------------------
 
             const agendamento = {
 
@@ -1693,6 +1641,10 @@ app.post(
 
             };
 
+            // -------------------------------------------------
+            // SALVAR AGENDAMENTO
+            // -------------------------------------------------
+
             await db
                 .ref(
                     `agendamentos/${pedidoId}`
@@ -1701,12 +1653,20 @@ app.post(
                     agendamento
                 );
 
+            // -------------------------------------------------
+            // ATUALIZAR PEDIDO
+            // -------------------------------------------------
+
             await pedidoRef.update({
 
                 agendamento:
                     agendamento
 
             });
+
+            // -------------------------------------------------
+            // RESPOSTA
+            // -------------------------------------------------
 
             return res.json({
 
@@ -1901,41 +1861,24 @@ app.listen(
     PORT,
     () => {
 
-        console.log(
-            "======================================"
-        );
-
-        console.log(
-            "API PLATAFORMA ONLINE"
-        );
-
-        console.log(
-            "Porta:",
-            PORT
-        );
-
+        console.log("======================================");
+        console.log("API PLATAFORMA ONLINE");
+        console.log("Porta:", PORT);
         console.log(
             "Firebase:",
             FIREBASE_PROJECT_ID
         );
-
         console.log(
             "Database:",
             FIREBASE_DATABASE_URL
         );
-
         console.log(
             "Stripe:",
-            STRIPE_SECRET_KEY.startsWith(
-                "sk_test_"
-            )
+            STRIPE_SECRET_KEY.startsWith("sk_test_")
                 ? "MODO TESTE"
                 : "MODO PRODUÇÃO"
         );
-
-        console.log(
-            "======================================"
-        );
+        console.log("======================================");
 
     }
 );
