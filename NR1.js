@@ -1,11 +1,17 @@
 import {
-    auth
+    auth,
+    db
 } from "./firebase.js";
 
 import {
     onAuthStateChanged,
     signOut
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+import {
+    ref,
+    get
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 
 // =====================================================
@@ -17,7 +23,7 @@ const API_URL =
 
 
 // =====================================================
-// DADOS DO CURSO
+// CONFIGURAÇÃO DO CURSO
 // =====================================================
 
 const CURSO = {
@@ -32,22 +38,7 @@ const CURSO = {
 
 
 // =====================================================
-// MATERIAIS DO CURSO
-// =====================================================
-//
-// Pode adicionar quantos materiais quiser.
-//
-// tipo:
-// "pdf"
-// "video"
-//
-// arquivo:
-// Caminho relativo:
-// "videos/aula1.mp4"
-//
-// ou URL completa:
-// "https://site.com/video.mp4"
-//
+// MATERIAIS
 // =====================================================
 
 const MATERIAIS = [
@@ -65,7 +56,6 @@ const MATERIAIS = [
             "videos/aula1.mp4"
     },
 
-
     {
         tipo: "pdf",
 
@@ -73,12 +63,11 @@ const MATERIAIS = [
             "Material 1 - Introdução",
 
         descricao:
-            "Material complementar da primeira aula.",
+            "Material complementar.",
 
         arquivo:
             "pdfs/material1.pdf"
     },
-
 
     {
         tipo: "video",
@@ -93,7 +82,6 @@ const MATERIAIS = [
             "videos/aula2.mp4"
     },
 
-
     {
         tipo: "pdf",
 
@@ -107,7 +95,6 @@ const MATERIAIS = [
             "pdfs/html.pdf"
     },
 
-
     {
         tipo: "video",
 
@@ -120,7 +107,6 @@ const MATERIAIS = [
         arquivo:
             "videos/aula3.mp4"
     },
-
 
     {
         tipo: "pdf",
@@ -143,175 +129,136 @@ const MATERIAIS = [
 // =====================================================
 
 const telaSenha =
-    document.getElementById(
-        "telaSenha"
-    );
+    document.getElementById("telaSenha");
 
 const conteudoCurso =
-    document.getElementById(
-        "conteudoCurso"
-    );
+    document.getElementById("conteudoCurso");
 
 const senhaInput =
-    document.getElementById(
-        "senhaCurso"
-    );
+    document.getElementById("senhaCurso");
 
 const btnEntrar =
-    document.getElementById(
-        "btnEntrarCurso"
-    );
+    document.getElementById("btnEntrarCurso");
 
 const mensagem =
-    document.getElementById(
-        "mensagemSenha"
-    );
+    document.getElementById("mensagemSenha");
 
 const listaMateriais =
-    document.getElementById(
-        "listaMateriais"
-    );
+    document.getElementById("listaMateriais");
 
 const modal =
-    document.getElementById(
-        "modal"
-    );
+    document.getElementById("modal");
 
 const modalTitulo =
-    document.getElementById(
-        "modalTitulo"
-    );
+    document.getElementById("modalTitulo");
 
 const modalCorpo =
-    document.getElementById(
-        "modalCorpo"
-    );
+    document.getElementById("modalCorpo");
 
 const fecharModal =
-    document.getElementById(
-        "fecharModal"
-    );
+    document.getElementById("fecharModal");
+
+
+// =====================================================
+// PREENCHER CABEÇALHO
+// =====================================================
 
 const tituloCurso =
-    document.getElementById(
-        "tituloCurso"
-    );
+    document.getElementById("tituloCurso");
 
 const descricaoCurso =
-    document.getElementById(
-        "descricaoCurso"
-    );
+    document.getElementById("descricaoCurso");
 
-const btnSair =
-    document.getElementById(
-        "btnSair"
-    );
+if (tituloCurso) {
 
+    tituloCurso.textContent =
+        CURSO.nome;
 
-// =====================================================
-// VERIFICAR ELEMENTOS
-// =====================================================
+}
 
-if (!telaSenha ||
-    !conteudoCurso ||
-    !senhaInput ||
-    !btnEntrar ||
-    !mensagem ||
-    !listaMateriais ||
-    !modal ||
-    !modalTitulo ||
-    !modalCorpo ||
-    !fecharModal ||
-    !tituloCurso ||
-    !descricaoCurso ||
-    !btnSair
-) {
+if (descricaoCurso) {
 
-    console.error(
-        "Erro: um ou mais elementos do HTML não foram encontrados."
-    );
-
-    throw new Error(
-        "Estrutura HTML do curso incompleta."
-    );
+    descricaoCurso.textContent =
+        CURSO.descricao;
 
 }
 
 
 // =====================================================
-// PREENCHER CURSO
-// =====================================================
-
-tituloCurso.textContent =
-    CURSO.nome;
-
-descricaoCurso.textContent =
-    CURSO.descricao;
-
-
-// =====================================================
-// USUÁRIO ATUAL
+// USUÁRIO
 // =====================================================
 
 let usuarioAtual = null;
 
 
 // =====================================================
-// PEDIDO ATUAL
+// PEDIDO DO CURSO
 // =====================================================
 
-const pedidoId =
-    obterPedidoId();
-
-
-// =====================================================
-// VERIFICAR PEDIDO NA URL
-// =====================================================
-
-if (!pedidoId) {
-
-    mostrarMensagem(
-        "Pedido do curso não informado.",
-        "erro"
-    );
-
-    btnEntrar.disabled = true;
-
-    console.error(
-        "URL sem pedidoId."
-    );
-
-}
+let pedidoIdAtual = null;
 
 
 // =====================================================
-// AUTENTICAÇÃO
+// LOGIN
 // =====================================================
 
 onAuthStateChanged(
     auth,
-    (usuario) => {
+    async (usuario) => {
 
         if (!usuario) {
+
+            console.log(
+                "Usuário não autenticado."
+            );
 
             window.location =
                 "index.html";
 
             return;
-
         }
+
 
         usuarioAtual =
             usuario;
+
 
         console.log(
             "Usuário autenticado:",
             usuario.uid
         );
 
+
+        // =================================================
+        // LOCALIZAR PEDIDO
+        // =================================================
+
+        pedidoIdAtual =
+            await localizarPedido();
+
+
         console.log(
             "Pedido do curso:",
-            pedidoId
+            pedidoIdAtual
+        );
+
+
+        if (!pedidoIdAtual) {
+
+            mostrarMensagem(
+                "Você não possui este curso liberado.",
+                "erro"
+            );
+
+            btnEntrar.disabled =
+                true;
+
+            return;
+        }
+
+
+        console.log(
+            "Curso pronto para acesso."
         );
 
     }
@@ -319,7 +266,159 @@ onAuthStateChanged(
 
 
 // =====================================================
-// BOTÃO ACESSAR
+// LOCALIZAR PEDIDO
+// =====================================================
+
+async function localizarPedido() {
+
+    try {
+
+        // =================================================
+        // 1. PRIMEIRO TENTA PEGAR DA URL
+        // =================================================
+
+        const parametros =
+            new URLSearchParams(
+                window.location.search
+            );
+
+        const pedidoDaURL =
+            parametros.get("pedidoId");
+
+
+        if (pedidoDaURL) {
+
+            console.log(
+                "Pedido encontrado na URL:",
+                pedidoDaURL
+            );
+
+            return pedidoDaURL;
+
+        }
+
+
+        // =================================================
+        // 2. PROCURA NO PERFIL DO USUÁRIO
+        // =================================================
+
+        if (!usuarioAtual) {
+
+            return null;
+
+        }
+
+
+        const cursosRef =
+            ref(
+                db,
+                "usuarios/" +
+                usuarioAtual.uid +
+                "/cursos"
+            );
+
+
+        const snapshot =
+            await get(cursosRef);
+
+
+        if (!snapshot.exists()) {
+
+            console.log(
+                "Usuário não possui cursos."
+            );
+
+            return null;
+
+        }
+
+
+        let pedidoEncontrado =
+            null;
+
+
+        snapshot.forEach(
+            (item) => {
+
+                const curso =
+                    item.val();
+
+
+                console.log(
+                    "Curso encontrado:",
+                    curso
+                );
+
+
+                // =================================================
+                // COMPARAR PELO NOME DO CURSO
+                // =================================================
+
+                const nomeCurso =
+                    curso.curso ||
+                    curso.nome;
+
+
+                if (
+                    nomeCurso ===
+                    CURSO.nome
+                ) {
+
+                    // Preferir somente cursos liberados
+                    if (
+                        curso.status === "Liberado" ||
+                        curso.pago === true ||
+                        !curso.status
+                    ) {
+
+                        pedidoEncontrado =
+                            curso.pedidoId ||
+                            item.key;
+
+                    }
+
+                }
+
+            }
+        );
+
+
+        if (pedidoEncontrado) {
+
+            console.log(
+                "Pedido encontrado no Firebase:",
+                pedidoEncontrado
+            );
+
+            return pedidoEncontrado;
+
+        }
+
+
+        return null;
+
+    }
+    catch (error) {
+
+        console.error(
+            "ERRO AO LOCALIZAR PEDIDO:",
+            error
+        );
+
+        mostrarMensagem(
+            "Não foi possível localizar seu curso.",
+            "erro"
+        );
+
+        return null;
+
+    }
+
+}
+
+
+// =====================================================
+// ACESSAR CURSO
 // =====================================================
 
 btnEntrar.onclick =
@@ -327,7 +426,7 @@ btnEntrar.onclick =
 
 
 // =====================================================
-// ENTER NA SENHA
+// ENTER
 // =====================================================
 
 senhaInput.addEventListener(
@@ -338,8 +437,6 @@ senhaInput.addEventListener(
             event.key === "Enter"
         ) {
 
-            event.preventDefault();
-
             acessarCurso();
 
         }
@@ -349,7 +446,7 @@ senhaInput.addEventListener(
 
 
 // =====================================================
-// ACESSAR CURSO
+// VALIDAR SENHA
 // =====================================================
 
 async function acessarCurso() {
@@ -358,26 +455,6 @@ async function acessarCurso() {
         senhaInput.value.trim();
 
 
-    // -----------------------------------------
-    // VERIFICAR PEDIDO
-    // -----------------------------------------
-
-    if (!pedidoId) {
-
-        mostrarMensagem(
-            "Pedido do curso não encontrado.",
-            "erro"
-        );
-
-        return;
-
-    }
-
-
-    // -----------------------------------------
-    // VERIFICAR SENHA
-    // -----------------------------------------
-
     if (!senha) {
 
         mostrarMensagem(
@@ -385,16 +462,10 @@ async function acessarCurso() {
             "erro"
         );
 
-        senhaInput.focus();
-
         return;
 
     }
 
-
-    // -----------------------------------------
-    // VERIFICAR USUÁRIO
-    // -----------------------------------------
 
     if (!usuarioAtual) {
 
@@ -408,48 +479,44 @@ async function acessarCurso() {
     }
 
 
-    // -----------------------------------------
-    // BLOQUEAR BOTÃO
-    // -----------------------------------------
+    // =================================================
+    // GARANTIR PEDIDO
+    // =================================================
+
+    if (!pedidoIdAtual) {
+
+        pedidoIdAtual =
+            await localizarPedido();
+
+    }
+
+
+    if (!pedidoIdAtual) {
+
+        mostrarMensagem(
+            "Não foi possível localizar o pedido deste curso.",
+            "erro"
+        );
+
+        return;
+
+    }
+
+
+    console.log(
+        "Validando pedido:",
+        pedidoIdAtual
+    );
+
 
     btnEntrar.disabled =
         true;
-
-    const textoOriginal =
-        btnEntrar.textContent;
 
     btnEntrar.textContent =
         "Verificando...";
 
 
     try {
-
-        console.log(
-            "======================================"
-        );
-
-        console.log(
-            "VALIDANDO SENHA DO CURSO"
-        );
-
-        console.log(
-            "Pedido:",
-            pedidoId
-        );
-
-        console.log(
-            "Usuário:",
-            usuarioAtual.uid
-        );
-
-        console.log(
-            "======================================"
-        );
-
-
-        // -----------------------------------------
-        // ENVIAR PARA O BACKEND
-        // -----------------------------------------
 
         const resposta =
             await fetch(
@@ -470,10 +537,13 @@ async function acessarCurso() {
                         JSON.stringify({
 
                             pedidoId:
-                                pedidoId,
+                                pedidoIdAtual,
 
                             senha:
-                                senha
+                                senha,
+
+                            usuarioId:
+                                usuarioAtual.uid
 
                         })
 
@@ -481,30 +551,8 @@ async function acessarCurso() {
             );
 
 
-        // -----------------------------------------
-        // LER RESPOSTA
-        // -----------------------------------------
-
-        let dados;
-
-        try {
-
-            dados =
-                await resposta.json();
-
-        }
-        catch (erroJSON) {
-
-            console.error(
-                "Resposta do servidor não é JSON:",
-                erroJSON
-            );
-
-            throw new Error(
-                "O servidor retornou uma resposta inválida."
-            );
-
-        }
+        const dados =
+            await resposta.json();
 
 
         console.log(
@@ -512,10 +560,6 @@ async function acessarCurso() {
             dados
         );
 
-
-        // -----------------------------------------
-        // ERRO HTTP
-        // -----------------------------------------
 
         if (!resposta.ok) {
 
@@ -527,9 +571,9 @@ async function acessarCurso() {
         }
 
 
-        // -----------------------------------------
-        // SENHA INCORRETA / BLOQUEADA
-        // -----------------------------------------
+        // =================================================
+        // SENHA INVÁLIDA
+        // =================================================
 
         if (!dados.valido) {
 
@@ -539,65 +583,29 @@ async function acessarCurso() {
                 "erro"
             );
 
-            senhaInput.select();
-
             return;
 
         }
 
 
-        // -----------------------------------------
+        // =================================================
         // ACESSO AUTORIZADO
-        // -----------------------------------------
+        // =================================================
 
-        const usosRestantes =
-            Number(
-                dados.usosRestantes
-            );
-
-
-        if (
-            Number.isFinite(
-                usosRestantes
-            )
-        ) {
-
-            if (
-                usosRestantes > 0
-            ) {
-
-                mostrarMensagem(
-                    `Acesso autorizado. Restam ${usosRestantes} uso(s) da senha.`,
-                    "sucesso"
-                );
-
-            }
-            else {
-
-                mostrarMensagem(
-                    "Acesso autorizado. Este foi o último uso da senha.",
-                    "sucesso"
-                );
-
-            }
-
-        }
-        else {
-
-            mostrarMensagem(
-                "Acesso autorizado.",
-                "sucesso"
-            );
-
-        }
+        mostrarMensagem(
+            "Acesso autorizado.",
+            "sucesso"
+        );
 
 
-        // -----------------------------------------
-        // PEQUENO INTERVALO VISUAL
-        // -----------------------------------------
+        console.log(
+            "Acessos restantes:",
+            dados.usosRestantes
+        );
+
 
         await new Promise(
-            (resolve) =>
+            resolve =>
                 setTimeout(
                     resolve,
                     500
@@ -605,12 +613,7 @@ async function acessarCurso() {
         );
 
 
-        // -----------------------------------------
-        // LIBERAR CURSO
-        // -----------------------------------------
-
         liberarCurso();
-
 
     }
     catch (error) {
@@ -619,6 +622,7 @@ async function acessarCurso() {
             "ERRO AO VALIDAR SENHA:",
             error
         );
+
 
         mostrarMensagem(
             error.message ||
@@ -633,27 +637,9 @@ async function acessarCurso() {
             false;
 
         btnEntrar.textContent =
-            textoOriginal;
+            "Acessar curso";
 
     }
-
-}
-
-
-// =====================================================
-// OBTER PEDIDO ID
-// =====================================================
-
-function obterPedidoId() {
-
-    const parametros =
-        new URLSearchParams(
-            window.location.search
-        );
-
-    return parametros.get(
-        "pedidoId"
-    );
 
 }
 
@@ -670,6 +656,7 @@ function liberarCurso() {
     conteudoCurso.style.display =
         "block";
 
+
     carregarMateriais();
 
 }
@@ -683,34 +670,6 @@ function carregarMateriais() {
 
     listaMateriais.innerHTML =
         "";
-
-
-    if (
-        !Array.isArray(
-            MATERIAIS
-        ) ||
-        MATERIAIS.length === 0
-    ) {
-
-        listaMateriais.innerHTML = `
-
-            <div class="sem-materiais">
-
-                <h3>
-                    Nenhum material disponível
-                </h3>
-
-                <p>
-                    Os materiais deste curso ainda não foram adicionados.
-                </p>
-
-            </div>
-
-        `;
-
-        return;
-
-    }
 
 
     MATERIAIS.forEach(
@@ -732,24 +691,6 @@ function carregarMateriais() {
                     : "Vídeo";
 
 
-            const botao =
-                document.createElement(
-                    "button"
-                );
-
-
-            botao.className =
-                "btn-material";
-
-
-            botao.textContent =
-                `Abrir ${tipoTexto}`;
-
-
-            botao.dataset.indice =
-                indice;
-
-
             card.innerHTML = `
 
                 <div class="tipo">
@@ -757,41 +698,55 @@ function carregarMateriais() {
                 </div>
 
                 <h3>
-                    ${escaparHTML(
-                        material.titulo
-                    )}
+                    ${material.titulo}
                 </h3>
 
                 <p>
-                    ${escaparHTML(
-                        material.descricao
-                    )}
+                    ${material.descricao}
                 </p>
 
+                <button
+                    class="btn-material"
+                    data-indice="${indice}"
+                >
+                    Abrir ${tipoTexto}
+                </button>
+
             `;
-
-
-            card.appendChild(
-                botao
-            );
 
 
             listaMateriais.appendChild(
                 card
             );
 
-
-            botao.onclick =
-                () => {
-
-                    abrirMaterial(
-                        material
-                    );
-
-                };
-
         }
     );
+
+
+    document
+        .querySelectorAll(
+            ".btn-material"
+        )
+        .forEach(
+            (botao) => {
+
+                botao.onclick =
+                    () => {
+
+                        const indice =
+                            Number(
+                                botao.dataset.indice
+                            );
+
+
+                        abrirMaterial(
+                            MATERIAIS[indice]
+                        );
+
+                    };
+
+            }
+        );
 
 }
 
@@ -800,25 +755,7 @@ function carregarMateriais() {
 // ABRIR MATERIAL
 // =====================================================
 
-function abrirMaterial(
-    material
-) {
-
-    if (
-        !material ||
-        !material.tipo ||
-        !material.arquivo
-    ) {
-
-        console.error(
-            "Material inválido:",
-            material
-        );
-
-        return;
-
-    }
-
+function abrirMaterial(material) {
 
     modalTitulo.textContent =
         material.titulo;
@@ -854,12 +791,6 @@ function abrirMaterial(
             "lazy";
 
 
-        iframe.setAttribute(
-            "allowfullscreen",
-            ""
-        );
-
-
         modalCorpo.appendChild(
             iframe
         );
@@ -893,12 +824,6 @@ function abrirMaterial(
             true;
 
 
-        video.setAttribute(
-            "controlsList",
-            "nodownload"
-        );
-
-
         const source =
             document.createElement(
                 "source"
@@ -925,42 +850,8 @@ function abrirMaterial(
     }
 
 
-    // =================================================
-    // TIPO INVÁLIDO
-    // =================================================
-
-    else {
-
-        modalCorpo.innerHTML = `
-
-            <div class="erro-material">
-
-                <h3>
-                    Tipo de material inválido
-                </h3>
-
-                <p>
-                    O tipo "${material.tipo}" não é suportado.
-                </p>
-
-            </div>
-
-        `;
-
-    }
-
-
-    // =================================================
-    // ABRIR MODAL
-    // =================================================
-
     modal.classList.add(
         "ativo"
-    );
-
-
-    document.body.classList.add(
-        "modal-aberto"
     );
 
 }
@@ -971,7 +862,7 @@ function abrirMaterial(
 // =====================================================
 
 fecharModal.onclick =
-    fecharModalCurso;
+    fechar;
 
 
 modal.onclick =
@@ -981,50 +872,19 @@ modal.onclick =
             event.target === modal
         ) {
 
-            fecharModalCurso();
+            fechar();
 
         }
 
     };
 
 
-document.addEventListener(
-    "keydown",
-    (event) => {
-
-        if (
-            event.key === "Escape" &&
-            modal.classList.contains(
-                "ativo"
-            )
-        ) {
-
-            fecharModalCurso();
-
-        }
-
-    }
-);
-
-
-// =====================================================
-// FECHAR MODAL
-// =====================================================
-
-function fecharModalCurso() {
+function fechar() {
 
     modal.classList.remove(
         "ativo"
     );
 
-
-    document.body.classList.remove(
-        "modal-aberto"
-    );
-
-
-    // Remove o vídeo/iframe.
-    // Isso também interrompe o vídeo.
 
     modalCorpo.innerHTML =
         "";
@@ -1046,41 +906,7 @@ function mostrarMensagem(
 
 
     mensagem.className =
-        "mensagem " +
-        tipo;
-
-}
-
-
-// =====================================================
-// ESCAPAR HTML
-// =====================================================
-
-function escaparHTML(
-    texto
-) {
-
-    if (
-        texto === null ||
-        texto === undefined
-    ) {
-
-        return "";
-
-    }
-
-
-    const elemento =
-        document.createElement(
-            "div"
-        );
-
-
-    elemento.textContent =
-        String(texto);
-
-
-    return elemento.innerHTML;
+        "mensagem " + tipo;
 
 }
 
@@ -1089,24 +915,12 @@ function escaparHTML(
 // SAIR
 // =====================================================
 
-btnSair.onclick =
+document
+    .getElementById("btnSair")
+    .onclick =
     async () => {
 
-        try {
-
-            await signOut(
-                auth
-            );
-
-        }
-        catch (error) {
-
-            console.error(
-                "Erro ao sair:",
-                error
-            );
-
-        }
+        await signOut(auth);
 
         window.location =
             "index.html";
