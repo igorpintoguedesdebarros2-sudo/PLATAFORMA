@@ -1542,101 +1542,48 @@ app.get(
 // TESTE FIREBASE
 // =====================================================
 
-app.get(
-    "/teste-firebase",
-    async (req, res) => {
+app.get("/teste-firebase", async (req, res) => {
 
-        try {
+    try {
 
-            console.log(
-                "======================================"
-            );
+        console.log("======================================");
+        console.log("TESTE FIREBASE");
 
-            console.log(
-                "TESTE FIREBASE"
-            );
+        const testeRef =
+            db.ref("teste_servidor");
 
-            console.log(
-                "Tipo db:",
-                typeof db
-            );
+        await testeRef.set({
+            funcionando: true,
+            data: new Date().toISOString()
+        });
 
-            console.log(
-                "Tipo ref:",
-                typeof ref
-            );
+        const snapshot =
+            await testeRef.once("value");
 
-            console.log(
-                "Tipo get:",
-                typeof get
-            );
+        console.log(
+            "Firebase funcionando:",
+            snapshot.val()
+        );
 
-            console.log(
-                "Tipo set:",
-                typeof set
-            );
+        return res.json({
+            sucesso: true,
+            firebase: snapshot.val()
+        });
 
-               const testeRef = db.ref(
-    "teste_servidor"
-);
+    } catch (error) {
 
-            await set(
-                testeRef,
-                {
+        console.error(
+            "ERRO TESTE FIREBASE:",
+            error
+        );
 
-                    funcionando:
-                        true,
-
-                    data:
-                        new Date()
-                            .toISOString()
-
-                }
-            );
-
-            const snapshot =
-                await get(
-                    testeRef
-                );
-
-            return res.json({
-
-                sucesso:
-                    true,
-
-                firebase:
-                    snapshot.val()
-
-            });
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "ERRO TESTE FIREBASE:",
-                error
-            );
-
-            return res
-                .status(500)
-                .json({
-
-                    sucesso:
-                        false,
-
-                    erro:
-                        error.message,
-
-                    stack:
-                        error.stack
-
-                });
-
-        }
-
+        return res.status(500).json({
+            sucesso: false,
+            erro: error.message,
+            stack: error.stack
+        });
     }
-);
+});
 
 // =====================================================
 // SERVIDOR
