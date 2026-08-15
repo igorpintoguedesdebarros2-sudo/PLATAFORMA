@@ -96,7 +96,7 @@ if (!STRIPE_SECRET_KEY) {
 }
 
 // =====================================================
-// FIREBASE ADMIN - API MODULAR
+// FIREBASE ADMIN MODULAR
 // =====================================================
 
 const {
@@ -106,7 +106,11 @@ const {
 } = require("firebase-admin/app");
 
 const {
-    getDatabase
+    getDatabase,
+    ref,
+    get,
+    set,
+    update
 } = require("firebase-admin/database");
 
 // =====================================================
@@ -190,68 +194,44 @@ app.use(
 const cursos = {
 
     "NR1": {
-
         valor: 49.90,
-
         categoria: "EAD",
-
         link:
             "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/NR1.html"
-
     },
 
     "CSS Completo": {
-
         valor: 39.90,
-
         categoria: "EAD",
-
         link:
             "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/css.html"
-
     },
 
     "JavaScript": {
-
         valor: 59.90,
-
         categoria: "EAD",
-
         link:
             "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/javascript.html"
-
     },
 
     "Python": {
-
         valor: 69.90,
-
         categoria: "EAD",
-
         link:
             "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/python.html"
-
     },
 
     "Firebase": {
-
         valor: 79.90,
-
         categoria: "EAD",
-
         link:
             "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/firebase.html"
-
     },
 
     "Python Presencial": {
-
         valor: 99.90,
-
         categoria: "Presencial",
-
         link: ""
-
     }
 
 };
@@ -311,12 +291,8 @@ app.post(
             if (!curso) {
 
                 return res.status(400).json({
-
                     sucesso: false,
-
-                    erro:
-                        "Curso não informado."
-
+                    erro: "Curso não informado."
                 });
 
             }
@@ -327,12 +303,8 @@ app.post(
             if (!cursoSelecionado) {
 
                 return res.status(400).json({
-
                     sucesso: false,
-
-                    erro:
-                        "Curso inválido."
-
+                    erro: "Curso inválido."
                 });
 
             }
@@ -344,18 +316,14 @@ app.post(
             if (!usuarioId) {
 
                 return res.status(400).json({
-
                     sucesso: false,
-
-                    erro:
-                        "Usuário não informado."
-
+                    erro: "Usuário não informado."
                 });
 
             }
 
             // -------------------------------------------------
-            // GERAR PEDIDO
+            // ID DO PEDIDO
             // -------------------------------------------------
 
             const idPedido =
@@ -363,6 +331,16 @@ app.post(
                 `pedido_${Date.now()}_${Math.random()
                     .toString(36)
                     .substring(2, 8)}`;
+
+            // -------------------------------------------------
+            // REFERÊNCIA DO PEDIDO
+            // -------------------------------------------------
+
+            const pedidoRef =
+                ref(
+                    db,
+                    `solicitacoes_cursos/${idPedido}`
+                );
 
             // -------------------------------------------------
             // PEDIDO INICIAL
@@ -408,16 +386,13 @@ app.post(
 
             };
 
-            await db
-                .ref(
-                    `solicitacoes_cursos/${idPedido}`
-                )
-                .set(
-                    pedidoInicial
-                );
+            await set(
+                pedidoRef,
+                pedidoInicial
+            );
 
             // -------------------------------------------------
-            // STRIPE CHECKOUT
+            // CRIAR CHECKOUT STRIPE
             // -------------------------------------------------
 
             const session =
@@ -433,7 +408,6 @@ app.post(
                         line_items: [
 
                             {
-
                                 price_data: {
 
                                     currency:
@@ -456,7 +430,6 @@ app.post(
 
                                 quantity:
                                     1
-
                             }
 
                         ],
@@ -467,19 +440,13 @@ app.post(
                         metadata: {
 
                             pedidoId:
-                                String(
-                                    idPedido
-                                ),
+                                String(idPedido),
 
                             usuarioId:
-                                String(
-                                    usuarioId
-                                ),
+                                String(usuarioId),
 
                             curso:
-                                String(
-                                    curso
-                                )
+                                String(curso)
 
                         },
 
@@ -492,19 +459,16 @@ app.post(
                     });
 
             // -------------------------------------------------
-            // SALVAR SESSION
+            // SALVAR SESSION ID
             // -------------------------------------------------
 
-            await db
-                .ref(
-                    `solicitacoes_cursos/${idPedido}`
-                )
-                .update({
-
+            await update(
+                pedidoRef,
+                {
                     pagamentoId:
                         session.id
-
-                });
+                }
+            );
 
             // -------------------------------------------------
             // RESPOSTA
@@ -593,7 +557,7 @@ app.get(
             }
 
             // -------------------------------------------------
-            // STRIPE
+            // CONSULTAR STRIPE
             // -------------------------------------------------
 
             const session =
@@ -668,7 +632,7 @@ app.get(
             }
 
             // -------------------------------------------------
-            // CURSO
+            // VALIDAR CURSO
             // -------------------------------------------------
 
             const cursoSelecionado =
@@ -689,21 +653,20 @@ app.get(
             }
 
             // -------------------------------------------------
-            // PEDIDO
+            // REFERÊNCIA DO PEDIDO
             // -------------------------------------------------
 
             const pedidoRef =
-                db.ref(
+                ref(
+                    db,
                     `solicitacoes_cursos/${pedidoId}`
                 );
 
             const snapshot =
-                await pedidoRef.once(
-                    "value"
-                );
+                await get(pedidoRef);
 
             // -------------------------------------------------
-            // VERIFICAR SE JÁ FOI PROCESSADO
+            // SE JÁ FOI PROCESSADO
             // -------------------------------------------------
 
             if (snapshot.exists()) {
@@ -767,14 +730,14 @@ app.get(
             }
 
             // -------------------------------------------------
-            // DATA DO PAGAMENTO
+            // DATA
             // -------------------------------------------------
 
             const dataPagamento =
                 new Date().toISOString();
 
             // -------------------------------------------------
-            // DADOS DO CURSO PAGO
+            // GERAR DADOS DO CURSO
             // -------------------------------------------------
 
             const dadosCurso = {
@@ -858,19 +821,24 @@ app.get(
             // SALVAR PEDIDO
             // -------------------------------------------------
 
-            await pedidoRef.set(
+            await set(
+                pedidoRef,
                 dadosCurso
             );
 
             // -------------------------------------------------
-            // SALVAR CURSO NO USUÁRIO
+            // CURSO DO USUÁRIO
             // -------------------------------------------------
 
-            await db
-                .ref(
+            const usuarioCursoRef =
+                ref(
+                    db,
                     `usuarios/${usuarioId}/cursos/${pedidoId}`
-                )
-                .set({
+                );
+
+            await set(
+                usuarioCursoRef,
+                {
 
                     pedidoId:
                         pedidoId,
@@ -907,17 +875,22 @@ app.get(
                     dataPagamento:
                         dataPagamento
 
-                });
+                }
+            );
 
             // -------------------------------------------------
-            // SALVAR PAGAMENTO
+            // PAGAMENTO DO USUÁRIO
             // -------------------------------------------------
 
-            await db
-                .ref(
+            const pagamentoRef =
+                ref(
+                    db,
                     `usuarios/${usuarioId}/pagamentos/${pedidoId}`
-                )
-                .set({
+                );
+
+            await set(
+                pagamentoRef,
+                {
 
                     pedidoId:
                         pedidoId,
@@ -934,7 +907,8 @@ app.get(
                     dataPagamento:
                         dataPagamento
 
-                });
+                }
+            );
 
             // -------------------------------------------------
             // LOG
@@ -945,16 +919,19 @@ app.get(
             console.log("Pedido:", pedidoId);
             console.log("Usuário:", usuarioId);
             console.log("Curso:", curso);
+
             console.log(
                 "Senha gerada:",
                 dadosCurso.senhaCurso
                     ? "SIM"
                     : "NÃO"
             );
+
             console.log(
                 "Usos:",
                 dadosCurso.usosRestantes
             );
+
             console.log("======================================");
 
             // -------------------------------------------------
@@ -1108,18 +1085,17 @@ app.get(
 // USAR SENHA DO CURSO
 // =====================================================
 //
-// O usuário envia somente:
+// Recebe:
+//
 // {
 //     "senha": "XXXXXXXXXXXX"
 // }
 //
-// Não precisa enviar pedidoId.
-// Não precisa enviar usuarioId.
+// Procura em:
 //
-// A senha é procurada em:
 // solicitacoes_cursos
 //
-// Cada senha começa com 2 usos.
+// Cada senha possui 2 usos.
 // =====================================================
 
 app.post(
@@ -1133,10 +1109,14 @@ app.post(
             } = req.body || {};
 
             // -------------------------------------------------
-            // VALIDAR SENHA
+            // VALIDAR SENHA RECEBIDA
             // -------------------------------------------------
 
-            if (!senha) {
+            if (
+                senha === undefined ||
+                senha === null ||
+                String(senha).trim() === ""
+            ) {
 
                 return res.status(400).json({
 
@@ -1162,18 +1142,17 @@ app.post(
             console.log("======================================");
 
             // -------------------------------------------------
-            // BUSCAR PEDIDOS
+            // BUSCAR SOLICITAÇÕES
             // -------------------------------------------------
 
             const pedidosRef =
-                db.ref(
+                ref(
+                    db,
                     "solicitacoes_cursos"
                 );
 
             const snapshot =
-                await pedidosRef.once(
-                    "value"
-                );
+                await get(pedidosRef);
 
             if (!snapshot.exists()) {
 
@@ -1232,7 +1211,7 @@ app.post(
             if (!pedidoEncontrado) {
 
                 console.log(
-                    "Senha inválida."
+                    "Senha inválida ou inexistente."
                 );
 
                 return res.json({
@@ -1327,20 +1306,28 @@ app.post(
                 usos - 1;
 
             // -------------------------------------------------
-            // ATUALIZAR PEDIDO
+            // REFERÊNCIA DO PEDIDO
             // -------------------------------------------------
 
             const pedidoRef =
-                db.ref(
+                ref(
+                    db,
                     `solicitacoes_cursos/${pedidoEncontrado.id}`
                 );
 
-            await pedidoRef.update({
+            // -------------------------------------------------
+            // ATUALIZAR PEDIDO
+            // -------------------------------------------------
 
-                usosRestantes:
-                    novosUsos
+            await update(
+                pedidoRef,
+                {
 
-            });
+                    usosRestantes:
+                        novosUsos
+
+                }
+            );
 
             // -------------------------------------------------
             // ATUALIZAR CURSO DO USUÁRIO
@@ -1351,16 +1338,20 @@ app.post(
             ) {
 
                 const usuarioCursoRef =
-                    db.ref(
+                    ref(
+                        db,
                         `usuarios/${pedidoEncontrado.usuarioId}/cursos/${pedidoEncontrado.id}`
                     );
 
-                await usuarioCursoRef.update({
+                await update(
+                    usuarioCursoRef,
+                    {
 
-                    usosRestantes:
-                        novosUsos
+                        usosRestantes:
+                            novosUsos
 
-                });
+                    }
+                );
 
             }
 
@@ -1370,26 +1361,32 @@ app.post(
 
             console.log("======================================");
             console.log("ACESSO AUTORIZADO");
+
             console.log(
                 "Curso:",
                 pedidoEncontrado.curso
             );
+
             console.log(
                 "Pedido:",
                 pedidoEncontrado.id
             );
+
             console.log(
                 "Usuário:",
                 pedidoEncontrado.usuarioId
             );
+
             console.log(
                 "Usos anteriores:",
                 usos
             );
+
             console.log(
                 "Usos restantes:",
                 novosUsos
             );
+
             console.log("======================================");
 
             // -------------------------------------------------
@@ -1496,14 +1493,13 @@ app.post(
             // -------------------------------------------------
 
             const pedidoRef =
-                db.ref(
+                ref(
+                    db,
                     `solicitacoes_cursos/${pedidoId}`
                 );
 
             const snapshot =
-                await pedidoRef.once(
-                    "value"
-                );
+                await get(pedidoRef);
 
             if (!snapshot.exists()) {
 
@@ -1645,24 +1641,30 @@ app.post(
             // SALVAR AGENDAMENTO
             // -------------------------------------------------
 
-            await db
-                .ref(
+            const agendamentoRef =
+                ref(
+                    db,
                     `agendamentos/${pedidoId}`
-                )
-                .set(
-                    agendamento
                 );
+
+            await set(
+                agendamentoRef,
+                agendamento
+            );
 
             // -------------------------------------------------
             // ATUALIZAR PEDIDO
             // -------------------------------------------------
 
-            await pedidoRef.update({
+            await update(
+                pedidoRef,
+                {
 
-                agendamento:
-                    agendamento
+                    agendamento:
+                        agendamento
 
-            });
+                }
+            );
 
             // -------------------------------------------------
             // RESPOSTA
@@ -1749,11 +1751,12 @@ app.get(
         try {
 
             const testeRef =
-                db.ref(
+                ref(
+                    db,
                     "teste_servidor"
                 );
 
-            await testeRef.set({
+            const dadosTeste = {
 
                 funcionando:
                     true,
@@ -1761,11 +1764,16 @@ app.get(
                 data:
                     new Date().toISOString()
 
-            });
+            };
+
+            await set(
+                testeRef,
+                dadosTeste
+            );
 
             const snapshot =
-                await testeRef.once(
-                    "value"
+                await get(
+                    testeRef
                 );
 
             return res.json({
@@ -1872,12 +1880,16 @@ app.listen(
             "Database:",
             FIREBASE_DATABASE_URL
         );
+
         console.log(
             "Stripe:",
-            STRIPE_SECRET_KEY.startsWith("sk_test_")
+            STRIPE_SECRET_KEY.startsWith(
+                "sk_test_"
+            )
                 ? "MODO TESTE"
                 : "MODO PRODUÇÃO"
         );
+
         console.log("======================================");
 
     }
