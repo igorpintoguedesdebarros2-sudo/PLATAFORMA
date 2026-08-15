@@ -1,4 +1,4 @@
-import { auth } from "../../firebase";
+import { auth } from "../firebase.js";
 
 import {
     onAuthStateChanged,
@@ -9,20 +9,15 @@ import {
 // API
 // =====================================================
 
-const API_URL =
-    "https://plataforma-56gy.onrender.com";
+const API_URL = "https://plataforma-56gy.onrender.com";
 
 // =====================================================
 // CURSO
 // =====================================================
 
 const CURSO = {
-
     nome: "NR1",
-
-    descricao:
-        "Curso NR1 - Segurança e Saúde no Trabalho."
-
+    descricao: "Curso NR1 - Segurança e Saúde no Trabalho."
 };
 
 // =====================================================
@@ -30,198 +25,101 @@ const CURSO = {
 // =====================================================
 
 const MATERIAIS = [
-
     {
         tipo: "video",
-
-        titulo:
-            "Aula 1 - Introdução à NR1",
-
-        descricao:
-            "Introdução ao curso NR1.",
-
-        arquivo:
-            "videos/aula1.mp4"
+        titulo: "Aula 1 - Introdução à NR1",
+        descricao: "Introdução ao curso NR1.",
+        arquivo: "videos/aula1.mp4"
     },
 
     {
         tipo: "pdf",
-
-        titulo:
-            "Material 1 - Introdução",
-
-        descricao:
-            "Material complementar da aula 1.",
-
-        arquivo:
-            "pdfs/material1.pdf"
+        titulo: "Material 1 - Introdução",
+        descricao: "Material complementar da aula 1.",
+        arquivo: "pdfs/material1.pdf"
     },
 
     {
         tipo: "video",
-
-        titulo:
-            "Aula 2 - NR1",
-
-        descricao:
-            "Conteúdo da NR1.",
-
-        arquivo:
-            "videos/aula2.mp4"
+        titulo: "Aula 2 - NR1",
+        descricao: "Conteúdo da NR1.",
+        arquivo: "videos/aula2.mp4"
     },
 
     {
         tipo: "pdf",
-
-        titulo:
-            "Material 2 - NR1",
-
-        descricao:
-            "Apostila complementar.",
-
-        arquivo:
-            "pdfs/nr1.pdf"
+        titulo: "Material 2 - NR1",
+        descricao: "Apostila complementar.",
+        arquivo: "pdfs/nr1.pdf"
     },
 
     {
         tipo: "video",
-
-        titulo:
-            "Aula 3 - Segurança do Trabalho",
-
-        descricao:
-            "Conceitos fundamentais.",
-
-        arquivo:
-            "videos/aula3.mp4"
+        titulo: "Aula 3 - Segurança do Trabalho",
+        descricao: "Conceitos fundamentais.",
+        arquivo: "videos/aula3.mp4"
     },
 
     {
         tipo: "pdf",
-
-        titulo:
-            "Material 3 - Segurança",
-
-        descricao:
-            "Material complementar.",
-
-        arquivo:
-            "pdfs/seguranca.pdf"
+        titulo: "Material 3 - Segurança",
+        descricao: "Material complementar.",
+        arquivo: "pdfs/seguranca.pdf"
     }
-
 ];
 
 // =====================================================
 // ELEMENTOS
 // =====================================================
 
-const telaSenha =
-    document.getElementById("telaSenha");
+const telaSenha = document.getElementById("telaSenha");
+const conteudoCurso = document.getElementById("conteudoCurso");
+const senhaInput = document.getElementById("senhaCurso");
+const btnEntrar = document.getElementById("btnEntrarCurso");
+const mensagem = document.getElementById("mensagemSenha");
+const listaMateriais = document.getElementById("listaMateriais");
 
-const conteudoCurso =
-    document.getElementById("conteudoCurso");
+const modal = document.getElementById("modal");
+const modalTitulo = document.getElementById("modalTitulo");
+const modalCorpo = document.getElementById("modalCorpo");
+const fecharModal = document.getElementById("fecharModal");
 
-const senhaInput =
-    document.getElementById("senhaCurso");
+const btnSair = document.getElementById("btnSair");
 
-const btnEntrar =
-    document.getElementById("btnEntrarCurso");
-
-const mensagem =
-    document.getElementById("mensagemSenha");
-
-const listaMateriais =
-    document.getElementById("listaMateriais");
-
-const modal =
-    document.getElementById("modal");
-
-const modalTitulo =
-    document.getElementById("modalTitulo");
-
-const modalCorpo =
-    document.getElementById("modalCorpo");
-
-const fecharModal =
-    document.getElementById("fecharModal");
-
-const btnSair =
-    document.getElementById("btnSair");
-
-const tituloCurso =
-    document.getElementById("tituloCurso");
-
-const descricaoCurso =
-    document.getElementById("descricaoCurso");
+const tituloCurso = document.getElementById("tituloCurso");
+const descricaoCurso = document.getElementById("descricaoCurso");
 
 // =====================================================
-// VERIFICAR ELEMENTOS
+// DEBUG
 // =====================================================
 
 console.log("======================================");
 console.log("INICIANDO NR1.JS");
 console.log("======================================");
 
-console.log(
-    "telaSenha:",
-    !!telaSenha
-);
-
-console.log(
-    "conteudoCurso:",
-    !!conteudoCurso
-);
-
-console.log(
-    "senhaInput:",
-    !!senhaInput
-);
-
-console.log(
-    "btnEntrar:",
-    !!btnEntrar
-);
-
-console.log(
-    "mensagem:",
-    !!mensagem
-);
-
-console.log(
-    "listaMateriais:",
-    !!listaMateriais
-);
-
-console.log(
-    "modal:",
-    !!modal
-);
-
-console.log(
-    "btnSair:",
-    !!btnSair
-);
+console.log("telaSenha:", !!telaSenha);
+console.log("conteudoCurso:", !!conteudoCurso);
+console.log("senhaInput:", !!senhaInput);
+console.log("btnEntrar:", !!btnEntrar);
+console.log("mensagem:", !!mensagem);
+console.log("listaMateriais:", !!listaMateriais);
+console.log("modal:", !!modal);
+console.log("btnSair:", !!btnSair);
 
 // =====================================================
 // TÍTULO
 // =====================================================
 
 if (tituloCurso) {
-
-    tituloCurso.textContent =
-        CURSO.nome;
-
+    tituloCurso.textContent = CURSO.nome;
 }
 
 if (descricaoCurso) {
-
-    descricaoCurso.textContent =
-        CURSO.descricao;
-
+    descricaoCurso.textContent = CURSO.descricao;
 }
 
 // =====================================================
-// USUÁRIO ATUAL
+// USUÁRIO
 // =====================================================
 
 let usuarioAtual = null;
@@ -230,47 +128,38 @@ let usuarioAtual = null;
 // AUTENTICAÇÃO
 // =====================================================
 
-onAuthStateChanged(
-    auth,
-    (usuario) => {
+onAuthStateChanged(auth, (usuario) => {
 
-        console.log(
-            "Estado da autenticação:",
-            usuario
-                ? "AUTENTICADO"
-                : "NÃO AUTENTICADO"
+    console.log(
+        "Estado da autenticação:",
+        usuario ? "AUTENTICADO" : "NÃO AUTENTICADO"
+    );
+
+    if (!usuario) {
+
+        usuarioAtual = null;
+
+        console.warn(
+            "Usuário não autenticado. Redirecionando..."
         );
 
-        if (!usuario) {
+        window.location.href = "index.html";
 
-            usuarioAtual = null;
-
-            console.warn(
-                "Usuário não autenticado. Redirecionando..."
-            );
-
-            window.location.href =
-                "index.html";
-
-            return;
-
-        }
-
-        usuarioAtual =
-            usuario;
-
-        console.log(
-            "Usuário autenticado:",
-            usuario.uid
-        );
-
-        console.log(
-            "Email:",
-            usuario.email || "não informado"
-        );
-
+        return;
     }
-);
+
+    usuarioAtual = usuario;
+
+    console.log(
+        "Usuário autenticado:",
+        usuario.uid
+    );
+
+    console.log(
+        "Email:",
+        usuario.email || "não informado"
+    );
+});
 
 // =====================================================
 // BOTÃO ENTRAR
@@ -282,7 +171,6 @@ if (btnEntrar) {
         "click",
         acessarCurso
     );
-
 }
 
 // =====================================================
@@ -295,19 +183,14 @@ if (senhaInput) {
         "keydown",
         (event) => {
 
-            if (
-                event.key === "Enter"
-            ) {
+            if (event.key === "Enter") {
 
                 event.preventDefault();
 
                 acessarCurso();
-
             }
-
         }
     );
-
 }
 
 // =====================================================
@@ -316,22 +199,12 @@ if (senhaInput) {
 
 async function acessarCurso() {
 
-    console.log(
-        "======================================"
-    );
+    console.log("======================================");
+    console.log("INICIANDO VALIDAÇÃO DA SENHA");
 
-    console.log(
-        "INICIANDO VALIDAÇÃO DA SENHA"
-    );
-
-    // =================================================
-    // PEGAR SENHA
-    // =================================================
-
-    const senha =
-        senhaInput
-            ? senhaInput.value.trim()
-            : "";
+    const senha = senhaInput
+        ? senhaInput.value.trim()
+        : "";
 
     if (!senha) {
 
@@ -341,12 +214,7 @@ async function acessarCurso() {
         );
 
         return;
-
     }
-
-    // =================================================
-    // VERIFICAR USUÁRIO
-    // =================================================
 
     if (!usuarioAtual) {
 
@@ -360,15 +228,9 @@ async function acessarCurso() {
         );
 
         return;
-
     }
 
-    // =================================================
-    // UID
-    // =================================================
-
-    const usuarioId =
-        usuarioAtual.uid;
+    const usuarioId = usuarioAtual.uid;
 
     console.log(
         "UID enviado:",
@@ -380,18 +242,10 @@ async function acessarCurso() {
         senha
     );
 
-    // =================================================
-    // DESABILITAR BOTÃO
-    // =================================================
-
     if (btnEntrar) {
 
-        btnEntrar.disabled =
-            true;
-
-        btnEntrar.textContent =
-            "Verificando...";
-
+        btnEntrar.disabled = true;
+        btnEntrar.textContent = "Verificando...";
     }
 
     mostrarMensagem(
@@ -401,52 +255,34 @@ async function acessarCurso() {
 
     try {
 
-        // =================================================
-        // REQUISIÇÃO
-        // =================================================
+        const resposta = await fetch(
+            `${API_URL}/usar-senha-curso`,
+            {
+                method: "POST",
 
-        const resposta =
-            await fetch(
-                `${API_URL}/usar-senha-curso`,
-                {
-                    method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            senha:
-                                senha,
-
-                            usuarioId:
-                                usuarioId
-
-                        })
-                }
-            );
+                body: JSON.stringify({
+                    senha: senha,
+                    usuarioId: usuarioId
+                })
+            }
+        );
 
         console.log(
             "Status HTTP:",
             resposta.status
         );
 
-        // =================================================
-        // LER RESPOSTA
-        // =================================================
-
         let dados;
 
         try {
 
-            dados =
-                await resposta.json();
+            dados = await resposta.json();
 
-        }
-        catch (jsonError) {
+        } catch (jsonError) {
 
             console.error(
                 "Resposta não é JSON:",
@@ -456,7 +292,6 @@ async function acessarCurso() {
             throw new Error(
                 `O servidor retornou uma resposta inválida. HTTP ${resposta.status}`
             );
-
         }
 
         console.log(
@@ -464,37 +299,25 @@ async function acessarCurso() {
             dados
         );
 
-        // =================================================
-        // ERRO HTTP
-        // =================================================
-
         if (!resposta.ok) {
 
             throw new Error(
-
                 dados.erro ||
                 dados.detalhe ||
                 `Erro HTTP ${resposta.status}`
-
             );
-
         }
 
         // =================================================
         // SENHA INVÁLIDA
         // =================================================
 
-        if (
-            dados.valido !== true
-        ) {
+        if (dados.valido !== true) {
 
             mostrarMensagem(
-
                 dados.erro ||
                 "Senha inválida ou inexistente.",
-
                 "erro"
-
             );
 
             console.warn(
@@ -503,7 +326,6 @@ async function acessarCurso() {
             );
 
             return;
-
         }
 
         // =================================================
@@ -512,7 +334,7 @@ async function acessarCurso() {
 
         if (
             dados.curso &&
-            dados.curso !== "NR1"
+            dados.curso.toUpperCase() !== CURSO.nome
         ) {
 
             console.error(
@@ -521,56 +343,28 @@ async function acessarCurso() {
             );
 
             mostrarMensagem(
-                `Esta senha pertence ao curso "${dados.curso}" e não ao NR1.`,
+                `Esta senha pertence ao curso "${dados.curso}" e não ao ${CURSO.nome}.`,
                 "erro"
             );
 
             return;
-
         }
 
         // =================================================
         // ACESSO AUTORIZADO
         // =================================================
 
-        console.log(
-            "======================================"
-        );
-
-        console.log(
-            "ACESSO AUTORIZADO"
-        );
-
-        console.log(
-            "Curso:",
-            dados.curso
-        );
-
-        console.log(
-            "Pedido:",
-            dados.pedidoId
-        );
-
-        console.log(
-            "Usuário:",
-            dados.usuarioId
-        );
-
-        console.log(
-            "Usos restantes:",
-            dados.usosRestantes
-        );
-
-        console.log(
-            "======================================"
-        );
+        console.log("======================================");
+        console.log("ACESSO AUTORIZADO");
+        console.log("Curso:", dados.curso);
+        console.log("Pedido:", dados.pedidoId);
+        console.log("Usuário:", dados.usuarioId);
+        console.log("Usos restantes:", dados.usosRestantes);
+        console.log("======================================");
 
         mostrarMensagem(
-
             `Acesso autorizado. Usos restantes: ${dados.usosRestantes}`,
-
             "sucesso"
-
         );
 
         // =================================================
@@ -579,31 +373,23 @@ async function acessarCurso() {
 
         const acessoCurso = {
 
-            pedidoId:
-                dados.pedidoId,
+            pedidoId: dados.pedidoId,
 
-            usuarioId:
-                dados.usuarioId,
+            usuarioId: dados.usuarioId,
 
-            curso:
-                dados.curso,
+            curso: dados.curso,
 
-            categoria:
-                dados.categoria,
+            categoria: dados.categoria,
 
-            usosRestantes:
-                dados.usosRestantes,
+            usosRestantes: dados.usosRestantes,
 
             autorizadoEm:
                 new Date().toISOString()
-
         };
 
         sessionStorage.setItem(
             "curso_acesso",
-            JSON.stringify(
-                acessoCurso
-            )
+            JSON.stringify(acessoCurso)
         );
 
         // =================================================
@@ -611,20 +397,12 @@ async function acessarCurso() {
         // =================================================
 
         await new Promise(
-            (resolve) => {
-
-                setTimeout(
-                    resolve,
-                    500
-                );
-
-            }
+            resolve => setTimeout(resolve, 500)
         );
 
         liberarCurso();
 
-    }
-    catch (error) {
+    } catch (error) {
 
         console.error(
             "======================================"
@@ -634,38 +412,26 @@ async function acessarCurso() {
             "ERRO AO VALIDAR SENHA"
         );
 
-        console.error(
-            error
-        );
+        console.error(error);
 
         console.error(
             "======================================"
         );
 
         mostrarMensagem(
-
             error.message ||
             "Não foi possível validar a senha.",
-
             "erro"
-
         );
 
-    }
-    finally {
+    } finally {
 
         if (btnEntrar) {
 
-            btnEntrar.disabled =
-                false;
-
-            btnEntrar.textContent =
-                "Acessar curso";
-
+            btnEntrar.disabled = false;
+            btnEntrar.textContent = "Acessar curso";
         }
-
     }
-
 }
 
 // =====================================================
@@ -681,7 +447,6 @@ function liberarCurso() {
         );
 
         return;
-
     }
 
     if (!conteudoCurso) {
@@ -691,17 +456,13 @@ function liberarCurso() {
         );
 
         return;
-
     }
 
-    telaSenha.style.display =
-        "none";
+    telaSenha.style.display = "none";
 
-    conteudoCurso.style.display =
-        "block";
+    conteudoCurso.style.display = "block";
 
     carregarMateriais();
-
 }
 
 // =====================================================
@@ -717,22 +478,17 @@ function carregarMateriais() {
         );
 
         return;
-
     }
 
-    listaMateriais.innerHTML =
-        "";
+    listaMateriais.innerHTML = "";
 
     MATERIAIS.forEach(
         (material, indice) => {
 
             const card =
-                document.createElement(
-                    "article"
-                );
+                document.createElement("article");
 
-            card.className =
-                "material";
+            card.className = "material";
 
             const tipoTexto =
                 material.tipo === "pdf"
@@ -740,7 +496,6 @@ function carregarMateriais() {
                     : "Vídeo";
 
             card.innerHTML = `
-
                 <div class="tipo">
                     ${tipoTexto}
                 </div>
@@ -760,20 +515,14 @@ function carregarMateriais() {
                 >
                     Abrir ${tipoTexto}
                 </button>
-
             `;
 
-            listaMateriais.appendChild(
-                card
-            );
-
+            listaMateriais.appendChild(card);
         }
     );
 
     document
-        .querySelectorAll(
-            ".btn-material"
-        )
+        .querySelectorAll(".btn-material")
         .forEach(
             (botao) => {
 
@@ -797,28 +546,20 @@ function carregarMateriais() {
                             );
 
                             return;
-
                         }
 
-                        abrirMaterial(
-                            material
-                        );
-
+                        abrirMaterial(material);
                     }
                 );
-
             }
         );
-
 }
 
 // =====================================================
 // ABRIR MATERIAL
 // =====================================================
 
-function abrirMaterial(
-    material
-) {
+function abrirMaterial(material) {
 
     if (!modal) {
 
@@ -827,7 +568,6 @@ function abrirMaterial(
         );
 
         return;
-
     }
 
     if (!modalTitulo) {
@@ -837,7 +577,6 @@ function abrirMaterial(
         );
 
         return;
-
     }
 
     if (!modalCorpo) {
@@ -847,27 +586,21 @@ function abrirMaterial(
         );
 
         return;
-
     }
 
     modalTitulo.textContent =
         material.titulo;
 
-    modalCorpo.innerHTML =
-        "";
+    modalCorpo.innerHTML = "";
 
     // =================================================
     // PDF
     // =================================================
 
-    if (
-        material.tipo === "pdf"
-    ) {
+    if (material.tipo === "pdf") {
 
         const iframe =
-            document.createElement(
-                "iframe"
-            );
+            document.createElement("iframe");
 
         iframe.src =
             material.arquivo;
@@ -892,41 +625,29 @@ function abrirMaterial(
         modalCorpo.appendChild(
             iframe
         );
-
     }
 
     // =================================================
     // VÍDEO
     // =================================================
 
-    else if (
-        material.tipo === "video"
-    ) {
+    else if (material.tipo === "video") {
 
         const video =
-            document.createElement(
-                "video"
-            );
+            document.createElement("video");
 
-        video.controls =
-            true;
+        video.controls = true;
 
-        video.preload =
-            "metadata";
+        video.preload = "metadata";
 
-        video.playsInline =
-            true;
+        video.playsInline = true;
 
-        video.style.width =
-            "100%";
+        video.style.width = "100%";
 
-        video.style.maxHeight =
-            "70vh";
+        video.style.maxHeight = "70vh";
 
         const source =
-            document.createElement(
-                "source"
-            );
+            document.createElement("source");
 
         source.src =
             material.arquivo;
@@ -934,27 +655,18 @@ function abrirMaterial(
         source.type =
             "video/mp4";
 
-        video.appendChild(
-            source
-        );
+        video.appendChild(source);
 
-        modalCorpo.appendChild(
-            video
-        );
-
+        modalCorpo.appendChild(video);
     }
 
     else {
 
         modalCorpo.textContent =
             "Tipo de material não suportado.";
-
     }
 
-    modal.classList.add(
-        "ativo"
-    );
-
+    modal.classList.add("ativo");
 }
 
 // =====================================================
@@ -967,7 +679,6 @@ if (fecharModal) {
         "click",
         fechar
     );
-
 }
 
 if (modal) {
@@ -976,17 +687,12 @@ if (modal) {
         "click",
         (event) => {
 
-            if (
-                event.target === modal
-            ) {
+            if (event.target === modal) {
 
                 fechar();
-
             }
-
         }
     );
-
 }
 
 function fechar() {
@@ -995,35 +701,26 @@ function fechar() {
         return;
     }
 
-    modal.classList.remove(
-        "ativo"
-    );
+    modal.classList.remove("ativo");
 
     if (modalCorpo) {
 
-        modalCorpo.innerHTML =
-            "";
-
+        modalCorpo.innerHTML = "";
     }
-
 }
 
 // =====================================================
-// ESC PARA FECHAR MODAL
+// ESC
 // =====================================================
 
 document.addEventListener(
     "keydown",
     (event) => {
 
-        if (
-            event.key === "Escape"
-        ) {
+        if (event.key === "Escape") {
 
             fechar();
-
         }
-
     }
 );
 
@@ -1043,7 +740,6 @@ function mostrarMensagem(
         );
 
         return;
-
     }
 
     mensagem.textContent =
@@ -1051,7 +747,6 @@ function mostrarMensagem(
 
     mensagem.className =
         `mensagem ${tipo}`;
-
 }
 
 // =====================================================
@@ -1066,18 +761,14 @@ if (btnSair) {
 
             try {
 
-                await signOut(
-                    auth
-                );
+                await signOut(auth);
 
-            }
-            catch (error) {
+            } catch (error) {
 
                 console.error(
                     "Erro ao sair:",
                     error
                 );
-
             }
 
             sessionStorage.removeItem(
@@ -1086,10 +777,8 @@ if (btnSair) {
 
             window.location.href =
                 "index.html";
-
         }
     );
-
 }
 
 // =====================================================
