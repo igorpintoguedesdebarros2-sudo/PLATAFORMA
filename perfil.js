@@ -21,11 +21,16 @@ import {
 onAuthStateChanged(auth, (usuario) => {
 
     if (!usuario) {
+
         window.location.href = "index.html";
+
         return;
     }
 
-    console.log("Usuário autenticado:", usuario.uid);
+    console.log(
+        "Usuário autenticado:",
+        usuario.uid
+    );
 
     carregarPerfil(usuario);
     carregarCursos(usuario.uid);
@@ -40,35 +45,65 @@ onAuthStateChanged(auth, (usuario) => {
 
 function carregarPerfil(usuario) {
 
-    const usuarioRef = ref(
-        db,
-        "usuarios/" + usuario.uid
-    );
+    const nomeElemento =
+        document.getElementById("nome");
+
+    const emailElemento =
+        document.getElementById("email");
+
+
+    // Dados do Authentication já podem ser
+    // mostrados imediatamente.
+
+    if (nomeElemento) {
+
+        nomeElemento.textContent =
+            usuario.displayName ||
+            "Usuário";
+
+    }
+
+    if (emailElemento) {
+
+        emailElemento.textContent =
+            usuario.email ||
+            "";
+
+    }
+
+
+    // Depois tenta obter dados adicionais
+    // do Realtime Database.
+
+    const usuarioRef =
+        ref(
+            db,
+            "usuarios/" + usuario.uid
+        );
+
 
     onValue(
         usuarioRef,
+
         (snapshot) => {
 
-            const dados = snapshot.val() || {};
+            const dados =
+                snapshot.val() || {};
 
-            const nome =
-                document.getElementById("nome");
 
-            const email =
-                document.getElementById("email");
+            if (nomeElemento) {
 
-            if (nome) {
-
-                nome.textContent =
+                nomeElemento.textContent =
                     dados.nome ||
                     usuario.displayName ||
                     "Usuário";
 
             }
 
-            if (email) {
 
-                email.textContent =
+            if (emailElemento) {
+
+                emailElemento.textContent =
                     dados.email ||
                     usuario.email ||
                     "";
@@ -76,37 +111,16 @@ function carregarPerfil(usuario) {
             }
 
         },
+
         (error) => {
 
-            console.error(
-                "Erro ao carregar perfil:",
+            console.warn(
+                "Não foi possível ler dados adicionais do perfil:",
                 error
             );
 
-            // Mesmo que a leitura do perfil seja bloqueada,
-            // usamos os dados do Firebase Authentication.
-
-            const nome =
-                document.getElementById("nome");
-
-            const email =
-                document.getElementById("email");
-
-            if (nome) {
-
-                nome.textContent =
-                    usuario.displayName ||
-                    "Usuário";
-
-            }
-
-            if (email) {
-
-                email.textContent =
-                    usuario.email ||
-                    "";
-
-            }
+            // Não interrompe o perfil.
+            // Os dados do Authentication continuam sendo usados.
 
         }
     );
@@ -123,9 +137,16 @@ function carregarCursos(uid) {
     const tabela =
         document.getElementById("cursos");
 
+
     if (!tabela) {
+
+        console.warn(
+            "Elemento #cursos não encontrado."
+        );
+
         return;
     }
+
 
     const cursosRef =
         ref(
@@ -135,14 +156,18 @@ function carregarCursos(uid) {
             "/cursos"
         );
 
+
     onValue(
         cursosRef,
+
         (snapshot) => {
 
             tabela.innerHTML = "";
 
+
             const cursos =
                 snapshot.val();
+
 
             if (!cursos) {
 
@@ -157,6 +182,11 @@ function carregarCursos(uid) {
                 return;
             }
 
+
+            let encontrou =
+                false;
+
+
             Object.entries(cursos)
                 .forEach(([id, curso]) => {
 
@@ -164,12 +194,17 @@ function carregarCursos(uid) {
                         return;
                     }
 
+
+                    encontrou = true;
+
+
                     const linha =
                         document.createElement("tr");
 
-                    // -------------------------------
+
+                    // =================================
                     // NOME
-                    // -------------------------------
+                    // =================================
 
                     const nome =
                         document.createElement("td");
@@ -179,9 +214,10 @@ function carregarCursos(uid) {
                         curso.curso ||
                         "Curso";
 
-                    // -------------------------------
+
+                    // =================================
                     // STATUS
-                    // -------------------------------
+                    // =================================
 
                     const status =
                         document.createElement("td");
@@ -190,9 +226,10 @@ function carregarCursos(uid) {
                         curso.status ||
                         "Concluído";
 
-                    // -------------------------------
+
+                    // =================================
                     // CATEGORIA
-                    // -------------------------------
+                    // =================================
 
                     const categoria =
                         document.createElement("td");
@@ -201,29 +238,36 @@ function carregarCursos(uid) {
                         curso.categoria ||
                         "EAD";
 
-                    // -------------------------------
+
+                    // =================================
                     // ACESSO
-                    // -------------------------------
+                    // =================================
 
                     const acesso =
                         document.createElement("td");
+
 
                     if (curso.linkCurso) {
 
                         const link =
                             document.createElement("a");
 
+
                         link.href =
                             curso.linkCurso;
+
 
                         link.target =
                             "_blank";
 
+
                         link.rel =
                             "noopener noreferrer";
 
+
                         link.textContent =
                             "Acessar curso";
+
 
                         acesso.appendChild(link);
 
@@ -235,22 +279,39 @@ function carregarCursos(uid) {
 
                     }
 
+
                     linha.appendChild(nome);
                     linha.appendChild(status);
                     linha.appendChild(categoria);
                     linha.appendChild(acesso);
 
+
                     tabela.appendChild(linha);
 
                 });
 
+
+            if (!encontrou) {
+
+                tabela.innerHTML = `
+                    <tr>
+                        <td colspan="4">
+                            Nenhum curso realizado
+                        </td>
+                    </tr>
+                `;
+
+            }
+
         },
+
         (error) => {
 
             console.error(
                 "Erro ao carregar cursos:",
                 error
             );
+
 
             tabela.innerHTML = `
                 <tr>
@@ -275,9 +336,16 @@ function carregarPagamentos(uid) {
     const tabela =
         document.getElementById("pagamentos");
 
+
     if (!tabela) {
+
+        console.warn(
+            "Elemento #pagamentos não encontrado."
+        );
+
         return;
     }
+
 
     const pagamentosRef =
         ref(
@@ -287,14 +355,18 @@ function carregarPagamentos(uid) {
             "/pagamentos"
         );
 
+
     onValue(
         pagamentosRef,
+
         (snapshot) => {
 
             tabela.innerHTML = "";
 
+
             const pagamentos =
                 snapshot.val();
+
 
             if (!pagamentos) {
 
@@ -309,6 +381,11 @@ function carregarPagamentos(uid) {
                 return;
             }
 
+
+            let encontrou =
+                false;
+
+
             Object.entries(pagamentos)
                 .forEach(([id, pagamento]) => {
 
@@ -316,50 +393,70 @@ function carregarPagamentos(uid) {
                         return;
                     }
 
+
+                    encontrou = true;
+
+
                     const linha =
                         document.createElement("tr");
 
-                    // -------------------------------
+
+                    // =================================
                     // CURSO
-                    // -------------------------------
+                    // =================================
 
                     const curso =
                         document.createElement("td");
+
 
                     curso.textContent =
                         pagamento.curso ||
                         "Curso";
 
-                    // -------------------------------
+
+                    // =================================
                     // VALOR
-                    // -------------------------------
+                    // =================================
 
                     const valor =
                         document.createElement("td");
 
+
                     const numero =
                         Number(
-                            pagamento.valor || 0
+                            pagamento.valor ?? 0
                         );
 
-                    valor.textContent =
-                        `R$ ${numero
-                            .toFixed(2)
-                            .replace(".", ",")}`;
 
-                    // -------------------------------
+                    valor.textContent =
+                        Number.isFinite(numero)
+                            ? `R$ ${numero
+                                .toFixed(2)
+                                .replace(".", ",")}`
+                            : "R$ 0,00";
+
+
+                    // =================================
                     // DATA
-                    // -------------------------------
+                    // =================================
 
                     const data =
                         document.createElement("td");
 
-                    if (pagamento.data) {
+
+                    const dataPagamento =
+                        pagamento.data ||
+                        pagamento.dataPagamento ||
+                        "";
+
+
+                    if (dataPagamento) {
 
                         const dataObj =
                             new Date(
-                                pagamento.data
+                                dataPagamento
                             );
+
 
                         if (
                             !isNaN(
@@ -376,7 +473,7 @@ function carregarPagamentos(uid) {
                         else {
 
                             data.textContent =
-                                pagamento.data;
+                                dataPagamento;
 
                         }
 
@@ -388,21 +485,38 @@ function carregarPagamentos(uid) {
 
                     }
 
+
                     linha.appendChild(curso);
                     linha.appendChild(valor);
                     linha.appendChild(data);
+
 
                     tabela.appendChild(linha);
 
                 });
 
+
+            if (!encontrou) {
+
+                tabela.innerHTML = `
+                    <tr>
+                        <td colspan="3">
+                            Nenhum pagamento encontrado
+                        </td>
+                    </tr>
+                `;
+
+            }
+
         },
+
         (error) => {
 
             console.error(
                 "Erro ao carregar pagamentos:",
                 error
             );
+
 
             tabela.innerHTML = `
                 <tr>
@@ -425,10 +539,12 @@ function carregarPagamentos(uid) {
 const botaoSair =
     document.getElementById("sair");
 
+
 if (botaoSair) {
 
     botaoSair.addEventListener(
         "click",
+
         async () => {
 
             try {
