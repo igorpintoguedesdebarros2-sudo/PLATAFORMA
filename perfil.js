@@ -15,9 +15,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 
-/* =====================================================
-   AUTENTICAÇÃO
-===================================================== */
+// =====================================================
+// AUTENTICAÇÃO
+// =====================================================
 
 onAuthStateChanged(auth, async (usuario) => {
 
@@ -28,55 +28,93 @@ onAuthStateChanged(auth, async (usuario) => {
         return;
     }
 
-    console.log("Usuário autenticado:", usuario.uid);
+    console.log(
+        "Usuário autenticado:",
+        usuario.uid
+    );
 
     try {
+
+        // =================================================
+        // DADOS DO USUÁRIO
+        // =================================================
 
         const usuarioRef = ref(
             db,
             "usuarios/" + usuario.uid
         );
 
-        const snapshot = await get(usuarioRef);
+        const snapshot =
+            await get(usuarioRef);
 
         if (snapshot.exists()) {
 
-            const user = snapshot.val();
+            const user =
+                snapshot.val();
 
-            document.getElementById("nome").textContent =
-                user.nome ||
-                usuario.displayName ||
-                "Usuário";
+            const nome =
+                document.getElementById("nome");
 
-            document.getElementById("email").textContent =
-                user.email ||
-                usuario.email ||
-                "";
+            const email =
+                document.getElementById("email");
 
-        } else {
+            if (nome) {
 
-            document.getElementById("nome").textContent =
-                usuario.displayName ||
-                "Usuário";
+                nome.textContent =
+                    user.nome ||
+                    usuario.displayName ||
+                    "Usuário";
+            }
 
-            document.getElementById("email").textContent =
-                usuario.email ||
-                "";
+            if (email) {
+
+                email.textContent =
+                    user.email ||
+                    usuario.email ||
+                    "";
+            }
 
         }
+        else {
 
-        /*
-         * IMPORTANTE:
-         * Os pagamentos confirmados pelo servidor
-         * ficam inicialmente em:
-         *
-         * solicitacoes_cursos/{pedidoId}
-         *
-         * Portanto carregamos diretamente essa coleção
-         * e filtramos pelo UID do usuário.
-         */
+            const nome =
+                document.getElementById("nome");
 
-        carregarCursosEPagamentos(usuario.uid);
+            const email =
+                document.getElementById("email");
+
+            if (nome) {
+
+                nome.textContent =
+                    usuario.displayName ||
+                    "Usuário";
+            }
+
+            if (email) {
+
+                email.textContent =
+                    usuario.email ||
+                    "";
+            }
+        }
+
+
+        // =================================================
+        // CARREGAR CURSOS
+        // =================================================
+
+        carregarCursos(
+            usuario.uid
+        );
+
+
+        // =================================================
+        // CARREGAR PAGAMENTOS
+        // =================================================
+
+        carregarPagamentos(
+            usuario.uid
+        );
 
     }
     catch (error) {
@@ -91,151 +129,11 @@ onAuthStateChanged(auth, async (usuario) => {
 });
 
 
-/* =====================================================
-   CARREGAR CURSOS E PAGAMENTOS
-===================================================== */
+// =====================================================
+// CURSOS DO USUÁRIO
+// =====================================================
 
-function carregarCursosEPagamentos(usuarioId) {
-
-    const solicitacoesRef = ref(
-        db,
-        "solicitacoes_cursos"
-    );
-
-    onValue(
-        solicitacoesRef,
-        (snapshot) => {
-
-            const dados = snapshot.val();
-
-            console.log(
-                "Dados de solicitacoes_cursos:",
-                dados
-            );
-
-            const cursos = [];
-            const pagamentos = [];
-
-            if (dados) {
-
-                Object.entries(dados)
-                .forEach(([pedidoId, pedido]) => {
-
-                    if (!pedido) {
-                        return;
-                    }
-
-                    /*
-                     * Só mostra pedidos do usuário
-                     * atualmente autenticado.
-                     */
-
-                    if (
-                        String(pedido.usuarioId) !==
-                        String(usuarioId)
-                    ) {
-
-                        return;
-                    }
-
-
-                    /* =====================================
-                       CURSO PAGO
-                    ===================================== */
-
-                    if (
-                        pedido.pago === true
-                    ) {
-
-                        cursos.push({
-
-                            pedidoId:
-                                pedidoId,
-
-                            nome:
-                                pedido.curso ||
-                                "Curso",
-
-                            status:
-                                pedido.status ||
-                                "liberado",
-
-                            categoria:
-                                pedido.categoria ||
-                                "",
-
-                            linkCurso:
-                                pedido.linkCurso ||
-                                "",
-
-                            senhaCurso:
-                                pedido.senhaCurso ||
-                                null,
-
-                            usosRestantes:
-                                pedido.usosRestantes ??
-                                null
-
-                        });
-
-
-                        /* =================================
-                           PAGAMENTO
-                        ================================= */
-
-                        pagamentos.push({
-
-                            pedidoId:
-                                pedidoId,
-
-                            curso:
-                                pedido.curso ||
-                                "Curso",
-
-                            valor:
-                                pedido.valor ??
-                                0,
-
-                            data:
-                                pedido.dataPagamento ||
-                                ""
-
-                        });
-
-                    }
-
-                });
-
-            }
-
-
-            /*
-             * Mostrar na tela
-             */
-
-            carregarCursos(cursos);
-
-            carregarPagamentos(pagamentos);
-
-        },
-        (error) => {
-
-            console.error(
-                "Erro ao carregar cursos/pagamentos:",
-                error
-            );
-
-        }
-    );
-
-}
-
-
-/* =====================================================
-   CURSOS
-===================================================== */
-
-function carregarCursos(cursos) {
+function carregarCursos(usuarioId) {
 
     const tabela =
         document.getElementById("cursos");
@@ -249,104 +147,172 @@ function carregarCursos(cursos) {
         return;
     }
 
-    tabela.innerHTML = "";
+    const cursosRef =
+        ref(
+            db,
+            "usuarios/" +
+            usuarioId +
+            "/cursos"
+        );
+
+    onValue(
+        cursosRef,
+
+        (snapshot) => {
+
+            tabela.innerHTML = "";
+
+            const dados =
+                snapshot.val();
+
+            if (!dados) {
+
+                tabela.innerHTML = `
+                    <tr>
+                        <td colspan="4">
+                            Nenhum curso realizado
+                        </td>
+                    </tr>
+                `;
+
+                return;
+            }
 
 
-    if (
-        !cursos ||
-        cursos.length === 0
-    ) {
-
-        tabela.innerHTML = `
-            <tr>
-                <td colspan="4">
-                    Nenhum curso realizado
-                </td>
-            </tr>
-        `;
-
-        return;
-    }
+            const cursos =
+                Object.entries(dados);
 
 
-    cursos.forEach((curso) => {
+            cursos.forEach(
+                ([pedidoId, curso]) => {
 
-        const linha =
-            document.createElement("tr");
-
-
-        const nome =
-            document.createElement("td");
-
-        nome.textContent =
-            curso.nome;
+                    if (!curso) {
+                        return;
+                    }
 
 
-        const status =
-            document.createElement("td");
-
-        status.textContent =
-            curso.status;
+                    const linha =
+                        document.createElement("tr");
 
 
-        const categoria =
-            document.createElement("td");
+                    // =================================================
+                    // NOME
+                    // =================================================
 
-        categoria.textContent =
-            curso.categoria ||
-            "-";
+                    const nome =
+                        document.createElement("td");
+
+                    nome.textContent =
+                        curso.nome ||
+                        curso.curso ||
+                        "Curso";
 
 
-        const acesso =
-            document.createElement("td");
+                    // =================================================
+                    // STATUS
+                    // =================================================
+
+                    const status =
+                        document.createElement("td");
+
+                    status.textContent =
+                        curso.status ||
+                        "Liberado";
 
 
-        if (curso.linkCurso) {
+                    // =================================================
+                    // CATEGORIA
+                    // =================================================
 
-            const link =
-                document.createElement("a");
+                    const categoria =
+                        document.createElement("td");
 
-            link.href =
-                curso.linkCurso;
+                    categoria.textContent =
+                        curso.categoria ||
+                        "-";
 
-            link.target =
-                "_blank";
 
-            link.rel =
-                "noopener noreferrer";
+                    // =================================================
+                    // ACESSO
+                    // =================================================
 
-            link.textContent =
-                "Acessar curso";
+                    const acesso =
+                        document.createElement("td");
 
-            acesso.appendChild(link);
+
+                    if (curso.linkCurso) {
+
+                        const link =
+                            document.createElement("a");
+
+                        link.href =
+                            curso.linkCurso;
+
+                        link.target =
+                            "_blank";
+
+                        link.rel =
+                            "noopener noreferrer";
+
+                        link.textContent =
+                            "Acessar curso";
+
+                        acesso.appendChild(
+                            link
+                        );
+
+                    }
+                    else {
+
+                        acesso.textContent =
+                            "Sem link disponível";
+
+                    }
+
+
+                    linha.appendChild(nome);
+
+                    linha.appendChild(status);
+
+                    linha.appendChild(categoria);
+
+                    linha.appendChild(acesso);
+
+
+                    tabela.appendChild(
+                        linha
+                    );
+
+                }
+            );
+
+        },
+
+        (error) => {
+
+            console.error(
+                "Erro ao carregar cursos:",
+                error
+            );
+
+            tabela.innerHTML = `
+                <tr>
+                    <td colspan="4">
+                        Não foi possível carregar os cursos.
+                    </td>
+                </tr>
+            `;
 
         }
-        else {
-
-            acesso.textContent =
-                "Sem link";
-
-        }
-
-
-        linha.appendChild(nome);
-        linha.appendChild(status);
-        linha.appendChild(categoria);
-        linha.appendChild(acesso);
-
-
-        tabela.appendChild(linha);
-
-    });
-
+    );
 }
 
 
-/* =====================================================
-   PAGAMENTOS
-===================================================== */
+// =====================================================
+// PAGAMENTOS DO USUÁRIO
+// =====================================================
 
-function carregarPagamentos(pagamentos) {
+function carregarPagamentos(usuarioId) {
 
     const tabela =
         document.getElementById("pagamentos");
@@ -360,105 +326,177 @@ function carregarPagamentos(pagamentos) {
         return;
     }
 
-    tabela.innerHTML = "";
+    const pagamentosRef =
+        ref(
+            db,
+            "usuarios/" +
+            usuarioId +
+            "/pagamentos"
+        );
+
+    onValue(
+        pagamentosRef,
+
+        (snapshot) => {
+
+            tabela.innerHTML = "";
+
+            const dados =
+                snapshot.val();
+
+            if (!dados) {
+
+                tabela.innerHTML = `
+                    <tr>
+                        <td colspan="3">
+                            Nenhum pagamento encontrado
+                        </td>
+                    </tr>
+                `;
+
+                return;
+            }
 
 
-    if (
-        !pagamentos ||
-        pagamentos.length === 0
-    ) {
+            Object.entries(dados)
+            .forEach(
+                ([pedidoId, pagamento]) => {
 
-        tabela.innerHTML = `
-            <tr>
-                <td colspan="3">
-                    Nenhum pagamento encontrado
-                </td>
-            </tr>
-        `;
-
-        return;
-    }
+                    if (!pagamento) {
+                        return;
+                    }
 
 
-    pagamentos.forEach((pagamento) => {
-
-        const linha =
-            document.createElement("tr");
+                    const linha =
+                        document.createElement("tr");
 
 
-        const curso =
-            document.createElement("td");
+                    // =================================================
+                    // CURSO
+                    // =================================================
 
-        curso.textContent =
-            pagamento.curso;
+                    const curso =
+                        document.createElement("td");
 
-
-        const valor =
-            document.createElement("td");
-
-        const valorNumerico =
-            Number(pagamento.valor);
-
-
-        valor.textContent =
-            Number.isFinite(valorNumerico)
-                ? `R$ ${valorNumerico.toFixed(2).replace(".", ",")}`
-                : "R$ 0,00";
+                    curso.textContent =
+                        pagamento.curso ||
+                        pagamento.nome ||
+                        "Curso";
 
 
-        const data =
-            document.createElement("td");
+                    // =================================================
+                    // VALOR
+                    // =================================================
+
+                    const valor =
+                        document.createElement("td");
+
+                    const valorNumerico =
+                        Number(
+                            pagamento.valor || 0
+                        );
+
+                    valor.textContent =
+                        Number.isFinite(
+                            valorNumerico
+                        )
+                            ? `R$ ${valorNumerico
+                                .toFixed(2)
+                                .replace(".", ",")}`
+                            : "R$ 0,00";
 
 
-        if (pagamento.data) {
+                    // =================================================
+                    // DATA
+                    // =================================================
 
-            const dataObj =
-                new Date(pagamento.data);
+                    const data =
+                        document.createElement("td");
+
+                    const dataPagamento =
+                        pagamento.dataPagamento ||
+                        pagamento.data ||
+                        "";
 
 
-            if (!isNaN(dataObj.getTime())) {
+                    if (dataPagamento) {
 
-                data.textContent =
-                    dataObj.toLocaleString(
-                        "pt-BR"
+                        const dataObj =
+                            new Date(
+                                dataPagamento
+                            );
+
+
+                        if (
+                            !isNaN(
+                                dataObj.getTime()
+                            )
+                        ) {
+
+                            data.textContent =
+                                dataObj.toLocaleString(
+                                    "pt-BR"
+                                );
+
+                        }
+                        else {
+
+                            data.textContent =
+                                dataPagamento;
+
+                        }
+
+                    }
+                    else {
+
+                        data.textContent =
+                            "-";
+
+                    }
+
+
+                    linha.appendChild(curso);
+
+                    linha.appendChild(valor);
+
+                    linha.appendChild(data);
+
+
+                    tabela.appendChild(
+                        linha
                     );
 
-            }
-            else {
+                }
+            );
 
-                data.textContent =
-                    pagamento.data;
+        },
 
-            }
+        (error) => {
+
+            console.error(
+                "Erro ao carregar pagamentos:",
+                error
+            );
+
+            tabela.innerHTML = `
+                <tr>
+                    <td colspan="3">
+                        Não foi possível carregar os pagamentos.
+                    </td>
+                </tr>
+            `;
 
         }
-        else {
-
-            data.textContent =
-                "-";
-
-        }
-
-
-        linha.appendChild(curso);
-        linha.appendChild(valor);
-        linha.appendChild(data);
-
-
-        tabela.appendChild(linha);
-
-    });
-
+    );
 }
 
 
-/* =====================================================
-   SAIR
-===================================================== */
+// =====================================================
+// SAIR
+// =====================================================
 
 const botaoSair =
     document.getElementById("sair");
-
 
 if (botaoSair) {
 
@@ -485,5 +523,4 @@ if (botaoSair) {
 
         }
     );
-
 }
