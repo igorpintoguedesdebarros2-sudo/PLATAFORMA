@@ -11,7 +11,7 @@ import {
     query,
     orderByChild,
     equalTo
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 
 // =====================================================
@@ -121,13 +121,6 @@ function procurarPagamento() {
      * Isso permite que as Rules de produção
      * controlem o acesso corretamente.
      */
-
-    const consulta = query(
-        ref(db, "solicitacoes_cursos"),
-        orderByChild("usuarioId"),
-        equalTo(usuarioAtual.uid)
-    );
-
 
     onValue(
         consulta,
@@ -514,18 +507,6 @@ async function salvarSenha(
 ) {
 
     try {
-
-        await set(
-
-            ref(
-                db,
-                "solicitacoes_cursos/" +
-                id +
-                "/senhaAcesso"
-            ),
-
-            senha
-        );
 
     } catch (error) {
 
