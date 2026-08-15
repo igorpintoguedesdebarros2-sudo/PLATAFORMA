@@ -1895,6 +1895,185 @@ app.use(
     }
 );
 
+app.get("/consultar-pagamento", async (req, res) => {
+    try {
+        const { session_id } = req.query;
+
+        if (!session_id) {
+            return res.status(400).json({
+                pago: false,
+                erro: "session_id não informado."
+            });
+        }
+
+        console.log("Consultando pagamento:", session_id);
+
+        const session = await stripe.checkout.sessions.retrieve(
+            session_id
+        );
+
+        if (session.payment_status !== "paid") {
+            return res.json({
+                pago: false,
+                status: session.payment_status,
+                mensagem: "O pagamento ainda não foi confirmado."
+            });
+        }
+
+        const metadata = session.metadata || {};
+
+        const pedidoId = metadata.pedidoId;
+        const usuarioId = metadata.usuarioId;
+        const curso = metadata.curso;
+
+        if (!pedidoId || !usuarioId || !curso) {
+            return res.status(400).json({
+                pago: false,
+                erro: "Metadata do pagamento incompleta."
+            });
+        }
+
+        const cursoSelecionado = cursos[curso];
+
+        if (!cursoSelecionado) {
+            return res.status(400).json({
+                pago: false,
+                erro: "Curso não encontrado."
+            });
+        }
+
+        const pedidoRef = ref(
+            db,
+            `solicitacoes_cursos/${pedidoId}`
+        );
+
+        const snapshot = await get(pedidoRef);
+
+        // Se já foi processado, simplesmente retorna os dados.
+        if (snapshot.exists()) {
+            const pedido = snapshot.val();
+
+            if (
+                pedido.usuarioId &&
+                String(pedido.usuarioId) !== String(usuarioId)
+            ) {
+                return res.status(403).json({
+                    pago: false,
+                    erro: "Este pagamento pertence a outro usuário."
+                });
+            }
+
+            if (pedido.pago === true) {
+                return res.json({
+                    pago: true,
+                    curso: pedido.curso,
+                    valor: pedido.valor,
+                    pedidoId: pedido.pedidoId,
+                    usuarioId: pedido.usuarioId,
+                    linkCurso: pedido.linkCurso,
+                    categoria: pedido.categoria,
+                    pagamentoId: pedido.pagamentoId,
+                    senhaCurso: pedido.senhaCurso || null,
+                    usosRestantes: pedido.usosRestantes ?? null,
+                    dataPagamento: pedido.dataPagamento,
+                    agendamento: pedido.agendamento || null
+                });
+            }
+        }
+
+        const dataPagamento = new Date().toISOString();
+
+        const dadosCurso = {
+            usuarioId,
+            pedidoId,
+            curso,
+            valor: cursoSelecionado.valor,
+            categoria: cursoSelecionado.categoria,
+            linkCurso: cursoSelecionado.link,
+            status: "liberado",
+            pago: true,
+            pagamentoId: session.id,
+            dataPagamento,
+            agendamento: null
+        };
+
+        if (cursoSelecionado.categoria === "EAD") {
+            dadosCurso.senhaCurso = gerarSenhaCurso();
+            dadosCurso.usosRestantes = 2;
+        } else {
+            dadosCurso.senhaCurso = null;
+            dadosCurso.usosRestantes = null;
+        }
+
+        // Salva o pedido
+        await set(pedidoRef, dadosCurso);
+
+        // Salva o curso no perfil
+        await set(
+            ref(
+                db,
+                `usuarios/${usuarioId}/cursos/${pedidoId}`
+            ),
+            {
+                pedidoId,
+                nome: curso,
+                curso,
+                status: "Liberado",
+                categoria: dadosCurso.categoria,
+                valor: dadosCurso.valor,
+                linkCurso: dadosCurso.linkCurso,
+                senhaCurso: dadosCurso.senhaCurso || null,
+                usosRestantes: dadosCurso.usosRestantes ?? null,
+                dataPagamento
+            }
+        );
+
+        // Salva o pagamento no perfil
+        await set(
+            ref(
+                db,
+                `usuarios/${usuarioId}/pagamentos/${pedidoId}`
+            ),
+            {
+                pedidoId,
+                curso,
+                valor: dadosCurso.valor,
+                pagamentoId: session.id,
+                dataPagamento
+            }
+        );
+
+        console.log("Pagamento confirmado.");
+        console.log("Pedido:", pedidoId);
+        console.log("Usuário:", usuarioId);
+        console.log("Curso:", curso);
+
+        return res.json({
+            pago: true,
+            curso: dadosCurso.curso,
+            valor: dadosCurso.valor,
+            pedidoId: dadosCurso.pedidoId,
+            usuarioId: dadosCurso.usuarioId,
+            linkCurso: dadosCurso.linkCurso,
+            categoria: dadosCurso.categoria,
+            pagamentoId: dadosCurso.pagamentoId,
+            senhaCurso: dadosCurso.senhaCurso || null,
+            usosRestantes: dadosCurso.usosRestantes ?? null,
+            dataPagamento: dadosCurso.dataPagamento,
+            agendamento: null
+        });
+
+    } catch (error) {
+        console.error("ERRO CONSULTAR PAGAMENTO:", error);
+
+        return res.status(500).json({
+            pago: false,
+            erro: "Erro ao consultar pagamento.",
+            detalhe: error.message
+        });
+    }
+});
+
 // =====================================================
 // SERVIDOR
 // =====================================================
