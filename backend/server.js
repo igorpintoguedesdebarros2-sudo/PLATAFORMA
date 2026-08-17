@@ -781,6 +781,8 @@ async function buscarConfiguracaoCurso(
 // ser concluído.
 //
 // =====================================================
+// USAR SENHA DO CURSO
+// =====================================================
 
 app.post(
     "/usar-senha-curso",
@@ -801,8 +803,7 @@ app.post(
             const {
                 senha,
                 usuarioId
-            } =
-                req.body || {};
+            } = req.body || {};
 
 
             // =================================================
@@ -821,8 +822,7 @@ app.post(
                     .status(400)
                     .json({
 
-                        valido:
-                            false,
+                        valido: false,
 
                         erro:
                             "Senha do curso não informada."
@@ -847,8 +847,7 @@ app.post(
                     .status(400)
                     .json({
 
-                        valido:
-                            false,
+                        valido: false,
 
                         erro:
                             "usuarioId não informado."
@@ -874,9 +873,7 @@ app.post(
 
             const pedidosSnapshot =
                 await db
-                    .collection(
-                        "pedidos"
-                    )
+                    .collection("pedidos")
                     .where(
                         "usuarioId",
                         "==",
@@ -885,16 +882,13 @@ app.post(
                     .get();
 
 
-            if (
-                pedidosSnapshot.empty
-            ) {
+            if (pedidosSnapshot.empty) {
 
                 return res
                     .status(404)
                     .json({
 
-                        valido:
-                            false,
+                        valido: false,
 
                         erro:
                             "Nenhum curso encontrado para este usuário."
@@ -904,17 +898,14 @@ app.post(
 
 
             // =================================================
-            // PROCURAR PEDIDO COMPATÍVEL
+            // PROCURAR PEDIDO
             // =================================================
 
-            let pedidoEncontrado =
-                null;
+            let pedidoEncontrado = null;
 
-            let pedidoIdEncontrado =
-                null;
+            let pedidoIdEncontrado = null;
 
-            let configuracaoCurso =
-                null;
+            let configuracaoCurso = null;
 
 
             for (
@@ -922,25 +913,30 @@ app.post(
                 of pedidosSnapshot.docs
             ) {
 
-                const pedido =
+                let pedido =
                     documento.data() || {};
 
 
-                // =============================================
-                // SOMENTE PAGAMENTOS CONFIRMADOS
-                // =============================================
+                const pedidoId =
+                    documento.id;
+
+
+                // =================================================
+                // VERIFICAR USUÁRIO
+                // =================================================
 
                 if (
-                    pedido.pago !== true
+                    pedido.usuarioId !==
+                    usuarioIdInformado
                 ) {
 
                     continue;
                 }
 
 
-                // =============================================
-                // CURSO DO PEDIDO
-                // =============================================
+                // =================================================
+                // CURSO
+                // =================================================
 
                 const nomeCurso =
                     String(
@@ -949,13 +945,14 @@ app.post(
 
 
                 if (!nomeCurso) {
+
                     continue;
                 }
 
 
-                // =============================================
-                // BUSCAR CONFIGURAÇÃO DO CURSO
-                // =============================================
+                // =================================================
+                // BUSCAR CONFIGURAÇÃO
+                // =================================================
 
                 let configuracao;
 
@@ -969,7 +966,7 @@ app.post(
                 } catch (erro) {
 
                     console.error(
-                        "Erro buscando configuração:",
+                        "Erro buscando configuração do curso:",
                         erro
                     );
 
@@ -978,13 +975,14 @@ app.post(
 
 
                 if (!configuracao) {
+
                     continue;
                 }
 
 
-                // =============================================
-                // SENHA DO CURSO
-                // =============================================
+                // =================================================
+                // SENHA
+                // =================================================
 
                 const senhaBanco =
                     String(
@@ -992,9 +990,14 @@ app.post(
                     ).trim();
 
 
-                // =============================================
-                // COMPARAR SENHA
-                // =============================================
+                // =================================================
+                // PRIMEIRO CONFIRMAR A SENHA
+                // =================================================
+                //
+                // Isso permite identificar qual pedido
+                // corresponde à senha informada.
+                //
+                // =================================================
 
                 if (
                     senhaBanco !==
@@ -1005,9 +1008,201 @@ app.post(
                 }
 
 
-                // =============================================
+                console.log(
+                    "Senha corresponde ao curso:",
+                    nomeCurso
+                );
+
+
+                // =================================================
+                // VERIFICAR PAGAMENTO
+                // =================================================
+
+                let pagamentoConfirmado =
+                    pedido.pago === true;
+
+
+                // =================================================
+                // SE NÃO ESTÁ PAGO, CONSULTAR STRIPE
+                // =================================================
+
+                if (
+                    !pagamentoConfirmado
+                ) {
+
+                    console.log(
+                        "Pedido ainda consta como não pago."
+                    );
+
+                    console.log(
+                        "Verificando Stripe..."
+                    );
+
+
+                    const sessionId =
+                        pedido.sessionId ||
+                        pedido.pagamentoId ||
+                        "";
+
+
+                    if (sessionId) {
+
+                        try {
+
+                            const session =
+                                await stripe
+                                    .checkout
+                                    .sessions
+                                    .retrieve(
+                                        sessionId
+                                    );
+
+
+                            console.log(
+                                "Stripe payment_status:",
+                                session.payment_status
+                            );
+
+
+                            if (
+                                session.payment_status ===
+                                "paid"
+                            ) {
+
+                                pagamentoConfirmado =
+                                    true;
+
+
+                                // =========================================
+                                // ATUALIZAR PEDIDO
+                                // =========================================
+
+                                await db
+                                    .collection("pedidos")
+                                    .doc(pedidoId)
+                                    .set(
+
+                                        {
+
+                                            pago:
+                                                true,
+
+                                            paymentStatus:
+                                                session.payment_status,
+
+                                            sessionId:
+                                                session.id,
+
+                                            atualizadoEm:
+                                                FieldValue
+                                                    .serverTimestamp()
+
+                                        },
+
+                                        {
+                                            merge:
+                                                true
+                                        }
+
+                                    );
+
+
+                                // =========================================
+                                // ATUALIZAR PAGAMENTO
+                                // =========================================
+
+                                await db
+                                    .collection("pagamentos")
+                                    .doc(pedidoId)
+                                    .set(
+
+                                        {
+
+                                            pago:
+                                                true,
+
+                                            paymentStatus:
+                                                session.payment_status,
+
+                                            sessionId:
+                                                session.id,
+
+                                            pedidoId:
+                                                pedidoId,
+
+                                            usuarioId:
+                                                usuarioIdInformado,
+
+                                            curso:
+                                                nomeCurso,
+
+                                            atualizadoEm:
+                                                FieldValue
+                                                    .serverTimestamp()
+
+                                        },
+
+                                        {
+                                            merge:
+                                                true
+                                        }
+
+                                    );
+
+
+                                // Atualizar objeto local
+                                pedido.pago =
+                                    true;
+
+
+                                console.log(
+                                    "Pagamento confirmado diretamente pelo Stripe."
+                                );
+
+                            }
+
+                        } catch (stripeError) {
+
+                            console.error(
+                                "Erro consultando Stripe:",
+                                stripeError
+                            );
+
+                        }
+
+                    }
+
+                }
+
+
+                // =================================================
+                // PAGAMENTO NÃO CONFIRMADO
+                // =================================================
+
+                if (
+                    !pagamentoConfirmado
+                ) {
+
+                    return res
+                        .status(403)
+                        .json({
+
+                            valido:
+                                false,
+
+                            pago:
+                                false,
+
+                            erro:
+                                "O pagamento deste curso ainda não foi confirmado."
+
+                        });
+                }
+
+
+                // =================================================
                 // CURSO CONCLUÍDO?
-                // =============================================
+                // =================================================
 
                 const cursoConcluido =
                     pedido.cursoConcluido === true;
@@ -1034,25 +1229,26 @@ app.post(
                 }
 
 
-                // =============================================
+                // =================================================
                 // PEDIDO ENCONTRADO
-                // =============================================
+                // =================================================
 
                 pedidoEncontrado =
                     pedido;
 
                 pedidoIdEncontrado =
-                    documento.id;
+                    pedidoId;
 
                 configuracaoCurso =
                     configuracao;
 
                 break;
+
             }
 
 
             // =================================================
-            // NENHUM PEDIDO COMPATÍVEL
+            // NENHUM PEDIDO ENCONTRADO
             // =================================================
 
             if (
@@ -1082,15 +1278,18 @@ app.post(
                 pedidoEncontrado.curso ||
                 "";
 
+
             const categoria =
                 configuracaoCurso.categoria ||
                 pedidoEncontrado.categoria ||
                 "EAD";
 
+
             const descricao =
                 configuracaoCurso.descricao ||
                 pedidoEncontrado.descricao ||
                 "Curso adquirido na plataforma.";
+
 
             const linkCurso =
                 configuracaoCurso.linkCurso ||
@@ -1099,13 +1298,21 @@ app.post(
 
 
             // =================================================
+            // USOS RESTANTES
+            // =================================================
+
+            const usosRestantes =
+                Number(
+                    configuracaoCurso.usosRestantes
+                );
+
+
+            // =================================================
             // REGISTRAR ACESSO
             // =================================================
 
             await db
-                .collection(
-                    "acessos_cursos"
-                )
+                .collection("acessos_cursos")
                 .add({
 
                     pedidoId:
@@ -1135,12 +1342,8 @@ app.post(
             // =================================================
 
             await db
-                .collection(
-                    "pedidos"
-                )
-                .doc(
-                    pedidoIdEncontrado
-                )
+                .collection("pedidos")
+                .doc(pedidoIdEncontrado)
                 .set(
 
                     {
@@ -1171,12 +1374,8 @@ app.post(
             // =================================================
 
             await db
-                .collection(
-                    "pagamentos"
-                )
-                .doc(
-                    pedidoIdEncontrado
-                )
+                .collection("pagamentos")
+                .doc(pedidoIdEncontrado)
                 .set(
 
                     {
@@ -1190,7 +1389,10 @@ app.post(
 
                         atualizadoEm:
                             FieldValue
-                                .serverTimestamp()
+                                .serverTimestamp(),
+
+                        pago:
+                            true
 
                     },
 
@@ -1230,6 +1432,11 @@ app.post(
             );
 
             console.log(
+                "Usos restantes:",
+                usosRestantes
+            );
+
+            console.log(
                 "======================================"
             );
 
@@ -1259,6 +1466,13 @@ app.post(
 
                 cursoConcluido:
                     false,
+
+                usosRestantes:
+                    Number.isFinite(
+                        usosRestantes
+                    )
+                        ? usosRestantes
+                        : 0,
 
                 autorizadoEm:
                     new Date()
@@ -1299,10 +1513,9 @@ app.post(
 
                 });
         }
+
     }
 );
-
-
 // =====================================================
 // CONCLUIR CURSO
 // =====================================================
