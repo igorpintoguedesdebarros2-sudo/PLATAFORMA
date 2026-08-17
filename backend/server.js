@@ -1,7 +1,17 @@
 import express from "express";
 import cors from "cors";
 import Stripe from "stripe";
-import admin from "firebase-admin";
+
+import {
+    initializeApp,
+    getApps,
+    cert
+} from "firebase-admin/app";
+
+import {
+    getFirestore,
+    FieldValue
+} from "firebase-admin/firestore";
 
 // =====================================================
 // CONFIGURAÇÃO
@@ -9,51 +19,110 @@ import admin from "firebase-admin";
 
 const app = express();
 
-const PORT = process.env.PORT || 10000;
+const PORT =
+    process.env.PORT || 10000;
 
-const stripe = new Stripe(
-    process.env.STRIPE_SECRET_KEY
-);
+// =====================================================
+// STRIPE
+// =====================================================
+
+if (!process.env.STRIPE_SECRET_KEY) {
+
+    console.error(
+        "ERRO: STRIPE_SECRET_KEY não configurada."
+    );
+}
+
+const stripe =
+    new Stripe(
+        process.env.STRIPE_SECRET_KEY
+    );
 
 // =====================================================
 // FIREBASE ADMIN
 // =====================================================
 
-if (!admin.apps.length) {
+const firebasePrivateKey =
+    process.env.FIREBASE_PRIVATE_KEY
+        ?.replace(/\\n/g, "\n");
 
-    const firebasePrivateKey =
-        process.env.FIREBASE_PRIVATE_KEY
-            ?.replace(/\\n/g, "\n");
+if (
+    !process.env.FIREBASE_PROJECT_ID ||
+    !process.env.FIREBASE_CLIENT_EMAIL ||
+    !firebasePrivateKey
+) {
 
-    admin.initializeApp({
+    console.error(
+        "ERRO: variáveis do Firebase Admin não configuradas."
+    );
 
-        credential:
-            admin.credential.cert({
+} else {
 
-                projectId:
-                    process.env.FIREBASE_PROJECT_ID,
+    if (!getApps().length) {
 
-                clientEmail:
-                    process.env.FIREBASE_CLIENT_EMAIL,
+        initializeApp({
 
-                privateKey:
-                    firebasePrivateKey
-            })
-    });
+            credential:
+                cert({
+
+                    projectId:
+                        process.env.FIREBASE_PROJECT_ID,
+
+                    clientEmail:
+                        process.env.FIREBASE_CLIENT_EMAIL,
+
+                    privateKey:
+                        firebasePrivateKey
+
+                })
+
+        });
+
+        console.log(
+            "Firebase Admin inicializado."
+        );
+
+    } else {
+
+        console.log(
+            "Firebase Admin já estava inicializado."
+        );
+    }
 }
 
 const db =
-    admin.firestore();
+    getFirestore();
 
 // =====================================================
-// MIDDLEWARE
+// CORS
 // =====================================================
 
 app.use(
+
     cors({
-        origin: "*"
+
+        origin: "*",
+
+        methods: [
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "OPTIONS"
+        ],
+
+        allowedHeaders: [
+            "Content-Type",
+            "Authorization"
+        ]
+
     })
+
 );
+
+// =====================================================
+// JSON
+// =====================================================
 
 app.use(
     express.json()
@@ -68,10 +137,17 @@ app.get(
     (req, res) => {
 
         res.json({
+
             ok: true,
-            servidor: "Plataforma",
-            status: "online"
+
+            servidor:
+                "Plataforma",
+
+            status:
+                "online"
+
         });
+
     }
 );
 
@@ -88,48 +164,71 @@ app.get(
             const sessionId =
                 req.query.session_id;
 
+            // =================================================
+            // VALIDAR SESSION ID
+            // =================================================
+
             if (!sessionId) {
 
-                return res.status(400).json({
+                return res
+                    .status(400)
+                    .json({
 
-                    valido: false,
+                        valido: false,
 
-                    pago: false,
+                        pago: false,
 
-                    erro:
-                        "session_id não informado."
-                });
+                        erro:
+                            "session_id não informado."
+
+                    });
+
             }
 
             console.log(
-                "Consultando Stripe:",
+                "======================================"
+            );
+
+            console.log(
+                "CONSULTANDO PAGAMENTO"
+            );
+
+            console.log(
+                "Session:",
                 sessionId
             );
 
             // =================================================
-            // BUSCAR SESSÃO NA STRIPE
+            // STRIPE
             // =================================================
 
             const session =
-                await stripe.checkout.sessions.retrieve(
-                    sessionId
-                );
+                await stripe
+                    .checkout
+                    .sessions
+                    .retrieve(
+                        sessionId
+                    );
 
             if (!session) {
 
-                return res.status(404).json({
+                return res
+                    .status(404)
+                    .json({
 
-                    valido: false,
+                        valido: false,
 
-                    pago: false,
+                        pago: false,
 
-                    erro:
-                        "Sessão de pagamento não encontrada."
-                });
+                        erro:
+                            "Sessão de pagamento não encontrada."
+
+                    });
+
             }
 
             // =================================================
-            // VERIFICAR PAGAMENTO
+            // PAGAMENTO
             // =================================================
 
             const pago =
@@ -137,11 +236,15 @@ app.get(
                 "paid";
 
             // =================================================
-            // METADADOS
+            // METADATA
             // =================================================
 
             const metadata =
                 session.metadata || {};
+
+            // =================================================
+            // USUÁRIO
+            // =================================================
 
             const usuarioId =
                 metadata.usuarioId ||
@@ -149,22 +252,42 @@ app.get(
                 session.client_reference_id ||
                 "";
 
+            // =================================================
+            // PEDIDO
+            // =================================================
+
             const pedidoId =
                 metadata.pedidoId ||
                 metadata.pedido ||
                 "";
 
+            // =================================================
+            // CURSO
+            // =================================================
+
             const curso =
                 metadata.curso ||
                 "";
+
+            // =================================================
+            // CATEGORIA
+            // =================================================
 
             const categoria =
                 metadata.categoria ||
                 "EAD";
 
+            // =================================================
+            // DESCRIÇÃO
+            // =================================================
+
             const descricao =
                 metadata.descricao ||
                 "Curso adquirido na plataforma.";
+
+            // =================================================
+            // LINK
+            // =================================================
 
             const linkCurso =
                 metadata.linkCurso ||
@@ -203,9 +326,11 @@ app.get(
 
             const resultado = {
 
-                valido: true,
+                valido:
+                    true,
 
-                pago: pago,
+                pago:
+                    pago,
 
                 sessionId:
                     session.id,
@@ -233,11 +358,61 @@ app.get(
 
                 linkCurso:
                     linkCurso
+
             };
 
+            // =================================================
+            // LOG
+            // =================================================
+
             console.log(
-                "Pagamento consultado:",
-                resultado
+                "Pagamento consultado:"
+            );
+
+            console.log(
+                "Pago:",
+                pago
+            );
+
+            console.log(
+                "Usuário:",
+                usuarioId
+            );
+
+            console.log(
+                "Pedido:",
+                pedidoId
+            );
+
+            console.log(
+                "Curso:",
+                curso
+            );
+
+            console.log(
+                "Categoria:",
+                categoria
+            );
+
+            console.log(
+                "Senha:",
+                senhaCurso
+                    ? "ENVIADA"
+                    : "NÃO INFORMADA"
+            );
+
+            console.log(
+                "Usos:",
+                usosRestantes
+            );
+
+            console.log(
+                "Link:",
+                linkCurso
+            );
+
+            console.log(
+                "======================================"
             );
 
             return res.json(
@@ -252,17 +427,24 @@ app.get(
                 error
             );
 
-            return res.status(500).json({
+            return res
+                .status(500)
+                .json({
 
-                valido: false,
+                    valido:
+                        false,
 
-                pago: false,
+                    pago:
+                        false,
 
-                erro:
-                    error.message ||
-                    "Erro interno do servidor."
-            });
+                    erro:
+                        error.message ||
+                        "Erro interno do servidor."
+
+                });
+
         }
+
     }
 );
 
@@ -289,69 +471,111 @@ app.post(
             } = req.body;
 
             // =================================================
-            // VALIDAÇÃO
+            // VALIDAÇÕES
             // =================================================
 
             if (!pedidoId) {
 
-                return res.status(400).json({
+                return res
+                    .status(400)
+                    .json({
 
-                    erro:
-                        "pedidoId não informado."
-                });
+                        sucesso:
+                            false,
+
+                        erro:
+                            "pedidoId não informado."
+
+                    });
+
             }
 
             if (!usuarioId) {
 
-                return res.status(400).json({
+                return res
+                    .status(400)
+                    .json({
 
-                    erro:
-                        "usuarioId não informado."
-                });
+                        sucesso:
+                            false,
+
+                        erro:
+                            "usuarioId não informado."
+
+                    });
+
             }
 
             if (!data) {
 
-                return res.status(400).json({
+                return res
+                    .status(400)
+                    .json({
 
-                    erro:
-                        "Data não informada."
-                });
+                        sucesso:
+                            false,
+
+                        erro:
+                            "Data não informada."
+
+                    });
+
             }
 
             if (!horario) {
 
-                return res.status(400).json({
+                return res
+                    .status(400)
+                    .json({
 
-                    erro:
-                        "Horário não informado."
-                });
+                        sucesso:
+                            false,
+
+                        erro:
+                            "Horário não informado."
+
+                    });
+
             }
 
             // =================================================
-            // SALVAR AGENDAMENTO
+            // CRIAR AGENDAMENTO
             // =================================================
 
             const agendamento = {
 
                 pedidoId:
-                    pedidoId,
+                    String(
+                        pedidoId
+                    ),
 
                 usuarioId:
-                    usuarioId,
+                    String(
+                        usuarioId
+                    ),
 
                 data:
-                    data,
+                    String(
+                        data
+                    ),
 
                 horario:
-                    horario,
+                    String(
+                        horario
+                    ),
 
                 status:
                     "agendado",
 
                 criadoEm:
-                    admin.firestore.FieldValue.serverTimestamp()
+                    FieldValue
+                        .serverTimestamp()
+
             };
+
+            // =================================================
+            // FIRESTORE
+            // =================================================
 
             const referencia =
                 await db
@@ -369,13 +593,15 @@ app.post(
 
             return res.json({
 
-                sucesso: true,
+                sucesso:
+                    true,
 
                 agendamentoId:
                     referencia.id,
 
                 mensagem:
                     "Curso agendado com sucesso."
+
             });
 
         }
@@ -386,15 +612,21 @@ app.post(
                 error
             );
 
-            return res.status(500).json({
+            return res
+                .status(500)
+                .json({
 
-                sucesso: false,
+                    sucesso:
+                        false,
 
-                erro:
-                    error.message ||
-                    "Erro ao salvar agendamento."
-            });
+                    erro:
+                        error.message ||
+                        "Erro ao salvar agendamento."
+
+                });
+
         }
+
     }
 );
 
@@ -402,13 +634,59 @@ app.post(
 // WEBHOOK STRIPE
 // =====================================================
 //
-// IMPORTANTE:
-// O webhook precisa receber o corpo bruto.
-// Por isso ele fica ANTES do express.json() caso
-// você queira utilizar esta rota.
+// Não estamos ativando o webhook nesta versão.
 //
-// Nesta versão deixamos apenas a estrutura.
+// Quando for ativá-lo, NÃO coloque a rota depois
+// de express.json(), porque a Stripe precisa do
+// corpo bruto da requisição.
+//
 // =====================================================
+
+// =====================================================
+// TRATAMENTO DE ROTA NÃO ENCONTRADA
+// =====================================================
+
+app.use(
+    (req, res) => {
+
+        res
+            .status(404)
+            .json({
+
+                erro:
+                    "Rota não encontrada.",
+
+                rota:
+                    req.originalUrl
+
+            });
+
+    }
+);
+
+// =====================================================
+// TRATAMENTO GLOBAL DE ERROS
+// =====================================================
+
+app.use(
+    (error, req, res, next) => {
+
+        console.error(
+            "Erro não tratado:",
+            error
+        );
+
+        res
+            .status(500)
+            .json({
+
+                erro:
+                    "Erro interno do servidor."
+
+            });
+
+    }
+);
 
 // =====================================================
 // INICIAR SERVIDOR
@@ -423,7 +701,11 @@ app.listen(
         );
 
         console.log(
-            `Servidor iniciado na porta ${PORT}`
+            "SERVIDOR DA PLATAFORMA"
+        );
+
+        console.log(
+            `Porta: ${PORT}`
         );
 
         console.log(
@@ -437,5 +719,6 @@ app.listen(
         console.log(
             "======================================"
         );
+
     }
 );
