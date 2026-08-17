@@ -903,7 +903,7 @@ app.post(
                             },
 
                         success_url:
-                            "https://igorpintoguedesdebarros2-sudo.github.io/sucesso.html?session_id={CHECKOUT_SESSION_ID}",
+                            "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/sucesso.html?session_id={CHECKOUT_SESSION_ID}",
 
                         cancel_url:
                             "https://igorpintoguedesdebarros2-sudo.github.io/pagamento.html"
