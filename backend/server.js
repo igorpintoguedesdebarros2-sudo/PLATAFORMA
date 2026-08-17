@@ -1,26 +1,20 @@
 import {
-    auth,
-    db
+    auth
 } from "./firebase.js";
 
 import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-import {
-    ref,
-    set
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
 // =====================================================
-// BACKEND
+// CONFIGURAÇÃO DO BACKEND
 // =====================================================
 
 const API_URL =
     "https://plataforma-56gy.onrender.com";
 
 // =====================================================
-// ELEMENTOS
+// ELEMENTOS DA PÁGINA
 // =====================================================
 
 const statusPagamento =
@@ -42,7 +36,7 @@ const botaoAgendar =
     document.getElementById("agendarCurso");
 
 // =====================================================
-// SESSION ID STRIPE
+// SESSION ID DA STRIPE
 // =====================================================
 
 const parametros =
@@ -164,6 +158,10 @@ async function procurarPagamento() {
                 "Consultando pagamento...";
         }
 
+        // =================================================
+        // URL DO SERVIDOR
+        // =================================================
+
         const url =
             `${API_URL}/consultar-pagamento?session_id=${encodeURIComponent(sessionId)}`;
 
@@ -172,17 +170,26 @@ async function procurarPagamento() {
             url
         );
 
+        // =================================================
+        // REQUISIÇÃO
+        // =================================================
+
         const resposta =
             await fetch(
                 url,
                 {
                     method: "GET",
+
                     headers: {
                         "Accept":
                             "application/json"
                     }
                 }
             );
+
+        // =================================================
+        // LER RESPOSTA
+        // =================================================
 
         const texto =
             await resposta.text();
@@ -203,12 +210,12 @@ async function procurarPagamento() {
         catch (erroJSON) {
 
             console.error(
-                "Servidor não retornou JSON:",
+                "Resposta não é JSON:",
                 texto
             );
 
             throw new Error(
-                "Resposta inválida do servidor."
+                "O servidor não retornou uma resposta JSON válida."
             );
         }
 
@@ -216,6 +223,10 @@ async function procurarPagamento() {
             "Resposta do servidor:",
             dados
         );
+
+        // =================================================
+        // ERRO HTTP
+        // =================================================
 
         if (!resposta.ok) {
 
@@ -241,7 +252,7 @@ async function procurarPagamento() {
         }
 
         // =================================================
-        // PAGAMENTO NÃO CONFIRMADO
+        // VERIFICAR PAGAMENTO
         // =================================================
 
         if (dados.pago !== true) {
@@ -271,6 +282,10 @@ async function procurarPagamento() {
         ultimoPagamento =
             dados;
 
+        console.log(
+            "Pagamento confirmado."
+        );
+
         if (statusPagamento) {
 
             statusPagamento.textContent =
@@ -278,7 +293,7 @@ async function procurarPagamento() {
         }
 
         // =================================================
-        // LIMPAR ÁREA
+        // LIMPAR ÁREAS
         // =================================================
 
         cursosPresenciais = [];
@@ -295,13 +310,13 @@ async function procurarPagamento() {
         }
 
         // =================================================
-        // CURSO
+        // VERIFICAR CURSO
         // =================================================
 
         if (!dados.curso) {
 
             console.error(
-                "Servidor confirmou pagamento, mas não enviou curso.",
+                "Pagamento confirmado, mas curso não foi retornado.",
                 dados
             );
 
@@ -309,14 +324,18 @@ async function procurarPagamento() {
 
                 cursosComprados.innerHTML = `
                     <p>
-                        Pagamento confirmado, mas os dados do curso
-                        não foram encontrados.
+                        Pagamento confirmado, mas os dados
+                        do curso não foram encontrados.
                     </p>
                 `;
             }
 
             return;
         }
+
+        // =================================================
+        // LOG DO CURSO
+        // =================================================
 
         console.log("======================================");
         console.log("CURSO RECEBIDO");
@@ -331,14 +350,22 @@ async function procurarPagamento() {
             "Usos restantes:",
             dados.usosRestantes
         );
-        console.log("Link:", dados.linkCurso);
+        console.log(
+            "Link:",
+            dados.linkCurso
+        );
         console.log("======================================");
+
+        // =================================================
+        // MOSTRAR CURSO
+        // =================================================
 
         mostrarCurso(
             dados,
             dados.pedidoId
         );
     }
+
     catch (error) {
 
         console.error(
@@ -455,7 +482,7 @@ function mostrarCurso(
 }
 
 // =====================================================
-// MOSTRAR EAD
+// MOSTRAR CURSO EAD
 // =====================================================
 
 function mostrarCursoEAD(
@@ -470,20 +497,16 @@ function mostrarCursoEAD(
     }
 
     // =================================================
-    // SENHA OFICIAL
-    // =================================================
-    //
-    // IMPORTANTE:
-    //
-    // NÃO GERAR SENHA AQUI.
-    //
-    // A senha precisa vir do server.js.
-    //
+    // SENHA OFICIAL DO SERVIDOR
     // =================================================
 
     const senha =
         curso.senhaCurso ||
         "";
+
+    // =================================================
+    // USOS
+    // =================================================
 
     const usos =
         Number(
@@ -495,9 +518,24 @@ function mostrarCursoEAD(
             ? usos
             : 0;
 
+    // =================================================
+    // LINK
+    // =================================================
+
     const link =
         curso.linkCurso ||
         "";
+
+    // =================================================
+    // ID SEGURO
+    // =================================================
+
+    const idSeguro =
+        escaparHTML(id);
+
+    // =================================================
+    // HTML
+    // =================================================
 
     let html = `
 
@@ -511,6 +549,7 @@ function mostrarCursoEAD(
                 <strong>
                     Categoria:
                 </strong>
+
                 EAD
             </p>
 
@@ -522,6 +561,7 @@ function mostrarCursoEAD(
                 <strong>
                     Pagamento:
                 </strong>
+
                 Confirmado
             </p>
 
@@ -531,86 +571,94 @@ function mostrarCursoEAD(
     // SENHA
     // =================================================
 
+    html += `
+
+        <div class="senha-curso">
+
+            <p>
+                <strong>
+                    Senha do curso:
+                </strong>
+            </p>
+    `;
+
+    // =================================================
+    // SENHA EXISTE
+    // =================================================
+
     if (senha) {
 
         html += `
 
-            <div class="senha-curso">
+            <code
+                id="senhaCurso_${idSeguro}"
+            >
+                ${escaparHTML(senha)}
+            </code>
 
-                <p>
-                    <strong>
-                        Senha do curso:
-                    </strong>
-                </p>
-
-                <code
-                    id="senhaCurso_${escaparHTML(id)}"
-                >
-                    ${escaparHTML(senha)}
-                </code>
-
-                <p>
-                    Esta senha possui
-                    <strong>
-                        ${usosValidos}
-                    </strong>
-                    utilização(ões)
-                    restante(s).
-                </p>
-
-                <button
-                    type="button"
-                    id="confirmarPagamento_${escaparHTML(id)}"
-                    class="botao-confirmar-pagamento"
-                >
-                    Confirmar pagamento
-                </button>
-
-                <p
-                    id="statusConfirmacao_${escaparHTML(id)}"
-                ></p>
-
-            </div>
-
-        `;
-
-    }
-    else {
-
-        html += `
-
-            <div class="senha-curso">
-
-                <p>
-                    <strong>
-                        Senha do curso:
-                    </strong>
-                </p>
-
-                <p>
-                    A senha oficial ainda não foi retornada
-                    pelo servidor.
-                </p>
-
-                <button
-                    type="button"
-                    id="confirmarPagamento_${escaparHTML(id)}"
-                    class="botao-confirmar-pagamento"
-                >
-                    Confirmar pagamento
-                </button>
-
-                <p
-                    id="statusConfirmacao_${escaparHTML(id)}"
-                ></p>
-
-            </div>
+            <p>
+                Esta senha possui
+                <strong>
+                    ${usosValidos}
+                </strong>
+                utilização(ões)
+                restante(s).
+            </p>
 
         `;
     }
 
     // =================================================
-    // LINK
+    // SENHA NÃO EXISTE
+    // =================================================
+
+    else {
+
+        html += `
+
+            <p
+                id="senhaCurso_${idSeguro}"
+            >
+                A senha oficial ainda não foi
+                disponibilizada pelo servidor.
+            </p>
+
+            <p>
+                Não é possível criar uma senha
+                pelo navegador.
+            </p>
+
+        `;
+    }
+
+    // =================================================
+    // BOTÃO CONFIRMAR PAGAMENTO
+    // =================================================
+    //
+    // O botão fica ABAIXO da senha.
+    //
+    // =================================================
+
+    html += `
+
+            <button
+                type="button"
+                id="confirmarPagamento_${idSeguro}"
+                class="botao-confirmar-pagamento"
+            >
+                Confirmar pagamento
+            </button>
+
+            <p
+                id="statusConfirmacao_${idSeguro}"
+            ></p>
+
+        </div>
+
+    `;
+
+    // =================================================
+    // ACESSO AO CURSO
     // =================================================
 
     if (link) {
@@ -636,8 +684,8 @@ function mostrarCursoEAD(
             </div>
 
         `;
-
     }
+
     else {
 
         html += `
@@ -649,17 +697,25 @@ function mostrarCursoEAD(
         `;
     }
 
+    // =================================================
+    // FECHAR CARD
+    // =================================================
+
     html += `
 
         </div>
 
     `;
 
+    // =================================================
+    // INSERIR NA PÁGINA
+    // =================================================
+
     cursosComprados.innerHTML =
         html;
 
     // =================================================
-    // BOTÃO CONFIRMAR PAGAMENTO
+    // BOTÃO
     // =================================================
 
     const botaoConfirmar =
@@ -682,14 +738,6 @@ function mostrarCursoEAD(
 
 // =====================================================
 // CONFIRMAR PAGAMENTO
-// =====================================================
-//
-// Este botão NÃO cria outra senha.
-//
-// Ele simplesmente consulta novamente o servidor.
-//
-// O servidor é a única fonte oficial da senha.
-//
 // =====================================================
 
 async function confirmarPagamento(
@@ -722,7 +770,8 @@ async function confirmarPagamento(
 
     try {
 
-        botao.disabled = true;
+        botao.disabled =
+            true;
 
         botao.textContent =
             "Confirmando...";
@@ -733,6 +782,10 @@ async function confirmarPagamento(
                 "Consultando servidor...";
         }
 
+        // =================================================
+        // URL
+        // =================================================
+
         const url =
             `${API_URL}/consultar-pagamento?session_id=${encodeURIComponent(sessionId)}`;
 
@@ -741,11 +794,16 @@ async function confirmarPagamento(
             url
         );
 
+        // =================================================
+        // CONSULTA
+        // =================================================
+
         const resposta =
             await fetch(
                 url,
                 {
                     method: "GET",
+
                     headers: {
                         "Accept":
                             "application/json"
@@ -753,21 +811,48 @@ async function confirmarPagamento(
                 }
             );
 
-        const dados =
-            await resposta.json();
+        // =================================================
+        // RESPOSTA
+        // =================================================
+
+        const texto =
+            await resposta.text();
+
+        let dados;
+
+        try {
+
+            dados =
+                JSON.parse(texto);
+
+        }
+        catch (erro) {
+
+            throw new Error(
+                "O servidor retornou uma resposta inválida."
+            );
+        }
 
         console.log(
             "Resultado da confirmação:",
             dados
         );
 
+        // =================================================
+        // HTTP
+        // =================================================
+
         if (!resposta.ok) {
 
             throw new Error(
                 dados.erro ||
-                "Erro ao confirmar pagamento."
+                `Erro HTTP ${resposta.status}`
             );
         }
+
+        // =================================================
+        // USUÁRIO
+        // =================================================
 
         if (
             dados.usuarioId &&
@@ -779,6 +864,10 @@ async function confirmarPagamento(
                 "Este pagamento pertence a outro usuário."
             );
         }
+
+        // =================================================
+        // PAGAMENTO
+        // =================================================
 
         if (dados.pago !== true) {
 
@@ -798,14 +887,11 @@ async function confirmarPagamento(
         }
 
         // =================================================
-        // CONFIRMADO
+        // ATUALIZAR PAGAMENTO
         // =================================================
 
-        if (status) {
-
-            status.textContent =
-                "Pagamento confirmado com sucesso.";
-        }
+        ultimoPagamento =
+            dados;
 
         if (statusPagamento) {
 
@@ -814,7 +900,59 @@ async function confirmarPagamento(
         }
 
         // =================================================
-        // SE FOR EAD, MOSTRAR SENHA OFICIAL
+        // SENHA
+        // =================================================
+
+        const senha =
+            dados.senhaCurso ||
+            "";
+
+        const senhaElemento =
+            document.getElementById(
+                `senhaCurso_${id}`
+            );
+
+        if (senhaElemento && senha) {
+
+            senhaElemento.textContent =
+                senha;
+        }
+
+        // =================================================
+        // USOS
+        // =================================================
+
+        const usos =
+            Number(
+                dados.usosRestantes
+            );
+
+        const usosValidos =
+            Number.isFinite(usos)
+                ? usos
+                : 0;
+
+        // =================================================
+        // STATUS
+        // =================================================
+
+        if (status) {
+
+            if (senha) {
+
+                status.textContent =
+                    `Pagamento confirmado. Senha oficial recebida. ${usosValidos} utilização(ões) restante(s).`;
+
+            }
+            else {
+
+                status.textContent =
+                    "Pagamento confirmado, mas o servidor ainda não retornou a senha oficial.";
+            }
+        }
+
+        // =================================================
+        // ATUALIZAR CARD COMPLETO
         // =================================================
 
         if (
@@ -826,49 +964,36 @@ async function confirmarPagamento(
             "ead"
         ) {
 
-            if (dados.senhaCurso) {
-
-                const senhaElemento =
-                    document.getElementById(
-                        `senhaCurso_${id}`
-                    );
-
-                if (senhaElemento) {
-
-                    senhaElemento.textContent =
-                        dados.senhaCurso;
-                }
-
-                const dadosCurso =
-                    {
-                        ...dados
-                    };
-
-                mostrarCursoEAD(
-                    dadosCurso,
-                    id,
-                    dados.curso || "Curso",
-                    dados.descricao ||
-                    "Curso adquirido na plataforma."
-                );
-            }
-            else {
-
-                if (status) {
-
-                    status.textContent =
-                        "Pagamento confirmado, mas o servidor não retornou a senha oficial.";
-                }
-            }
+            mostrarCursoEAD(
+                dados,
+                id,
+                dados.curso ||
+                "Curso",
+                dados.descricao ||
+                "Curso adquirido na plataforma."
+            );
         }
 
-        botao.disabled =
-            false;
+        // =================================================
+        // BOTÃO
+        // =================================================
 
-        botao.textContent =
-            "Pagamento confirmado";
+        const novoBotao =
+            document.getElementById(
+                `confirmarPagamento_${id}`
+            );
+
+        if (novoBotao) {
+
+            novoBotao.disabled =
+                false;
+
+            novoBotao.textContent =
+                "Pagamento confirmado";
+        }
 
     }
+
     catch (error) {
 
         console.error(
@@ -901,13 +1026,31 @@ function mostrarCursoPresencial(
     descricao
 ) {
 
-    cursosPresenciais.push({
+    // =================================================
+    // EVITAR DUPLICAÇÃO
+    // =================================================
 
-        ...curso,
+    const jaExiste =
+        cursosPresenciais.some(
+            cursoExistente =>
+                String(cursoExistente.id) ===
+                String(id)
+        );
 
-        id: id
+    if (!jaExiste) {
 
-    });
+        cursosPresenciais.push({
+
+            ...curso,
+
+            id: id
+
+        });
+    }
+
+    // =================================================
+    // CARD
+    // =================================================
 
     if (cursosComprados) {
 
@@ -923,6 +1066,7 @@ function mostrarCursoPresencial(
                     <strong>
                         Categoria:
                     </strong>
+
                     Presencial
                 </p>
 
@@ -934,6 +1078,7 @@ function mostrarCursoPresencial(
                     <strong>
                         Pagamento:
                     </strong>
+
                     Confirmado
                 </p>
 
@@ -946,6 +1091,10 @@ function mostrarCursoPresencial(
 
         `;
     }
+
+    // =================================================
+    // MOSTRAR ÁREA
+    // =================================================
 
     if (areaPresencial) {
 
@@ -1079,6 +1228,9 @@ if (botaoAgendar) {
 
                                 headers: {
                                     "Content-Type":
+                                        "application/json",
+
+                                    "Accept":
                                         "application/json"
                                 },
 
@@ -1097,13 +1249,27 @@ if (botaoAgendar) {
 
                                         horario:
                                             horario
-
                                     })
                             }
                         );
 
-                    const dados =
-                        await resposta.json();
+                    const texto =
+                        await resposta.text();
+
+                    let dados;
+
+                    try {
+
+                        dados =
+                            JSON.parse(texto);
+
+                    }
+                    catch {
+
+                        throw new Error(
+                            "O servidor retornou uma resposta inválida ao agendar."
+                        );
+                    }
 
                     if (!resposta.ok) {
 
@@ -1114,11 +1280,19 @@ if (botaoAgendar) {
                     }
                 }
 
+                // =========================================
+                // STATUS
+                // =========================================
+
                 if (statusPagamento) {
 
                     statusPagamento.textContent =
                         "Pagamento confirmado e curso presencial agendado.";
                 }
+
+                // =========================================
+                // CONFIRMAÇÃO
+                // =========================================
 
                 if (areaPresencial) {
 
@@ -1187,6 +1361,7 @@ if (botaoAgendar) {
                 }
 
             }
+
             catch (error) {
 
                 console.error(
