@@ -1,8 +1,20 @@
-import { auth } from "./firebase.js";
+import {
+    auth,
+    db
+} from "./firebase.js";
 
 import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+import {
+    ref,
+    set
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+// =====================================================
+// BACKEND
+// =====================================================
 
 const API_URL =
     "https://plataforma-56gy.onrender.com";
@@ -29,7 +41,6 @@ const horarioCurso =
 const botaoAgendar =
     document.getElementById("agendarCurso");
 
-
 // =====================================================
 // SESSION ID DA STRIPE
 // =====================================================
@@ -40,7 +51,6 @@ const parametros =
 const sessionId =
     parametros.get("session_id");
 
-
 // =====================================================
 // ESTADO
 // =====================================================
@@ -48,7 +58,6 @@ const sessionId =
 let usuarioAtual = null;
 
 let cursosPresenciais = [];
-
 
 // =====================================================
 // VERIFICAR SESSION ID
@@ -62,11 +71,13 @@ if (!sessionId) {
     }
 
     if (cursosComprados) {
-        cursosComprados.innerHTML =
-            "<p>Sessão de pagamento não encontrada.</p>";
+        cursosComprados.innerHTML = `
+            <p>
+                Sessão de pagamento não encontrada.
+            </p>
+        `;
     }
 }
-
 
 // =====================================================
 // AUTENTICAÇÃO
@@ -94,7 +105,6 @@ onAuthStateChanged(
     }
 );
 
-
 // =====================================================
 // PROCURAR PAGAMENTO
 // =====================================================
@@ -112,27 +122,69 @@ async function procurarPagamento() {
                 "Consultando pagamento...";
         }
 
-        const resposta = await fetch(
-            `${API_URL}/consultar-pagamento?session_id=${encodeURIComponent(sessionId)}`
+        const url =
+            `${API_URL}/consultar-pagamento?session_id=${encodeURIComponent(sessionId)}`;
+
+        console.log(
+            "Consultando pagamento:",
+            url
         );
 
-        const dados = await resposta.json();
+        const resposta =
+            await fetch(url);
+
+        const texto =
+            await resposta.text();
+
+        let dados;
+
+        try {
+
+            dados =
+                JSON.parse(texto);
+
+        } catch (erro) {
+
+            console.error(
+                "Resposta não é JSON:",
+                texto
+            );
+
+            throw new Error(
+                "O servidor retornou uma resposta inválida."
+            );
+        }
+
+        console.log(
+            "Resposta do servidor:",
+            dados
+        );
 
         if (!resposta.ok) {
+
             throw new Error(
                 dados.erro ||
                 "Erro ao consultar pagamento."
             );
         }
 
+        // =================================================
+        // VERIFICAR USUÁRIO
+        // =================================================
+
         if (
             dados.usuarioId &&
             dados.usuarioId !== usuarioAtual.uid
         ) {
+
             throw new Error(
                 "O pagamento não pertence ao usuário autenticado."
             );
         }
+
+        // =================================================
+        // VERIFICAR PAGAMENTO
+        // =================================================
 
         if (!dados.pago) {
 
@@ -149,21 +201,42 @@ async function procurarPagamento() {
                 "Pagamento confirmado.";
         }
 
-        if (dados.curso) {
+        // =================================================
+        // VERIFICAR CURSO
+        // =================================================
 
-            cursosPresenciais = [];
+        if (!dados.curso) {
+
+            console.error(
+                "O servidor não retornou os dados do curso:",
+                dados
+            );
 
             if (cursosComprados) {
-                cursosComprados.innerHTML = "";
+                cursosComprados.innerHTML = `
+                    <p>
+                        Pagamento confirmado, mas os dados
+                        do curso não foram encontrados.
+                    </p>
+                `;
             }
 
-            mostrarCurso(
-                dados.curso,
-                dados.pedidoId
-            );
+            return;
         }
 
-    } catch (error) {
+        cursosPresenciais = [];
+
+        if (cursosComprados) {
+            cursosComprados.innerHTML = "";
+        }
+
+        mostrarCurso(
+            dados.curso,
+            dados.pedidoId
+        );
+
+    }
+    catch (error) {
 
         console.error(
             "Erro ao consultar pagamento:",
@@ -176,9 +249,14 @@ async function procurarPagamento() {
         }
 
         if (cursosComprados) {
+
             cursosComprados.innerHTML = `
                 <p>
                     Não foi possível consultar o pagamento.
+                </p>
+
+                <p>
+                    ${escaparHTML(error.message)}
                 </p>
             `;
         }
@@ -194,20 +272,95 @@ function mostrarCurso(
     id
 ) {
 
-    const categoria =
-        curso.categoria || "EAD";
+    if (!curso) {
+        return;
+    }
 
+    // =================================================
+    // DADOS DO CURSO
+    // =================================================
+
+    const nomeCurso =
+        curso.curso ||
+        curso.nome ||
+        "Curso";
+
+    const categoria =
+        curso.categoria ||
+        "EAD";
 
     const descricao =
         curso.descricao ||
         "Curso adquirido na plataforma.";
 
+    const link =
+        curso.linkCurso ||
+        "";
+
+    const valor =
+        Number(
+            curso.valor || 0
+        );
+
+    const senha =
+        curso.senhaCurso ||
+        "";
+
+    const usosRestantes =
+        Number(
+            curso.usosRestantes ?? 0
+        );
 
     const categoriaNormalizada =
-        categoria
+        String(categoria)
             .trim()
             .toLowerCase();
 
+    // =================================================
+    // LOG PARA DEBUG
+    // =================================================
+
+    console.log(
+        "======================================"
+    );
+
+    console.log(
+        "CURSO RECEBIDO"
+    );
+
+    console.log(
+        "Curso:",
+        nomeCurso
+    );
+
+    console.log(
+        "Categoria:",
+        categoria
+    );
+
+    console.log(
+        "Pedido:",
+        id
+    );
+
+    console.log(
+        "Senha oficial:",
+        senha || "não informada"
+    );
+
+    console.log(
+        "Usos restantes:",
+        usosRestantes
+    );
+
+    console.log(
+        "Link:",
+        link
+    );
+
+    console.log(
+        "======================================"
+    );
 
     // =================================================
     // CURSO EAD
@@ -218,31 +371,6 @@ function mostrarCurso(
         "ead"
     ) {
 
-        let senha =
-            curso.senhaAcesso;
-
-
-        /*
-         * Se o servidor ainda não criou
-         * uma senha, criamos uma.
-         */
-
-        if (!senha) {
-
-            senha =
-                gerarSenhaUnica();
-
-            salvarSenha(
-                id,
-                senha
-            );
-        }
-
-
-        const link =
-            curso.linkCurso || "";
-
-
         if (cursosComprados) {
 
             let html = `
@@ -250,11 +378,13 @@ function mostrarCurso(
                 <div class="curso-card">
 
                     <h3>
-                        ${escaparHTML(curso.curso)}
+                        ${escaparHTML(nomeCurso)}
                     </h3>
 
                     <p>
-                        <strong>Categoria:</strong>
+                        <strong>
+                            Categoria:
+                        </strong>
                         EAD
                     </p>
 
@@ -263,21 +393,75 @@ function mostrarCurso(
                     </p>
 
                     <p>
-                        <strong>Pagamento:</strong>
+                        <strong>
+                            Pagamento:
+                        </strong>
                         Confirmado
                     </p>
 
-                    <p>
-                        <strong>Senha de acesso:</strong>
-                        ${escaparHTML(senha)}
-                    </p>
-
-                    <p>
-                        Utilize essa senha para acessar
-                        o curso.
-                    </p>
             `;
 
+            // =================================================
+            // SENHA OFICIAL
+            // =================================================
+
+            if (senha) {
+
+                html += `
+
+                    <div class="senha-curso">
+
+                        <p>
+                            <strong>
+                                Senha de acesso:
+                            </strong>
+                        </p>
+
+                        <code>
+                            ${escaparHTML(senha)}
+                        </code>
+
+                        <p>
+                            Esta é a senha oficial
+                            gerada pelo servidor.
+                        </p>
+
+                        <p>
+                            <strong>
+                                Usos restantes:
+                            </strong>
+                            ${usosRestantes}
+                        </p>
+
+                    </div>
+
+                `;
+
+            } else {
+
+                html += `
+
+                    <div class="senha-curso">
+
+                        <p>
+                            <strong>
+                                Senha de acesso:
+                            </strong>
+                        </p>
+
+                        <p>
+                            A senha ainda não foi
+                            disponibilizada pelo servidor.
+                        </p>
+
+                    </div>
+
+                `;
+            }
+
+            // =================================================
+            // LINK DO CURSO
+            // =================================================
 
             if (link) {
 
@@ -289,7 +473,9 @@ function mostrarCurso(
                         rel="noopener noreferrer"
                     >
 
-                        <button type="button">
+                        <button
+                            type="button"
+                        >
                             Acessar curso
                         </button>
 
@@ -302,12 +488,12 @@ function mostrarCurso(
                 html += `
 
                     <p>
-                        O link do curso ainda não foi configurado.
+                        O link do curso ainda não
+                        foi configurado.
                     </p>
 
                 `;
             }
-
 
             html += `
 
@@ -315,15 +501,12 @@ function mostrarCurso(
 
             `;
 
-
             cursosComprados.innerHTML +=
                 html;
         }
 
-
         return;
     }
-
 
     // =================================================
     // CURSO PRESENCIAL
@@ -338,9 +521,9 @@ function mostrarCurso(
 
             ...curso,
 
-            id: id
+            id:
+                id
         });
-
 
         if (cursosComprados) {
 
@@ -349,11 +532,13 @@ function mostrarCurso(
                 <div class="curso-card">
 
                     <h3>
-                        ${escaparHTML(curso.curso)}
+                        ${escaparHTML(nomeCurso)}
                     </h3>
 
                     <p>
-                        <strong>Categoria:</strong>
+                        <strong>
+                            Categoria:
+                        </strong>
                         Presencial
                     </p>
 
@@ -362,8 +547,20 @@ function mostrarCurso(
                     </p>
 
                     <p>
-                        <strong>Pagamento:</strong>
+                        <strong>
+                            Pagamento:
+                        </strong>
                         Confirmado
+                    </p>
+
+                    <p>
+                        <strong>
+                            Valor pago:
+                        </strong>
+                        R$
+                        ${valor
+                            .toFixed(2)
+                            .replace(".", ",")}
                     </p>
 
                     <p>
@@ -376,70 +573,13 @@ function mostrarCurso(
             `;
         }
 
-
         if (areaPresencial) {
+
             areaPresencial.style.display =
                 "block";
         }
     }
 }
-
-
-// =====================================================
-// GERAR SENHA ÚNICA
-// =====================================================
-
-function gerarSenhaUnica() {
-
-    const caracteres =
-        "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-
-
-    let senha = "";
-
-
-    for (
-        let i = 0;
-        i < 10;
-        i++
-    ) {
-
-        const indice =
-            Math.floor(
-                Math.random() *
-                caracteres.length
-            );
-
-
-        senha +=
-            caracteres[indice];
-    }
-
-
-    return senha;
-}
-
-
-// =====================================================
-// SALVAR SENHA DO EAD
-// =====================================================
-
-async function salvarSenha(
-    id,
-    senha
-) {
-
-    try {
-
-    } catch (error) {
-
-        console.error(
-            "Erro ao salvar senha:",
-            error
-        );
-    }
-}
-
 
 // =====================================================
 // CONFIGURAR DATA MÍNIMA
@@ -450,10 +590,8 @@ if (dataCurso) {
     const hoje =
         new Date();
 
-
     const ano =
         hoje.getFullYear();
-
 
     const mes =
         String(
@@ -463,7 +601,6 @@ if (dataCurso) {
             "0"
         );
 
-
     const dia =
         String(
             hoje.getDate()
@@ -472,11 +609,9 @@ if (dataCurso) {
             "0"
         );
 
-
     dataCurso.min =
         `${ano}-${mes}-${dia}`;
 }
-
 
 // =====================================================
 // AGENDAR CURSOS PRESENCIAIS
@@ -500,7 +635,6 @@ if (botaoAgendar) {
                 return;
             }
 
-
             // =============================================
             // VERIFICAR CURSOS
             // =============================================
@@ -516,7 +650,6 @@ if (botaoAgendar) {
                 return;
             }
 
-
             // =============================================
             // DATA
             // =============================================
@@ -525,7 +658,6 @@ if (botaoAgendar) {
                 dataCurso
                     ? dataCurso.value
                     : "";
-
 
             // =============================================
             // HORÁRIO
@@ -536,7 +668,6 @@ if (botaoAgendar) {
                     ? horarioCurso.value
                     : "";
 
-
             if (!data) {
 
                 alert(
@@ -546,7 +677,6 @@ if (botaoAgendar) {
                 return;
             }
 
-
             if (!horario) {
 
                 alert(
@@ -555,7 +685,6 @@ if (botaoAgendar) {
 
                 return;
             }
-
 
             // =============================================
             // SALVAR AGENDAMENTOS
@@ -602,10 +731,10 @@ if (botaoAgendar) {
                             criadoEm:
                                 new Date()
                                     .toISOString()
+
                         }
                     );
                 }
-
 
                 // =========================================
                 // STATUS
@@ -616,7 +745,6 @@ if (botaoAgendar) {
                     statusPagamento.textContent =
                         "Pagamento confirmado e cursos presenciais agendados.";
                 }
-
 
                 // =========================================
                 // CONFIRMAÇÃO
@@ -632,7 +760,6 @@ if (botaoAgendar) {
 
                     `;
 
-
                     cursosPresenciais.forEach(
                         (curso) => {
 
@@ -641,21 +768,28 @@ if (botaoAgendar) {
                                 <div class="curso-card">
 
                                     <h3>
-                                        ${escaparHTML(curso.curso)}
+                                        ${escaparHTML(
+                                            curso.curso
+                                        )}
                                     </h3>
 
                                     <p>
-                                        <strong>Data:</strong>
+                                        <strong>
+                                            Data:
+                                        </strong>
                                         ${escaparHTML(data)}
                                     </p>
 
                                     <p>
-                                        <strong>Horário:</strong>
+                                        <strong>
+                                            Horário:
+                                        </strong>
                                         ${escaparHTML(horario)}
                                     </p>
 
                                     <p>
-                                        Agendamento salvo com sucesso.
+                                        Agendamento salvo
+                                        com sucesso.
                                     </p>
 
                                 </div>
@@ -663,7 +797,6 @@ if (botaoAgendar) {
                             `;
                         }
                     );
-
 
                     html += `
 
@@ -674,12 +807,12 @@ if (botaoAgendar) {
 
                     `;
 
-
                     areaPresencial.innerHTML =
                         html;
                 }
 
-            } catch (error) {
+            }
+            catch (error) {
 
                 console.error(
                     "Erro ao agendar:",
@@ -692,7 +825,6 @@ if (botaoAgendar) {
             }
         };
 }
-
 
 // =====================================================
 // ESCAPAR HTML
@@ -729,7 +861,6 @@ function escaparHTML(valor) {
             "&#039;"
         );
 }
-
 
 // =====================================================
 // ESCAPAR ATRIBUTO HTML
