@@ -56,14 +56,6 @@ botao.onclick = async () => {
             .trim();
 
 
-    const uf =
-        document
-            .getElementById("uf")
-            .value
-            .trim()
-            .toUpperCase();
-
-
     const estado =
         document
             .getElementById("estado")
@@ -78,6 +70,13 @@ botao.onclick = async () => {
             .trim();
 
 
+    const complemento =
+        document
+            .getElementById("complemento")
+            .value
+            .trim();
+
+
     const telefone =
         document
             .getElementById("telefone")
@@ -88,6 +87,13 @@ botao.onclick = async () => {
     const cpf =
         document
             .getElementById("cpf")
+            .value
+            .trim();
+
+
+    const identidade =
+        document
+            .getElementById("identidade")
             .value
             .trim();
 
@@ -107,11 +113,12 @@ botao.onclick = async () => {
         !email ||
         !senha ||
         !pais ||
-        !uf ||
         !estado ||
         !endereco ||
+        !complemento ||
         !telefone ||
         !cpf ||
+        !identidade ||
         !dataNascimento
     ) {
 
@@ -133,15 +140,9 @@ botao.onclick = async () => {
     }
 
 
-    if (uf.length !== 2) {
-
-        alert(
-            "Informe uma UF válida."
-        );
-
-        return;
-    }
-
+    // =================================================
+    // DESABILITAR BOTÃO
+    // =================================================
 
     botao.disabled = true;
 
@@ -174,7 +175,7 @@ botao.onclick = async () => {
 
 
         // =================================================
-        // NOME NO AUTHENTICATION
+        // NOME NO FIREBASE AUTH
         // =================================================
 
         await updateProfile(
@@ -207,14 +208,14 @@ botao.onclick = async () => {
                 pais:
                     pais,
 
-                uf:
-                    uf,
-
                 estado:
                     estado,
 
                 endereco:
                     endereco,
+
+                complemento:
+                    complemento,
 
                 telefone:
                     telefone,
@@ -222,11 +223,14 @@ botao.onclick = async () => {
                 cpf:
                     cpf,
 
+                identidade:
+                    identidade,
+
                 dataNascimento:
                     dataNascimento,
 
                 // =========================================
-                // TODA CONTA NOVA É USUÁRIO NORMAL
+                // TODA CONTA CRIADA É USUÁRIO NORMAL
                 // =========================================
 
                 tipo:
@@ -261,6 +265,10 @@ botao.onclick = async () => {
         );
 
 
+        // =================================================
+        // E-MAIL JÁ EXISTE
+        // =================================================
+
         if (
             error.code ===
             "auth/email-already-in-use"
@@ -271,6 +279,12 @@ botao.onclick = async () => {
             );
 
         }
+
+
+        // =================================================
+        // E-MAIL INVÁLIDO
+        // =================================================
+
         else if (
             error.code ===
             "auth/invalid-email"
@@ -281,16 +295,28 @@ botao.onclick = async () => {
             );
 
         }
+
+
+        // =================================================
+        // SENHA FRACA
+        // =================================================
+
         else if (
             error.code ===
             "auth/weak-password"
         ) {
 
             alert(
-                "A senha é muito fraca."
+                "A senha precisa ter pelo menos 6 caracteres."
             );
 
         }
+
+
+        // =================================================
+        // OUTRO ERRO
+        // =================================================
+
         else {
 
             alert(
