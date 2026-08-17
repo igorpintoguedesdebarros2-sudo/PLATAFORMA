@@ -1,12 +1,22 @@
 <!DOCTYPE html>
 
-<html>
+<html lang="pt-BR">
 
 <head>
 
-<title>Meu Perfil</title>
+    <meta charset="UTF-8">
 
-<link rel="stylesheet" href="style.css">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Meu Perfil</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
 
 </head>
 
@@ -17,98 +27,43 @@
 <div class="box">
 
 
-<h2>Meu Perfil</h2>
+    <h2>Meu Perfil</h2>
 
 
-<h3 id="nome">
-Carregando...
-</h3>
+    <h3 id="nome">
+        Carregando...
+    </h3>
 
 
-<p id="email"></p>
+    <p id="email"></p>
 
 
-
-<hr>
-
+    <hr>
 
 
-<h2>Cursos realizados</h2>
+    <!-- =========================================
+         ÁREA DO USUÁRIO
+         ========================================= -->
+
+    <div id="mensagemPerfil"></div>
 
 
-<table border="1">
+    <!-- =========================================
+         BOTÃO SAIR
+         ========================================= -->
 
-<thead>
-
-<tr>
-
-<th>Curso</th>
-
-<th>Status</th>
-
-</tr>
-
-</thead>
-
-
-<tbody id="cursos">
-
-</tbody>
-
-
-</table>
-
-
-
-<hr>
-
-
-
-<h2>Histórico de pagamentos</h2>
-
-
-<table border="1">
-
-<thead>
-
-<tr>
-
-<th>Curso</th>
-
-<th>Valor</th>
-
-<th>Data</th>
-
-</tr>
-
-</thead>
-
-
-<tbody id="pagamentos">
-
-</tbody>
-
-
-</table>
-
-
-
-<br>
-
-<a href="pagamento.html">teste</a>
-<a href="admin_pagamento.html">teste1</a>
-
-<button id="sair">
-Sair
-</button>
+    <button id="sair">
+        Sair
+    </button>
 
 
 </div>
 
 
-
-
-<script type="module" src="perfil.js"></script>
+<script
+    type="module"
+    src="perfil.js">
+</script>
 
 
 </body>

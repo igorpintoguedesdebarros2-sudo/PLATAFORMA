@@ -1,250 +1,237 @@
-import { auth } from "./firebase.js";
+import {
+    auth,
+    db
+} from "./firebase.js";
 
 import {
-    signInWithEmailAndPassword,
-    GoogleAuthProvider,
-    signInWithPopup
+    signInWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-
-// =====================================================
-// E-MAILS AUTORIZADOS COMO ADMINISTRADORES
-// =====================================================
-
-const ADMIN_EMAILS = [
-
-    "ipgbtechadm@gmail.com",
-
-    "salustianocfaob@gmail.com",
-
-    "admzulmircfao@gmail.com"
-
-];
+import {
+    ref,
+    get
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 
 // =====================================================
-// LOGIN ADMINISTRADOR
+// LOGIN
 // =====================================================
 
-document
-    .getElementById("entrar")
-    .onclick = async () => {
-
-        const email =
-            document
-                .getElementById("email")
-                .value
-                .trim()
-                .toLowerCase();
-
-        const senha =
-            document
-                .getElementById("senha")
-                .value;
+const botaoEntrar =
+    document.getElementById("entrar");
 
 
-        // =================================================
-        // VALIDAR CAMPOS
-        // =================================================
+botaoEntrar.onclick = async () => {
 
-        if (!email || !senha) {
-
-            alert(
-                "Informe o e-mail e a senha."
-            );
-
-            return;
-        }
+    const email =
+        document
+            .getElementById("email")
+            .value
+            .trim()
+            .toLowerCase();
 
 
-        // =================================================
-        // VERIFICAR SE É ADMIN
-        // =================================================
+    const senha =
+        document
+            .getElementById("senha")
+            .value;
 
-        if (!ADMIN_EMAILS.includes(email)) {
 
-            alert(
-                "Este e-mail não possui acesso administrativo."
-            );
+    // =================================================
+    // VALIDAR
+    // =================================================
 
-            return;
-        }
+    if (!email || !senha) {
 
+        alert(
+            "Informe o e-mail e a senha."
+        );
+
+        return;
+    }
+
+
+    botaoEntrar.disabled = true;
+
+    botaoEntrar.textContent =
+        "Entrando...";
+
+
+    try {
 
         // =================================================
         // LOGIN FIREBASE
         // =================================================
 
-        try {
-
-            const resultado =
-                await signInWithEmailAndPassword(
-                    auth,
-                    email,
-                    senha
-                );
-
-
-            const usuario =
-                resultado.user;
-
-
-            console.log(
-                "Administrador conectado:",
-                usuario.email
+        const resultado =
+            await signInWithEmailAndPassword(
+                auth,
+                email,
+                senha
             );
 
+
+        const usuario =
+            resultado.user;
+
+
+        console.log(
+            "Usuário autenticado:",
+            usuario.uid
+        );
+
+
+        // =================================================
+        // BUSCAR PERFIL NO REALTIME DATABASE
+        // =================================================
+
+        const usuarioRef =
+            ref(
+                db,
+                "usuarios/" +
+                usuario.uid
+            );
+
+
+        const snapshot =
+            await get(usuarioRef);
+
+
+        // =================================================
+        // PERFIL NÃO EXISTE
+        // =================================================
+
+        if (!snapshot.exists()) {
+
+            alert(
+                "Conta autenticada, mas o perfil não foi encontrado."
+            );
+
+            await auth.signOut();
+
+            return;
+        }
+
+
+        const dados =
+            snapshot.val() || {};
+
+
+        const tipo =
+            String(
+                dados.tipo ||
+                "usuario"
+            )
+                .trim()
+                .toLowerCase();
+
+
+        console.log(
+            "Tipo de usuário:",
+            tipo
+        );
+
+
+        // =================================================
+        // ADMIN
+        // =================================================
+
+        if (
+            tipo === "admin" ||
+            tipo === "administrador"
+        ) {
 
             alert(
                 "Administrador conectado."
             );
 
 
-            // =================================================
-            // IR PARA ADMIN
-            // =================================================
-
             window.location.href =
                 "admin.html";
 
 
-        }
-        catch (error) {
-
-            console.error(
-                "ERRO LOGIN ADMIN:",
-                error
-            );
-
-
-            if (
-                error.code ===
-                "auth/invalid-credential"
-            ) {
-
-                alert(
-                    "E-mail ou senha incorretos."
-                );
-
-            }
-            else if (
-                error.code ===
-                "auth/user-not-found"
-            ) {
-
-                alert(
-                    "Administrador não cadastrado no Firebase."
-                );
-
-            }
-            else if (
-                error.code ===
-                "auth/wrong-password"
-            ) {
-
-                alert(
-                    "Senha incorreta."
-                );
-
-            }
-            else {
-
-                alert(
-                    error.message
-                );
-
-            }
-
+            return;
         }
 
-    };
+
+        // =================================================
+        // USUÁRIO NORMAL
+        // =================================================
+
+        alert(
+            "Login realizado com sucesso."
+        );
 
 
-// =====================================================
-// LOGIN GOOGLE
-// =====================================================
+        window.location.href =
+            "perfil.html";
 
-document
-    .getElementById("google")
-    .onclick = async () => {
+    }
+    catch (error) {
 
-        const provider =
-            new GoogleAuthProvider();
-
-
-        try {
-
-            const resultado =
-                await signInWithPopup(
-                    auth,
-                    provider
-                );
+        console.error(
+            "ERRO LOGIN:",
+            error
+        );
 
 
-            const usuario =
-                resultado.user;
-
-
-            console.log(
-                "Usuário Google:",
-                usuario
-            );
-
-
-            // =================================================
-            // IMPEDIR ADMIN DE USAR GOOGLE
-            // =================================================
-
-            const email =
-                usuario.email
-                    ?.trim()
-                    .toLowerCase();
-
-
-            if (
-                ADMIN_EMAILS.includes(email)
-            ) {
-
-                alert(
-                    "Administradores devem entrar utilizando e-mail e senha."
-                );
-
-
-                await auth.signOut();
-
-                return;
-            }
-
-
-            // =================================================
-            // USUÁRIO COMUM
-            // =================================================
+        if (
+            error.code ===
+            "auth/invalid-credential"
+        ) {
 
             alert(
-                "Bem-vindo " +
-                (
-                    usuario.displayName ||
-                    usuario.email
-                )
+                "E-mail ou senha incorretos."
             );
-
-
-            window.location.href =
-                "perfil.html";
 
         }
-        catch (error) {
-
-            console.error(
-                "ERRO LOGIN GOOGLE:",
-                error
-            );
-
+        else if (
+            error.code ===
+            "auth/user-not-found"
+        ) {
 
             alert(
-                error.message
+                "Usuário não encontrado."
+            );
+
+        }
+        else if (
+            error.code ===
+            "auth/wrong-password"
+        ) {
+
+            alert(
+                "Senha incorreta."
+            );
+
+        }
+        else if (
+            error.code ===
+            "auth/too-many-requests"
+        ) {
+
+            alert(
+                "Muitas tentativas. Aguarde alguns minutos."
+            );
+
+        }
+        else {
+
+            alert(
+                error.message ||
+                "Não foi possível realizar o login."
             );
 
         }
 
-    };
+    }
+    finally {
+
+        botaoEntrar.disabled = false;
+
+        botaoEntrar.textContent =
+            "Entrar";
+
+    }
+
+};

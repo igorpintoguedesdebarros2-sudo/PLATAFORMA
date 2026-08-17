@@ -1,40 +1,142 @@
 <!DOCTYPE html>
-<html>
+
+<html lang="pt-BR">
 
 <head>
-<title>Criar Conta</title>
-<link rel="stylesheet" href="style.css">
-</head>
 
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Criar Conta</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
 
 <body>
 
 <div class="box">
 
-<h2>Criar Conta</h2>
+    <h2>Criar Conta</h2>
 
 
-<input id="nome" placeholder="Nome">
+    <!-- NOME -->
 
-<input id="email" placeholder="Email">
-
-<input id="senha" type="password" placeholder="Senha">
-
-
-<button id="btn">
-Cadastrar
-</button>
+    <input
+        id="nome"
+        type="text"
+        placeholder="Nome completo"
+    >
 
 
-<a href="index.html">
-Já tenho conta
-</a>
+    <!-- EMAIL -->
 
+    <input
+        id="email"
+        type="email"
+        placeholder="Email"
+    >
+
+
+    <!-- SENHA -->
+
+    <input
+        id="senha"
+        type="password"
+        placeholder="Senha"
+    >
+
+
+    <!-- PAÍS -->
+
+    <input
+        id="pais"
+        type="text"
+        placeholder="País de origem"
+    >
+
+
+    <!-- UF -->
+
+    <input
+        id="uf"
+        type="text"
+        placeholder="UF"
+        maxlength="2"
+    >
+
+
+    <!-- ESTADO -->
+
+    <input
+        id="estado"
+        type="text"
+        placeholder="Estado"
+    >
+
+
+    <!-- ENDEREÇO -->
+
+    <input
+        id="endereco"
+        type="text"
+        placeholder="Endereço"
+    >
+
+
+    <!-- TELEFONE -->
+
+    <input
+        id="telefone"
+        type="tel"
+        placeholder="Telefone"
+    >
+
+
+    <!-- CPF -->
+
+    <input
+        id="cpf"
+        type="text"
+        placeholder="CPF"
+    >
+
+
+    <!-- DATA DE NASCIMENTO -->
+
+    <label for="dataNascimento">
+        Data de nascimento
+    </label>
+
+    <input
+        id="dataNascimento"
+        type="date"
+    >
+
+
+    <button id="btn">
+        Cadastrar
+    </button>
+
+
+    <br><br>
+
+
+    <a href="index.html">
+        Já tenho conta
+    </a>
 
 </div>
 
 
-<script type="module" src="cadastro.js"></script>
+<script
+    type="module"
+    src="cadastro.js"
+></script>
 
 </body>
 

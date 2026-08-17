@@ -33,8 +33,6 @@ onAuthStateChanged(auth, (usuario) => {
     );
 
     carregarPerfil(usuario);
-    carregarCursos(usuario.uid);
-    carregarPagamentos(usuario.uid);
 
 });
 
@@ -52,8 +50,9 @@ function carregarPerfil(usuario) {
         document.getElementById("email");
 
 
-    // Dados do Authentication já podem ser
-    // mostrados imediatamente.
+    // =================================================
+    // DADOS DO FIREBASE AUTH
+    // =================================================
 
     if (nomeElemento) {
 
@@ -62,6 +61,7 @@ function carregarPerfil(usuario) {
             "Usuário";
 
     }
+
 
     if (emailElemento) {
 
@@ -72,8 +72,9 @@ function carregarPerfil(usuario) {
     }
 
 
-    // Depois tenta obter dados adicionais
-    // do Realtime Database.
+    // =================================================
+    // DADOS ADICIONAIS DO REALTIME DATABASE
+    // =================================================
 
     const usuarioRef =
         ref(
@@ -83,6 +84,7 @@ function carregarPerfil(usuario) {
 
 
     onValue(
+
         usuarioRef,
 
         (snapshot) => {
@@ -90,6 +92,10 @@ function carregarPerfil(usuario) {
             const dados =
                 snapshot.val() || {};
 
+
+            // =============================================
+            // NOME
+            // =============================================
 
             if (nomeElemento) {
 
@@ -100,6 +106,10 @@ function carregarPerfil(usuario) {
 
             }
 
+
+            // =============================================
+            // EMAIL
+            // =============================================
 
             if (emailElemento) {
 
@@ -115,416 +125,12 @@ function carregarPerfil(usuario) {
         (error) => {
 
             console.warn(
-                "Não foi possível ler dados adicionais do perfil:",
+                "Não foi possível carregar dados adicionais:",
                 error
             );
 
-            // Não interrompe o perfil.
-            // Os dados do Authentication continuam sendo usados.
-
-        }
-    );
-
-}
-
-
-// =====================================================
-// CURSOS
-// =====================================================
-
-function carregarCursos(uid) {
-
-    const tabela =
-        document.getElementById("cursos");
-
-
-    if (!tabela) {
-
-        console.warn(
-            "Elemento #cursos não encontrado."
-        );
-
-        return;
-    }
-
-
-    const cursosRef =
-        ref(
-            db,
-            "usuarios/" +
-            uid +
-            "/cursos"
-        );
-
-
-    onValue(
-        cursosRef,
-
-        (snapshot) => {
-
-            tabela.innerHTML = "";
-
-
-            const cursos =
-                snapshot.val();
-
-
-            if (!cursos) {
-
-                tabela.innerHTML = `
-                    <tr>
-                        <td colspan="4">
-                            Nenhum curso realizado
-                        </td>
-                    </tr>
-                `;
-
-                return;
-            }
-
-
-            let encontrou =
-                false;
-
-
-            Object.entries(cursos)
-                .forEach(([id, curso]) => {
-
-                    if (!curso) {
-                        return;
-                    }
-
-
-                    encontrou = true;
-
-
-                    const linha =
-                        document.createElement("tr");
-
-
-                    // =================================
-                    // NOME
-                    // =================================
-
-                    const nome =
-                        document.createElement("td");
-
-                    nome.textContent =
-                        curso.nome ||
-                        curso.curso ||
-                        "Curso";
-
-
-                    // =================================
-                    // STATUS
-                    // =================================
-
-                    const status =
-                        document.createElement("td");
-
-                    status.textContent =
-                        curso.status ||
-                        "Concluído";
-
-
-                    // =================================
-                    // CATEGORIA
-                    // =================================
-
-                    const categoria =
-                        document.createElement("td");
-
-                    categoria.textContent =
-                        curso.categoria ||
-                        "EAD";
-
-
-                    // =================================
-                    // ACESSO
-                    // =================================
-
-                    const acesso =
-                        document.createElement("td");
-
-
-                    if (curso.linkCurso) {
-
-                        const link =
-                            document.createElement("a");
-
-
-                        link.href =
-                            curso.linkCurso;
-
-
-                        link.target =
-                            "_blank";
-
-
-                        link.rel =
-                            "noopener noreferrer";
-
-
-                        link.textContent =
-                            "Acessar curso";
-
-
-                        acesso.appendChild(link);
-
-                    }
-                    else {
-
-                        acesso.textContent =
-                            "Curso sem link";
-
-                    }
-
-
-                    linha.appendChild(nome);
-                    linha.appendChild(status);
-                    linha.appendChild(categoria);
-                    linha.appendChild(acesso);
-
-
-                    tabela.appendChild(linha);
-
-                });
-
-
-            if (!encontrou) {
-
-                tabela.innerHTML = `
-                    <tr>
-                        <td colspan="4">
-                            Nenhum curso realizado
-                        </td>
-                    </tr>
-                `;
-
-            }
-
-        },
-
-        (error) => {
-
-            console.error(
-                "Erro ao carregar cursos:",
-                error
-            );
-
-
-            tabela.innerHTML = `
-                <tr>
-                    <td colspan="4">
-                        Não foi possível carregar os cursos.
-                    </td>
-                </tr>
-            `;
-
-        }
-    );
-
-}
-
-
-// =====================================================
-// PAGAMENTOS
-// =====================================================
-
-function carregarPagamentos(uid) {
-
-    const tabela =
-        document.getElementById("pagamentos");
-
-
-    if (!tabela) {
-
-        console.warn(
-            "Elemento #pagamentos não encontrado."
-        );
-
-        return;
-    }
-
-
-    const pagamentosRef =
-        ref(
-            db,
-            "usuarios/" +
-            uid +
-            "/pagamentos"
-        );
-
-
-    onValue(
-        pagamentosRef,
-
-        (snapshot) => {
-
-            tabela.innerHTML = "";
-
-
-            const pagamentos =
-                snapshot.val();
-
-
-            if (!pagamentos) {
-
-                tabela.innerHTML = `
-                    <tr>
-                        <td colspan="3">
-                            Nenhum pagamento encontrado
-                        </td>
-                    </tr>
-                `;
-
-                return;
-            }
-
-
-            let encontrou =
-                false;
-
-
-            Object.entries(pagamentos)
-                .forEach(([id, pagamento]) => {
-
-                    if (!pagamento) {
-                        return;
-                    }
-
-
-                    encontrou = true;
-
-
-                    const linha =
-                        document.createElement("tr");
-
-
-                    // =================================
-                    // CURSO
-                    // =================================
-
-                    const curso =
-                        document.createElement("td");
-
-
-                    curso.textContent =
-                        pagamento.curso ||
-                        "Curso";
-
-
-                    // =================================
-                    // VALOR
-                    // =================================
-
-                    const valor =
-                        document.createElement("td");
-
-
-                    const numero =
-                        Number(
-                            pagamento.valor ?? 0
-                        );
-
-
-                    valor.textContent =
-                        Number.isFinite(numero)
-                            ? `R$ ${numero
-                                .toFixed(2)
-                                .replace(".", ",")}`
-                            : "R$ 0,00";
-
-
-                    // =================================
-                    // DATA
-                    // =================================
-
-                    const data =
-                        document.createElement("td");
-
-
-                    const dataPagamento =
-                        pagamento.data ||
-                        pagamento.dataPagamento ||
-                        "";
-
-
-                    if (dataPagamento) {
-
-                        const dataObj =
-                            new Date(
-                                dataPagamento
-                            );
-
-
-                        if (
-                            !isNaN(
-                                dataObj.getTime()
-                            )
-                        ) {
-
-                            data.textContent =
-                                dataObj.toLocaleString(
-                                    "pt-BR"
-                                );
-
-                        }
-                        else {
-
-                            data.textContent =
-                                dataPagamento;
-
-                        }
-
-                    }
-                    else {
-
-                        data.textContent =
-                            "-";
-
-                    }
-
-
-                    linha.appendChild(curso);
-                    linha.appendChild(valor);
-                    linha.appendChild(data);
-
-
-                    tabela.appendChild(linha);
-
-                });
-
-
-            if (!encontrou) {
-
-                tabela.innerHTML = `
-                    <tr>
-                        <td colspan="3">
-                            Nenhum pagamento encontrado
-                        </td>
-                    </tr>
-                `;
-
-            }
-
-        },
-
-        (error) => {
-
-            console.error(
-                "Erro ao carregar pagamentos:",
-                error
-            );
-
-
-            tabela.innerHTML = `
-                <tr>
-                    <td colspan="3">
-                        Não foi possível carregar os pagamentos.
-                    </td>
-                </tr>
-            `;
+            // O perfil continua funcionando
+            // usando os dados do Authentication.
 
         }
     );
@@ -543,6 +149,7 @@ const botaoSair =
 if (botaoSair) {
 
     botaoSair.addEventListener(
+
         "click",
 
         async () => {
@@ -551,10 +158,15 @@ if (botaoSair) {
 
                 await signOut(auth);
 
+                sessionStorage.removeItem(
+                    "curso_acesso"
+                );
+
                 window.location.href =
                     "index.html";
 
             }
+
             catch (error) {
 
                 console.error(
@@ -565,6 +177,16 @@ if (botaoSair) {
             }
 
         }
+
     );
 
 }
+
+
+// =====================================================
+// FINAL
+// =====================================================
+
+console.log(
+    "perfil.js carregado corretamente."
+);
