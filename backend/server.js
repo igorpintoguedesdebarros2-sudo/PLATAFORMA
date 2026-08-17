@@ -23,11 +23,14 @@ const PORT =
     process.env.PORT || 10000;
 
 // =====================================================
-// VALIDAR VARIÁVEIS DO AMBIENTE
+// VARIÁVEIS DO AMBIENTE
 // =====================================================
 
 const STRIPE_SECRET_KEY =
     process.env.STRIPE_SECRET_KEY;
+
+const STRIPE_WEBHOOK_SECRET =
+    process.env.STRIPE_WEBHOOK_SECRET;
 
 const FIREBASE_PROJECT_ID =
     process.env.FIREBASE_PROJECT_ID;
@@ -94,18 +97,6 @@ const stripe =
 // =====================================================
 // FIREBASE ADMIN
 // =====================================================
-//
-// Firebase Admin SDK 14.x
-//
-// NÃO usar:
-// admin.apps.length
-//
-// Usamos:
-// getApps()
-// initializeApp()
-// getFirestore()
-//
-// =====================================================
 
 let firebaseApp;
 
@@ -159,7 +150,7 @@ const db =
     );
 
 // =====================================================
-// MIDDLEWARE
+// CORS
 // =====================================================
 
 app.use(
@@ -173,12 +164,8 @@ app.use(
 // =====================================================
 //
 // IMPORTANTE:
-//
-// O webhook precisa do corpo RAW.
-//
-// Por isso esta rota fica ANTES de
-// express.json().
-//
+// O webhook precisa receber o corpo RAW.
+// Por isso esta rota vem ANTES do express.json().
 // =====================================================
 
 app.post(
@@ -188,10 +175,7 @@ app.post(
     }),
     async (req, res) => {
 
-        const webhookSecret =
-            process.env.STRIPE_WEBHOOK_SECRET;
-
-        if (!webhookSecret) {
+        if (!STRIPE_WEBHOOK_SECRET) {
 
             console.error(
                 "STRIPE_WEBHOOK_SECRET não configurada."
@@ -199,7 +183,9 @@ app.post(
 
             return res
                 .status(500)
-                .send("Webhook não configurado.");
+                .send(
+                    "Webhook Stripe não configurado."
+                );
         }
 
         const assinatura =
@@ -224,13 +210,13 @@ app.post(
                 stripe.webhooks.constructEvent(
                     req.body,
                     assinatura,
-                    webhookSecret
+                    STRIPE_WEBHOOK_SECRET
                 );
 
         } catch (error) {
 
             console.error(
-                "Assinatura do webhook inválida:",
+                "Erro na assinatura do webhook:",
                 error.message
             );
 
@@ -244,12 +230,12 @@ app.post(
         try {
 
             console.log(
-                "Webhook Stripe recebido:",
+                "Webhook recebido:",
                 evento.type
             );
 
             // =================================================
-            // PAGAMENTO CONCLUÍDO
+            // CHECKOUT CONCLUÍDO
             // =================================================
 
             if (
@@ -260,25 +246,6 @@ app.post(
                 const session =
                     evento.data.object;
 
-                console.log(
-                    "Checkout concluído:",
-                    session.id
-                );
-
-                console.log(
-                    "Pagamento:",
-                    session.payment_status
-                );
-
-                console.log(
-                    "Metadata:",
-                    session.metadata || {}
-                );
-
-                // ---------------------------------------------
-                // Se quiser salvar o pagamento no Firestore
-                // ---------------------------------------------
-
                 const metadata =
                     session.metadata || {};
 
@@ -286,6 +253,31 @@ app.post(
                     metadata.pedidoId ||
                     metadata.pedido ||
                     "";
+
+                const usuarioId =
+                    metadata.usuarioId ||
+                    metadata.userId ||
+                    session.client_reference_id ||
+                    "";
+
+                console.log(
+                    "Checkout concluído:",
+                    session.id
+                );
+
+                console.log(
+                    "Pedido:",
+                    pedidoId
+                );
+
+                console.log(
+                    "Usuário:",
+                    usuarioId
+                );
+
+                // =================================================
+                // SALVAR PAGAMENTO
+                // =================================================
 
                 if (pedidoId) {
 
@@ -306,10 +298,7 @@ app.post(
                                     pedidoId,
 
                                 usuarioId:
-                                    metadata.usuarioId ||
-                                    metadata.userId ||
-                                    session.client_reference_id ||
-                                    "",
+                                    usuarioId,
 
                                 curso:
                                     metadata.curso ||
@@ -319,6 +308,10 @@ app.post(
                                     metadata.categoria ||
                                     "EAD",
 
+                                descricao:
+                                    metadata.descricao ||
+                                    "",
+
                                 pago:
                                     session.payment_status ===
                                     "paid",
@@ -327,7 +320,8 @@ app.post(
                                     session.payment_status,
 
                                 atualizadoEm:
-                                    FieldValue.serverTimestamp()
+                                    FieldValue
+                                        .serverTimestamp()
 
                             },
                             {
@@ -336,14 +330,14 @@ app.post(
                         );
 
                     console.log(
-                        "Pagamento salvo no Firestore:",
+                        "Pagamento salvo:",
                         pedidoId
                     );
                 }
             }
 
             // =================================================
-            // PAGAMENTO EXPIRADO
+            // CHECKOUT EXPIRADO
             // =================================================
 
             if (
@@ -361,7 +355,7 @@ app.post(
             }
 
             // =================================================
-            // PAGAMENTO PROCESSADO
+            // PAYMENT INTENT
             // =================================================
 
             if (
@@ -385,7 +379,7 @@ app.post(
         } catch (error) {
 
             console.error(
-                "Erro ao processar webhook:",
+                "Erro processando webhook:",
                 error
             );
 
@@ -460,6 +454,195 @@ app.get(
 );
 
 // =====================================================
+// BUSCAR PEDIDO NO FIRESTORE
+// =====================================================
+//
+// Esta função tenta localizar o pedido em:
+//
+// 1. pagamentos/{pedidoId}
+// 2. solicitacoes_cursos/{pedidoId}
+// 3. cursos/{pedidoId}
+//
+// Isso permite que o backend encontre senha,
+// link e usos mesmo que eles não estejam na Stripe.
+// =====================================================
+
+async function buscarDadosPedido(
+    pedidoId
+) {
+
+    if (!pedidoId) {
+
+        return null;
+    }
+
+    console.log(
+        "Buscando dados do pedido:",
+        pedidoId
+    );
+
+    // =================================================
+    // 1. PAGAMENTOS
+    // =================================================
+
+    try {
+
+        const pagamento =
+            await db
+                .collection(
+                    "pagamentos"
+                )
+                .doc(
+                    pedidoId
+                )
+                .get();
+
+        if (
+            pagamento.exists
+        ) {
+
+            console.log(
+                "Pedido encontrado em pagamentos."
+            );
+
+            return {
+
+                id:
+                    pagamento.id,
+
+                ...pagamento.data()
+            };
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Erro buscando pagamentos:",
+            error
+        );
+    }
+
+    // =================================================
+    // 2. SOLICITACOES_CURSO
+    // =================================================
+
+    try {
+
+        const solicitacao =
+            await db
+                .collection(
+                    "solicitacoes_cursos"
+                )
+                .doc(
+                    pedidoId
+                )
+                .get();
+
+        if (
+            solicitacao.exists
+        ) {
+
+            console.log(
+                "Pedido encontrado em solicitacoes_cursos."
+            );
+
+            return {
+
+                id:
+                    solicitacao.id,
+
+                ...solicitacao.data()
+            };
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Erro buscando solicitacoes_cursos:",
+            error
+        );
+    }
+
+    // =================================================
+    // 3. CURSOS
+    // =================================================
+
+    try {
+
+        const curso =
+            await db
+                .collection(
+                    "cursos"
+                )
+                .doc(
+                    pedidoId
+                )
+                .get();
+
+        if (
+            curso.exists
+        ) {
+
+            console.log(
+                "Pedido encontrado em cursos."
+            );
+
+            return {
+
+                id:
+                    curso.id,
+
+                ...curso.data()
+            };
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Erro buscando cursos:",
+            error
+        );
+    }
+
+    // =================================================
+    // NÃO ENCONTRADO
+    // =================================================
+
+    console.warn(
+        "Pedido não encontrado no Firestore:",
+        pedidoId
+    );
+
+    return null;
+}
+
+// =====================================================
+// PEGAR PRIMEIRO VALOR VÁLIDO
+// =====================================================
+
+function primeiroValor(
+    ...valores
+) {
+
+    for (
+        const valor
+        of valores
+    ) {
+
+        if (
+            valor !== undefined &&
+            valor !== null &&
+            String(valor).trim() !== ""
+        ) {
+
+            return valor;
+        }
+    }
+
+    return "";
+}
+
+// =====================================================
 // CONSULTAR PAGAMENTO
 // =====================================================
 
@@ -508,7 +691,7 @@ app.get(
             );
 
             // =================================================
-            // BUSCAR STRIPE
+            // STRIPE
             // =================================================
 
             const session =
@@ -535,7 +718,7 @@ app.get(
             }
 
             // =================================================
-            // STATUS DO PAGAMENTO
+            // STATUS STRIPE
             // =================================================
 
             const pago =
@@ -547,94 +730,207 @@ app.get(
             // =================================================
 
             const metadata =
-                session.metadata ||
-                {};
+                session.metadata || {};
 
             // =================================================
-            // USUÁRIO
+            // DADOS INICIAIS DA STRIPE
             // =================================================
 
-            const usuarioId =
+            const usuarioIdStripe =
                 metadata.usuarioId ||
                 metadata.userId ||
                 session.client_reference_id ||
                 "";
-
-            // =================================================
-            // PEDIDO
-            // =================================================
 
             const pedidoId =
                 metadata.pedidoId ||
                 metadata.pedido ||
                 "";
 
-            // =================================================
-            // CURSO
-            // =================================================
-
-            const curso =
+            const cursoStripe =
                 metadata.curso ||
                 "";
 
-            // =================================================
-            // CATEGORIA
-            // =================================================
-
-            const categoria =
+            const categoriaStripe =
                 metadata.categoria ||
                 "EAD";
 
-            // =================================================
-            // DESCRIÇÃO
-            // =================================================
-
-            const descricao =
+            const descricaoStripe =
                 metadata.descricao ||
-                "Curso adquirido na plataforma.";
+                "";
 
-            // =================================================
-            // LINK
-            // =================================================
+            const senhaStripe =
+                primeiroValor(
+                    metadata.senhaCurso,
+                    metadata.senha,
+                    metadata.senhaOficial,
+                    metadata.senhaAcesso
+                );
 
-            const linkCurso =
+            const linkStripe =
                 metadata.linkCurso ||
                 "";
 
-            // =================================================
-            // SENHA
-            // =================================================
-            //
-            // IMPORTANTE:
-            //
-            // A senha deve vir do servidor/backend.
-            //
-            // O frontend não deve gerar senha.
-            //
-            // =================================================
-
-            const senhaCurso =
-                metadata.senhaCurso ||
-                metadata.senha ||
-                metadata.senhaOficial ||
-                metadata.senhaAcesso ||
-                "";
-
-            // =================================================
-            // USOS
-            // =================================================
-
-            const usosNumero =
+            const usosStripeNumero =
                 Number(
                     metadata.usosRestantes
                 );
 
-            const usosRestantes =
+            const usosStripe =
                 Number.isFinite(
-                    usosNumero
+                    usosStripeNumero
                 )
-                    ? usosNumero
-                    : 0;
+                    ? usosStripeNumero
+                    : null;
+
+            // =================================================
+            // BUSCAR PEDIDO FIRESTORE
+            // =================================================
+
+            const pedidoFirestore =
+                await buscarDadosPedido(
+                    pedidoId
+                );
+
+            // =================================================
+            // DADOS DO FIRESTORE
+            // =================================================
+
+            const usuarioIdFirestore =
+                pedidoFirestore
+                    ?.usuarioId ||
+                pedidoFirestore
+                    ?.userId ||
+                "";
+
+            const cursoFirestore =
+                pedidoFirestore
+                    ?.curso ||
+                pedidoFirestore
+                    ?.nomeCurso ||
+                pedidoFirestore
+                    ?.nome ||
+                "";
+
+            const categoriaFirestore =
+                pedidoFirestore
+                    ?.categoria ||
+                pedidoFirestore
+                    ?.tipo ||
+                "";
+
+            const descricaoFirestore =
+                pedidoFirestore
+                    ?.descricao ||
+                "";
+
+            const senhaFirestore =
+                primeiroValor(
+
+                    pedidoFirestore
+                        ?.senhaCurso,
+
+                    pedidoFirestore
+                        ?.senha,
+
+                    pedidoFirestore
+                        ?.senhaOficial,
+
+                    pedidoFirestore
+                        ?.senhaAcesso,
+
+                    pedidoFirestore
+                        ?.senha_acesso
+                );
+
+            const linkFirestore =
+                primeiroValor(
+
+                    pedidoFirestore
+                        ?.linkCurso,
+
+                    pedidoFirestore
+                        ?.link,
+
+                    pedidoFirestore
+                        ?.urlCurso,
+
+                    pedidoFirestore
+                        ?.cursoLink
+                );
+
+            const usosFirestoreNumero =
+                Number(
+                    primeiroValor(
+
+                        pedidoFirestore
+                            ?.usosRestantes,
+
+                        pedidoFirestore
+                            ?.usos,
+
+                        pedidoFirestore
+                            ?.quantidadeUsos
+                    )
+                );
+
+            const usosFirestore =
+                Number.isFinite(
+                    usosFirestoreNumero
+                )
+                    ? usosFirestoreNumero
+                    : null;
+
+            // =================================================
+            // MESCLAR DADOS
+            // =================================================
+
+            const usuarioId =
+                primeiroValor(
+                    usuarioIdStripe,
+                    usuarioIdFirestore
+                );
+
+            const curso =
+                primeiroValor(
+                    cursoStripe,
+                    cursoFirestore
+                );
+
+            const categoria =
+                primeiroValor(
+                    categoriaStripe,
+                    categoriaFirestore,
+                    "EAD"
+                );
+
+            const descricao =
+                primeiroValor(
+                    descricaoStripe,
+                    descricaoFirestore,
+                    "Curso adquirido na plataforma."
+                );
+
+            const senhaCurso =
+                primeiroValor(
+                    senhaStripe,
+                    senhaFirestore
+                );
+
+            const linkCurso =
+                primeiroValor(
+                    linkStripe,
+                    linkFirestore
+                );
+
+            const usosRestantes =
+                usosStripe !== null
+                    ? usosStripe
+                    : (
+                        usosFirestore !== null
+                            ? usosFirestore
+                            : 0
+                    );
 
             // =================================================
             // RESULTADO
@@ -677,9 +973,60 @@ app.get(
                     session.payment_status
             };
 
+            // =================================================
+            // LOG
+            // =================================================
+
             console.log(
-                "Resultado:",
-                resultado
+                "======================================"
+            );
+
+            console.log(
+                "RESULTADO FINAL"
+            );
+
+            console.log(
+                "Pagamento:",
+                pago
+            );
+
+            console.log(
+                "Pedido:",
+                pedidoId
+            );
+
+            console.log(
+                "Usuário:",
+                usuarioId
+            );
+
+            console.log(
+                "Curso:",
+                curso
+            );
+
+            console.log(
+                "Categoria:",
+                categoria
+            );
+
+            console.log(
+                "Senha encontrada:",
+                senhaCurso
+                    ? "SIM"
+                    : "NÃO"
+            );
+
+            console.log(
+                "Usos restantes:",
+                usosRestantes
+            );
+
+            console.log(
+                "Link encontrado:",
+                linkCurso
+                    ? "SIM"
+                    : "NÃO"
             );
 
             console.log(
@@ -696,10 +1043,6 @@ app.get(
                 "Erro em /consultar-pagamento:",
                 error
             );
-
-            // =================================================
-            // SESSION NÃO EXISTE
-            // =================================================
 
             if (
                 error &&
@@ -820,7 +1163,7 @@ app.post(
             }
 
             // =================================================
-            // VERIFICAR SE JÁ EXISTE AGENDAMENTO
+            // VERIFICAR DUPLICIDADE
             // =================================================
 
             const existente =
@@ -852,7 +1195,7 @@ app.post(
             }
 
             // =================================================
-            // CRIAR AGENDAMENTO
+            // SALVAR
             // =================================================
 
             const agendamento = {
@@ -943,11 +1286,16 @@ app.use(
 );
 
 // =====================================================
-// TRATAMENTO DE ERROS
+// ERRO GLOBAL
 // =====================================================
 
 app.use(
-    (error, req, res, next) => {
+    (
+        error,
+        req,
+        res,
+        next
+    ) => {
 
         console.error(
             "Erro não tratado:",
@@ -976,7 +1324,7 @@ app.use(
 );
 
 // =====================================================
-// INICIAR SERVIDOR
+// INICIAR
 // =====================================================
 
 app.listen(
