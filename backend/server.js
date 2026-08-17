@@ -652,29 +652,22 @@ app.get(
 
         try {
 
-            const sessionId =
-                String(
-                    req.query.session_id ||
-                    ""
-                ).trim();
-
-            // =================================================
-            // VALIDAR SESSION ID
-            // =================================================
+            const sessionId = String(
+                req.query.session_id || ""
+            ).trim();
 
             if (!sessionId) {
 
-                return res
-                    .status(400)
-                    .json({
+                return res.status(400).json({
 
-                        valido: false,
+                    valido: false,
+                    pago: false,
 
-                        pago: false,
+                    erro:
+                        "session_id não informado."
 
-                        erro:
-                            "session_id não informado."
-                    });
+                });
+
             }
 
             console.log(
@@ -695,48 +688,43 @@ app.get(
             // =================================================
 
             const session =
-                await stripe
-                    .checkout
-                    .sessions
-                    .retrieve(
-                        sessionId
-                    );
+                await stripe.checkout.sessions.retrieve(
+                    sessionId
+                );
 
             if (!session) {
 
-                return res
-                    .status(404)
-                    .json({
+                return res.status(404).json({
 
-                        valido: false,
+                    valido: false,
+                    pago: false,
 
-                        pago: false,
+                    erro:
+                        "Sessão Stripe não encontrada."
 
-                        erro:
-                            "Sessão de pagamento não encontrada."
-                    });
+                });
+
             }
 
             // =================================================
-            // STATUS STRIPE
+            // STATUS
             // =================================================
 
             const pago =
-                session.payment_status ===
-                "paid";
+                session.payment_status === "paid";
 
             // =================================================
-            // METADATA
+            // METADATA STRIPE
             // =================================================
 
             const metadata =
                 session.metadata || {};
 
             // =================================================
-            // DADOS INICIAIS DA STRIPE
+            // DADOS BÁSICOS
             // =================================================
 
-            const usuarioIdStripe =
+            const usuarioId =
                 metadata.usuarioId ||
                 metadata.userId ||
                 session.client_reference_id ||
@@ -747,193 +735,298 @@ app.get(
                 metadata.pedido ||
                 "";
 
-            const cursoStripe =
+            let curso =
                 metadata.curso ||
                 "";
 
-            const categoriaStripe =
+            let categoria =
                 metadata.categoria ||
                 "EAD";
 
-            const descricaoStripe =
+            let descricao =
                 metadata.descricao ||
+                "Curso adquirido na plataforma.";
+
+            let senhaCurso =
+                metadata.senhaCurso ||
+                metadata.senha ||
+                metadata.senhaOficial ||
+                metadata.senhaAcesso ||
                 "";
 
-            const senhaStripe =
-                primeiroValor(
-                    metadata.senhaCurso,
-                    metadata.senha,
-                    metadata.senhaOficial,
-                    metadata.senhaAcesso
-                );
+            let usosRestantes =
+                Number(metadata.usosRestantes);
 
-            const linkStripe =
+            let linkCurso =
                 metadata.linkCurso ||
                 "";
 
-            const usosStripeNumero =
-                Number(
-                    metadata.usosRestantes
-                );
-
-            const usosStripe =
-                Number.isFinite(
-                    usosStripeNumero
-                )
-                    ? usosStripeNumero
-                    : null;
-
             // =================================================
-            // BUSCAR PEDIDO FIRESTORE
+            // VALORES PADRÃO
             // =================================================
 
-            const pedidoFirestore =
-                await buscarDadosPedido(
+            if (!Number.isFinite(usosRestantes)) {
+
+                usosRestantes = 0;
+
+            }
+
+            // =================================================
+            // BUSCAR PEDIDO NO FIRESTORE
+            // =================================================
+
+            if (pedidoId) {
+
+                console.log(
+                    "Procurando pedido no Firestore:",
                     pedidoId
                 );
 
-            // =================================================
-            // DADOS DO FIRESTORE
-            // =================================================
+                // =================================================
+                // COLEÇÃO pedidos
+                // =================================================
 
-            const usuarioIdFirestore =
-                pedidoFirestore
-                    ?.usuarioId ||
-                pedidoFirestore
-                    ?.userId ||
-                "";
+                try {
 
-            const cursoFirestore =
-                pedidoFirestore
-                    ?.curso ||
-                pedidoFirestore
-                    ?.nomeCurso ||
-                pedidoFirestore
-                    ?.nome ||
-                "";
+                    const pedidoRef =
+                        await db
+                            .collection("pedidos")
+                            .doc(pedidoId)
+                            .get();
 
-            const categoriaFirestore =
-                pedidoFirestore
-                    ?.categoria ||
-                pedidoFirestore
-                    ?.tipo ||
-                "";
+                    if (pedidoRef.exists) {
 
-            const descricaoFirestore =
-                pedidoFirestore
-                    ?.descricao ||
-                "";
+                        const pedido =
+                            pedidoRef.data() || {};
 
-            const senhaFirestore =
-                primeiroValor(
+                        console.log(
+                            "Pedido encontrado em pedidos:",
+                            pedido
+                        );
 
-                    pedidoFirestore
-                        ?.senhaCurso,
+                        curso =
+                            pedido.curso ||
+                            curso;
 
-                    pedidoFirestore
-                        ?.senha,
+                        categoria =
+                            pedido.categoria ||
+                            categoria;
 
-                    pedidoFirestore
-                        ?.senhaOficial,
+                        descricao =
+                            pedido.descricao ||
+                            descricao;
 
-                    pedidoFirestore
-                        ?.senhaAcesso,
+                        senhaCurso =
+                            pedido.senhaCurso ||
+                            pedido.senha ||
+                            pedido.senhaOficial ||
+                            pedido.senhaAcesso ||
+                            senhaCurso;
 
-                    pedidoFirestore
-                        ?.senha_acesso
-                );
+                        linkCurso =
+                            pedido.linkCurso ||
+                            pedido.link ||
+                            linkCurso;
 
-            const linkFirestore =
-                primeiroValor(
+                        const usosPedido =
+                            Number(
+                                pedido.usosRestantes
+                            );
 
-                    pedidoFirestore
-                        ?.linkCurso,
+                        if (
+                            Number.isFinite(
+                                usosPedido
+                            )
+                        ) {
 
-                    pedidoFirestore
-                        ?.link,
+                            usosRestantes =
+                                usosPedido;
 
-                    pedidoFirestore
-                        ?.urlCurso,
+                        }
 
-                    pedidoFirestore
-                        ?.cursoLink
-                );
+                    }
 
-            const usosFirestoreNumero =
-                Number(
-                    primeiroValor(
+                }
+                catch (error) {
 
-                        pedidoFirestore
-                            ?.usosRestantes,
-
-                        pedidoFirestore
-                            ?.usos,
-
-                        pedidoFirestore
-                            ?.quantidadeUsos
-                    )
-                );
-
-            const usosFirestore =
-                Number.isFinite(
-                    usosFirestoreNumero
-                )
-                    ? usosFirestoreNumero
-                    : null;
-
-            // =================================================
-            // MESCLAR DADOS
-            // =================================================
-
-            const usuarioId =
-                primeiroValor(
-                    usuarioIdStripe,
-                    usuarioIdFirestore
-                );
-
-            const curso =
-                primeiroValor(
-                    cursoStripe,
-                    cursoFirestore
-                );
-
-            const categoria =
-                primeiroValor(
-                    categoriaStripe,
-                    categoriaFirestore,
-                    "EAD"
-                );
-
-            const descricao =
-                primeiroValor(
-                    descricaoStripe,
-                    descricaoFirestore,
-                    "Curso adquirido na plataforma."
-                );
-
-            const senhaCurso =
-                primeiroValor(
-                    senhaStripe,
-                    senhaFirestore
-                );
-
-            const linkCurso =
-                primeiroValor(
-                    linkStripe,
-                    linkFirestore
-                );
-
-            const usosRestantes =
-                usosStripe !== null
-                    ? usosStripe
-                    : (
-                        usosFirestore !== null
-                            ? usosFirestore
-                            : 0
+                    console.warn(
+                        "Erro ao consultar coleção pedidos:",
+                        error.message
                     );
 
+                }
+
+                // =================================================
+                // COLEÇÃO pagamentos
+                // =================================================
+
+                try {
+
+                    const pagamentoRef =
+                        await db
+                            .collection("pagamentos")
+                            .doc(pedidoId)
+                            .get();
+
+                    if (pagamentoRef.exists) {
+
+                        const pagamento =
+                            pagamentoRef.data() || {};
+
+                        console.log(
+                            "Pagamento encontrado no Firestore:",
+                            pagamento
+                        );
+
+                        curso =
+                            pagamento.curso ||
+                            curso;
+
+                        categoria =
+                            pagamento.categoria ||
+                            categoria;
+
+                        descricao =
+                            pagamento.descricao ||
+                            descricao;
+
+                        senhaCurso =
+                            pagamento.senhaCurso ||
+                            pagamento.senha ||
+                            pagamento.senhaOficial ||
+                            pagamento.senhaAcesso ||
+                            senhaCurso;
+
+                        linkCurso =
+                            pagamento.linkCurso ||
+                            pagamento.link ||
+                            linkCurso;
+
+                        const usosPagamento =
+                            Number(
+                                pagamento.usosRestantes
+                            );
+
+                        if (
+                            Number.isFinite(
+                                usosPagamento
+                            )
+                        ) {
+
+                            usosRestantes =
+                                usosPagamento;
+
+                        }
+
+                    }
+
+                }
+                catch (error) {
+
+                    console.warn(
+                        "Erro ao consultar coleção pagamentos:",
+                        error.message
+                    );
+
+                }
+
+            }
+
             // =================================================
-            // RESULTADO
+            // BUSCAR NA COLEÇÃO solicitacoes_cursos
+            // =================================================
+            //
+            // Caso seu sistema antigo tenha salvo o curso
+            // nessa coleção.
+            //
+            // =================================================
+
+            if (pedidoId) {
+
+                try {
+
+                    const snapshot =
+                        await db
+                            .collection(
+                                "solicitacoes_cursos"
+                            )
+                            .where(
+                                "pedidoId",
+                                "==",
+                                pedidoId
+                            )
+                            .limit(1)
+                            .get();
+
+                    if (!snapshot.empty) {
+
+                        const documento =
+                            snapshot.docs[0];
+
+                        const solicitacao =
+                            documento.data() || {};
+
+                        console.log(
+                            "Solicitação encontrada:",
+                            solicitacao
+                        );
+
+                        curso =
+                            solicitacao.curso ||
+                            curso;
+
+                        categoria =
+                            solicitacao.categoria ||
+                            categoria;
+
+                        descricao =
+                            solicitacao.descricao ||
+                            descricao;
+
+                        senhaCurso =
+                            solicitacao.senhaCurso ||
+                            solicitacao.senha ||
+                            solicitacao.senhaOficial ||
+                            solicitacao.senhaAcesso ||
+                            senhaCurso;
+
+                        linkCurso =
+                            solicitacao.linkCurso ||
+                            solicitacao.link ||
+                            linkCurso;
+
+                        const usosSolicitacao =
+                            Number(
+                                solicitacao.usosRestantes
+                            );
+
+                        if (
+                            Number.isFinite(
+                                usosSolicitacao
+                            )
+                        ) {
+
+                            usosRestantes =
+                                usosSolicitacao;
+
+                        }
+
+                    }
+
+                }
+                catch (error) {
+
+                    console.warn(
+                        "Erro ao consultar solicitacoes_cursos:",
+                        error.message
+                    );
+
+                }
+
+            }
+
+            // =================================================
+            // RESULTADO FINAL
             // =================================================
 
             const resultado = {
@@ -971,6 +1064,7 @@ app.get(
 
                 paymentStatus:
                     session.payment_status
+
             };
 
             // =================================================
@@ -986,8 +1080,8 @@ app.get(
             );
 
             console.log(
-                "Pagamento:",
-                pago
+                "Curso:",
+                curso
             );
 
             console.log(
@@ -1001,32 +1095,27 @@ app.get(
             );
 
             console.log(
-                "Curso:",
-                curso
+                "Pagamento:",
+                pago
             );
 
             console.log(
-                "Categoria:",
-                categoria
-            );
-
-            console.log(
-                "Senha encontrada:",
+                "Senha:",
                 senhaCurso
-                    ? "SIM"
-                    : "NÃO"
+                    ? "ENCONTRADA"
+                    : "NÃO ENCONTRADA"
             );
 
             console.log(
-                "Usos restantes:",
+                "Usos:",
                 usosRestantes
             );
 
             console.log(
-                "Link encontrado:",
+                "Link:",
                 linkCurso
-                    ? "SIM"
-                    : "NÃO"
+                    ? "ENCONTRADO"
+                    : "NÃO ENCONTRADO"
             );
 
             console.log(
@@ -1037,7 +1126,8 @@ app.get(
                 resultado
             );
 
-        } catch (error) {
+        }
+        catch (error) {
 
             console.error(
                 "Erro em /consultar-pagamento:",
@@ -1049,41 +1139,42 @@ app.get(
                 (
                     error.code ===
                     "StripeInvalidRequestError"
+
                     ||
-                    error.statusCode ===
-                    404
+
+                    error.statusCode === 404
                 )
             ) {
 
-                return res
-                    .status(404)
-                    .json({
-
-                        valido: false,
-
-                        pago: false,
-
-                        erro:
-                            "Sessão Stripe não encontrada."
-                    });
-            }
-
-            return res
-                .status(500)
-                .json({
+                return res.status(404).json({
 
                     valido: false,
 
                     pago: false,
 
                     erro:
-                        error.message ||
-                        "Erro interno do servidor."
+                        "Sessão Stripe não encontrada."
+
                 });
+
+            }
+
+            return res.status(500).json({
+
+                valido: false,
+
+                pago: false,
+
+                erro:
+                    error.message ||
+                    "Erro interno do servidor."
+
+            });
+
         }
+
     }
 );
-
 // =====================================================
 // AGENDAR CURSO PRESENCIAL
 // =====================================================
