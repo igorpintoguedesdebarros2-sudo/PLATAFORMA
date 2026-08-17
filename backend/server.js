@@ -1,128 +1,77 @@
-import {
-    auth
-} from "./firebase.js";
-
-import {
-    onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import express from "express";
+import cors from "cors";
+import Stripe from "stripe";
+import admin from "firebase-admin";
 
 // =====================================================
-// BACKEND
+// CONFIGURAÇÃO
 // =====================================================
 
-const API_URL =
-    "https://plataforma-56gy.onrender.com";
+const app = express();
+
+const PORT = process.env.PORT || 10000;
+
+const stripe = new Stripe(
+    process.env.STRIPE_SECRET_KEY
+);
 
 // =====================================================
-// ELEMENTOS
+// FIREBASE ADMIN
 // =====================================================
 
-const statusPagamento =
-    document.getElementById("statusPagamento");
+if (!admin.apps.length) {
 
-const cursosComprados =
-    document.getElementById("cursosComprados");
+    const firebasePrivateKey =
+        process.env.FIREBASE_PRIVATE_KEY
+            ?.replace(/\\n/g, "\n");
 
-const areaPresencial =
-    document.getElementById("areaPresencial");
+    admin.initializeApp({
 
-const dataCurso =
-    document.getElementById("dataCurso");
+        credential:
+            admin.credential.cert({
 
-const horarioCurso =
-    document.getElementById("horarioCurso");
+                projectId:
+                    process.env.FIREBASE_PROJECT_ID,
 
-const botaoAgendar =
-    document.getElementById("agendarCurso");
+                clientEmail:
+                    process.env.FIREBASE_CLIENT_EMAIL,
 
-// =====================================================
-// SESSION ID STRIPE
-// =====================================================
-
-const parametros =
-    new URLSearchParams(
-        window.location.search
-    );
-
-const sessionId =
-    parametros.get("session_id");
-
-// =====================================================
-// ESTADO
-// =====================================================
-
-let usuarioAtual = null;
-
-let cursosPresenciais = [];
-
-let ultimoPagamento = null;
-
-// =====================================================
-// LOG INICIAL
-// =====================================================
-
-console.log("======================================");
-console.log("SUCESSO.JS INICIADO");
-console.log("Session ID:", sessionId);
-console.log("API:", API_URL);
-console.log("======================================");
-
-// =====================================================
-// SESSION ID AUSENTE
-// =====================================================
-
-if (!sessionId) {
-
-    if (statusPagamento) {
-
-        statusPagamento.textContent =
-            "Não foi possível identificar o pagamento.";
-    }
-
-    if (cursosComprados) {
-
-        cursosComprados.innerHTML = `
-            <p>
-                Sessão de pagamento não encontrada.
-            </p>
-        `;
-    }
+                privateKey:
+                    firebasePrivateKey
+            })
+    });
 }
 
+const db =
+    admin.firestore();
+
 // =====================================================
-// AUTENTICAÇÃO
+// MIDDLEWARE
 // =====================================================
 
-onAuthStateChanged(
-    auth,
-    async (usuario) => {
+app.use(
+    cors({
+        origin: "*"
+    })
+);
 
-        if (!usuario) {
+app.use(
+    express.json()
+);
 
-            console.log(
-                "Usuário não autenticado."
-            );
+// =====================================================
+// TESTE DO SERVIDOR
+// =====================================================
 
-            if (statusPagamento) {
+app.get(
+    "/",
+    (req, res) => {
 
-                statusPagamento.textContent =
-                    "Usuário não autenticado.";
-            }
-
-            return;
-        }
-
-        usuarioAtual = usuario;
-
-        console.log(
-            "Usuário autenticado:",
-            usuarioAtual.uid
-        );
-
-        if (sessionId) {
-
-            await procurarPagamento();
-        }
+        res.json({
+            ok: true,
+            servidor: "Plataforma",
+            status: "online"
+        });
     }
 );
 
@@ -130,1230 +79,363 @@ onAuthStateChanged(
 // CONSULTAR PAGAMENTO
 // =====================================================
 
-async function procurarPagamento() {
-
-    if (!usuarioAtual) {
-
-        console.error(
-            "Usuário não autenticado."
-        );
-
-        return;
-    }
-
-    if (!sessionId) {
-
-        console.error(
-            "Session ID não informado."
-        );
-
-        return;
-    }
-
-    try {
-
-        if (statusPagamento) {
-
-            statusPagamento.textContent =
-                "Consultando pagamento...";
-        }
-
-        const url =
-            `${API_URL}/consultar-pagamento?session_id=${encodeURIComponent(sessionId)}`;
-
-        console.log(
-            "Consultando pagamento:",
-            url
-        );
-
-        const resposta =
-            await fetch(
-                url,
-                {
-                    method: "GET",
-
-                    headers: {
-                        "Accept":
-                            "application/json"
-                    }
-                }
-            );
-
-        const texto =
-            await resposta.text();
-
-        console.log(
-            "Resposta bruta do servidor:",
-            texto
-        );
-
-        let dados;
+app.get(
+    "/consultar-pagamento",
+    async (req, res) => {
 
         try {
 
-            dados =
-                JSON.parse(texto);
+            const sessionId =
+                req.query.session_id;
 
-        } catch (erro) {
+            if (!sessionId) {
 
-            console.error(
-                "Resposta não é JSON:",
-                texto
-            );
+                return res.status(400).json({
 
-            throw new Error(
-                "O servidor não retornou uma resposta JSON válida."
-            );
-        }
+                    valido: false,
 
-        console.log(
-            "Resposta do servidor:",
-            dados
-        );
+                    pago: false,
 
-        if (!resposta.ok) {
-
-            throw new Error(
-                dados.erro ||
-                `Erro HTTP ${resposta.status}`
-            );
-        }
-
-        // =================================================
-        // VALIDAR USUÁRIO
-        // =================================================
-
-        if (
-            dados.usuarioId &&
-            String(dados.usuarioId) !==
-            String(usuarioAtual.uid)
-        ) {
-
-            throw new Error(
-                "O pagamento não pertence ao usuário autenticado."
-            );
-        }
-
-        // =================================================
-        // PAGAMENTO
-        // =================================================
-
-        if (dados.pago !== true) {
-
-            if (statusPagamento) {
-
-                statusPagamento.textContent =
-                    "Pagamento ainda não confirmado.";
+                    erro:
+                        "session_id não informado."
+                });
             }
-
-            if (cursosComprados) {
-
-                cursosComprados.innerHTML = `
-                    <p>
-                        O pagamento ainda não foi confirmado pela Stripe.
-                    </p>
-                `;
-            }
-
-            return;
-        }
-
-        // =================================================
-        // PAGAMENTO CONFIRMADO
-        // =================================================
-
-        ultimoPagamento =
-            dados;
-
-        if (statusPagamento) {
-
-            statusPagamento.textContent =
-                "Pagamento confirmado.";
-        }
-
-        cursosPresenciais = [];
-
-        if (cursosComprados) {
-
-            cursosComprados.innerHTML = "";
-        }
-
-        if (areaPresencial) {
-
-            areaPresencial.style.display =
-                "none";
-        }
-
-        // =================================================
-        // CURSO
-        // =================================================
-
-        if (!dados.curso) {
-
-            console.error(
-                "Pagamento confirmado, mas curso não foi enviado:",
-                dados
-            );
-
-            if (cursosComprados) {
-
-                cursosComprados.innerHTML = `
-                    <p>
-                        Pagamento confirmado,
-                        mas o curso não foi encontrado.
-                    </p>
-                `;
-            }
-
-            return;
-        }
-
-        // =================================================
-        // SENHA RECEBIDA DO SERVIDOR
-        // =================================================
-
-        const senhaServidor =
-            obterSenhaServidor(dados);
-
-        console.log("======================================");
-        console.log("CURSO RECEBIDO");
-        console.log("Curso:", dados.curso);
-        console.log("Categoria:", dados.categoria);
-        console.log("Pedido:", dados.pedidoId);
-        console.log(
-            "Senha oficial:",
-            senhaServidor || "NÃO INFORMADA PELO SERVIDOR"
-        );
-        console.log(
-            "Usos restantes:",
-            dados.usosRestantes
-        );
-        console.log(
-            "Link:",
-            dados.linkCurso
-        );
-        console.log("======================================");
-
-        mostrarCurso(
-            {
-                ...dados,
-                senhaCurso: senhaServidor
-            },
-            dados.pedidoId
-        );
-    }
-
-    catch (error) {
-
-        console.error(
-            "Erro ao consultar pagamento:",
-            error
-        );
-
-        if (statusPagamento) {
-
-            statusPagamento.textContent =
-                "Erro ao consultar o pagamento.";
-        }
-
-        if (cursosComprados) {
-
-            cursosComprados.innerHTML = `
-                <p>
-                    Não foi possível consultar o pagamento.
-                </p>
-
-                <p>
-                    ${escaparHTML(
-                        error.message
-                    )}
-                </p>
-            `;
-        }
-    }
-}
-
-// =====================================================
-// OBTER SENHA DO SERVIDOR
-// =====================================================
-//
-// O frontend NÃO gera senha.
-//
-// O backend pode retornar:
-// senhaCurso
-// senha
-// senhaOficial
-// senhaAcesso
-//
-// A primeira encontrada será usada.
-// =====================================================
-
-function obterSenhaServidor(dados) {
-
-    if (!dados) {
-        return "";
-    }
-
-    const possiveisSenhas = [
-
-        dados.senhaCurso,
-
-        dados.senha,
-
-        dados.senhaOficial,
-
-        dados.senhaAcesso
-
-    ];
-
-    for (
-        const senha
-        of possiveisSenhas
-    ) {
-
-        if (
-            senha !== undefined &&
-            senha !== null &&
-            String(senha).trim() !== ""
-        ) {
-
-            return String(senha);
-        }
-    }
-
-    return "";
-}
-
-// =====================================================
-// MOSTRAR CURSO
-// =====================================================
-
-function mostrarCurso(
-    curso,
-    id
-) {
-
-    if (!curso) {
-        return;
-    }
-
-    const nomeCurso =
-        curso.curso ||
-        "Curso";
-
-    const categoria =
-        curso.categoria ||
-        "EAD";
-
-    const descricao =
-        curso.descricao ||
-        "Curso adquirido na plataforma.";
-
-    const categoriaNormalizada =
-        String(categoria)
-            .trim()
-            .toLowerCase();
-
-    // =================================================
-    // EAD
-    // =================================================
-
-    if (
-        categoriaNormalizada ===
-        "ead"
-    ) {
-
-        mostrarCursoEAD(
-            curso,
-            id,
-            nomeCurso,
-            descricao
-        );
-
-        return;
-    }
-
-    // =================================================
-    // PRESENCIAL
-    // =================================================
-
-    if (
-        categoriaNormalizada ===
-        "presencial"
-    ) {
-
-        mostrarCursoPresencial(
-            curso,
-            id,
-            nomeCurso,
-            descricao
-        );
-
-        return;
-    }
-
-    // =================================================
-    // PADRÃO
-    // =================================================
-
-    mostrarCursoEAD(
-        curso,
-        id,
-        nomeCurso,
-        descricao
-    );
-}
-
-// =====================================================
-// MOSTRAR CURSO EAD
-// =====================================================
-
-function mostrarCursoEAD(
-    curso,
-    id,
-    nomeCurso,
-    descricao
-) {
-
-    if (!cursosComprados) {
-        return;
-    }
-
-    // =================================================
-    // SENHA
-    // =================================================
-
-    const senha =
-        obterSenhaServidor(curso);
-
-    // =================================================
-    // USOS
-    // =================================================
-
-    const usos =
-        Number(
-            curso.usosRestantes
-        );
-
-    const usosValidos =
-        Number.isFinite(usos)
-            ? usos
-            : 0;
-
-    // =================================================
-    // LINK
-    // =================================================
-
-    const link =
-        curso.linkCurso ||
-        "";
-
-    // =================================================
-    // ID SEGURO
-    // =================================================
-
-    const idSeguro =
-        escaparID(id);
-
-    // =================================================
-    // HTML INICIAL
-    // =================================================
-
-    let html = `
-
-        <div class="curso-card">
-
-            <h3>
-                ${escaparHTML(nomeCurso)}
-            </h3>
-
-            <p>
-                <strong>
-                    Categoria:
-                </strong>
-                EAD
-            </p>
-
-            <p>
-                ${escaparHTML(descricao)}
-            </p>
-
-            <p>
-                <strong>
-                    Pagamento:
-                </strong>
-                Confirmado
-            </p>
-
-            <hr>
-
-            <div class="senha-curso">
-
-                <p>
-                    <strong>
-                        Senha de acesso:
-                    </strong>
-                </p>
-    `;
-
-    // =================================================
-    // SENHA DISPONÍVEL
-    // =================================================
-
-    if (senha) {
-
-        html += `
-
-                <code
-                    id="senhaCurso_${idSeguro}"
-                >
-                    ${escaparHTML(senha)}
-                </code>
-
-                <p>
-                    Esta senha possui
-                    <strong>
-                        ${usosValidos}
-                    </strong>
-                    utilização(ões)
-                    restante(s).
-                </p>
-
-        `;
-    }
-
-    // =================================================
-    // SENHA NÃO DISPONÍVEL
-    // =================================================
-
-    else {
-
-        html += `
-
-                <p
-                    id="textoSenha_${idSeguro}"
-                >
-                    A senha ainda não foi disponibilizada
-                    pelo servidor.
-                </p>
-
-        `;
-    }
-
-    // =================================================
-    // BOTÃO
-    // =================================================
-
-    html += `
-
-                <button
-                    type="button"
-                    id="confirmarPagamento_${idSeguro}"
-                    class="botao-confirmar-pagamento"
-                >
-                    Confirmar pagamento
-                </button>
-
-                <p
-                    id="statusConfirmacao_${idSeguro}"
-                ></p>
-
-            </div>
-
-            <hr>
-
-    `;
-
-    // =================================================
-    // LINK
-    // =================================================
-
-    if (link) {
-
-        html += `
-
-            <div class="acesso-curso">
-
-                <a
-                    href="${escaparAtributo(link)}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-
-                    <button
-                        type="button"
-                    >
-                        Acessar curso
-                    </button>
-
-                </a>
-
-            </div>
-
-        `;
-    }
-
-    else {
-
-        html += `
-
-            <p>
-                O link do curso ainda não foi configurado.
-            </p>
-
-        `;
-    }
-
-    // =================================================
-    // FECHAR CARD
-    // =================================================
-
-    html += `
-
-        </div>
-
-    `;
-
-    cursosComprados.innerHTML =
-        html;
-
-    // =================================================
-    // BOTÃO CONFIRMAR
-    // =================================================
-
-    const botaoConfirmar =
-        document.getElementById(
-            `confirmarPagamento_${idSeguro}`
-        );
-
-    if (botaoConfirmar) {
-
-        botaoConfirmar.onclick =
-            async () => {
-
-                await confirmarPagamento(
-                    botaoConfirmar,
-                    id
-                );
-            };
-    }
-}
-
-// =====================================================
-// CONFIRMAR PAGAMENTO
-// =====================================================
-
-async function confirmarPagamento(
-    botao,
-    id
-) {
-
-    if (!usuarioAtual) {
-
-        alert(
-            "Usuário não autenticado."
-        );
-
-        return;
-    }
-
-    if (!sessionId) {
-
-        alert(
-            "Session ID não encontrado."
-        );
-
-        return;
-    }
-
-    const idSeguro =
-        escaparID(id);
-
-    const status =
-        document.getElementById(
-            `statusConfirmacao_${idSeguro}`
-        );
-
-    try {
-
-        botao.disabled =
-            true;
-
-        botao.textContent =
-            "Confirmando...";
-
-        if (status) {
-
-            status.textContent =
-                "Consultando servidor...";
-        }
-
-        const url =
-            `${API_URL}/consultar-pagamento?session_id=${encodeURIComponent(sessionId)}`;
-
-        console.log(
-            "Confirmando pagamento:",
-            url
-        );
-
-        const resposta =
-            await fetch(
-                url,
-                {
-                    method: "GET",
-
-                    headers: {
-                        "Accept":
-                            "application/json"
-                    }
-                }
-            );
-
-        const texto =
-            await resposta.text();
-
-        let dados;
-
-        try {
-
-            dados =
-                JSON.parse(texto);
-
-        }
-        catch {
-
-            throw new Error(
-                "O servidor não retornou JSON válido."
-            );
-        }
-
-        console.log(
-            "Resultado da confirmação:",
-            dados
-        );
-
-        if (!resposta.ok) {
-
-            throw new Error(
-                dados.erro ||
-                `Erro HTTP ${resposta.status}`
-            );
-        }
-
-        // =================================================
-        // USUÁRIO
-        // =================================================
-
-        if (
-            dados.usuarioId &&
-            String(dados.usuarioId) !==
-            String(usuarioAtual.uid)
-        ) {
-
-            throw new Error(
-                "Este pagamento pertence a outro usuário."
-            );
-        }
-
-        // =================================================
-        // PAGAMENTO
-        // =================================================
-
-        if (dados.pago !== true) {
-
-            if (status) {
-
-                status.textContent =
-                    "Pagamento ainda não confirmado.";
-            }
-
-            botao.disabled =
-                false;
-
-            botao.textContent =
-                "Confirmar pagamento";
-
-            return;
-        }
-
-        // =================================================
-        // SENHA DO SERVIDOR
-        // =================================================
-
-        const senhaServidor =
-            obterSenhaServidor(dados);
-
-        console.log(
-            "Senha retornada pelo servidor:",
-            senhaServidor || "NÃO INFORMADA"
-        );
-
-        // =================================================
-        // ATUALIZAR CURSO
-        // =================================================
-
-        const cursoAtualizado = {
-
-            ...dados,
-
-            senhaCurso:
-                senhaServidor
-
-        };
-
-        // =================================================
-        // SE O SERVIDOR RETORNOU SENHA
-        // =================================================
-
-        if (senhaServidor) {
 
             console.log(
-                "Senha oficial recebida."
+                "Consultando Stripe:",
+                sessionId
             );
 
-            mostrarCursoEAD(
-                cursoAtualizado,
-                id,
-                dados.curso || "Curso",
-                dados.descricao ||
-                "Curso adquirido na plataforma."
+            // =================================================
+            // BUSCAR SESSÃO NA STRIPE
+            // =================================================
+
+            const session =
+                await stripe.checkout.sessions.retrieve(
+                    sessionId
+                );
+
+            if (!session) {
+
+                return res.status(404).json({
+
+                    valido: false,
+
+                    pago: false,
+
+                    erro:
+                        "Sessão de pagamento não encontrada."
+                });
+            }
+
+            // =================================================
+            // VERIFICAR PAGAMENTO
+            // =================================================
+
+            const pago =
+                session.payment_status ===
+                "paid";
+
+            // =================================================
+            // METADADOS
+            // =================================================
+
+            const metadata =
+                session.metadata || {};
+
+            const usuarioId =
+                metadata.usuarioId ||
+                metadata.userId ||
+                session.client_reference_id ||
+                "";
+
+            const pedidoId =
+                metadata.pedidoId ||
+                metadata.pedido ||
+                "";
+
+            const curso =
+                metadata.curso ||
+                "";
+
+            const categoria =
+                metadata.categoria ||
+                "EAD";
+
+            const descricao =
+                metadata.descricao ||
+                "Curso adquirido na plataforma.";
+
+            const linkCurso =
+                metadata.linkCurso ||
+                "";
+
+            // =================================================
+            // SENHA
+            // =================================================
+
+            const senhaCurso =
+                metadata.senhaCurso ||
+                metadata.senha ||
+                metadata.senhaOficial ||
+                metadata.senhaAcesso ||
+                "";
+
+            // =================================================
+            // USOS
+            // =================================================
+
+            const usosRestantesNumero =
+                Number(
+                    metadata.usosRestantes
+                );
+
+            const usosRestantes =
+                Number.isFinite(
+                    usosRestantesNumero
+                )
+                    ? usosRestantesNumero
+                    : 0;
+
+            // =================================================
+            // RESULTADO
+            // =================================================
+
+            const resultado = {
+
+                valido: true,
+
+                pago: pago,
+
+                sessionId:
+                    session.id,
+
+                pedidoId:
+                    pedidoId,
+
+                usuarioId:
+                    usuarioId,
+
+                curso:
+                    curso,
+
+                categoria:
+                    categoria,
+
+                descricao:
+                    descricao,
+
+                senhaCurso:
+                    senhaCurso,
+
+                usosRestantes:
+                    usosRestantes,
+
+                linkCurso:
+                    linkCurso
+            };
+
+            console.log(
+                "Pagamento consultado:",
+                resultado
             );
 
-            if (statusPagamento) {
+            return res.json(
+                resultado
+            );
 
-                statusPagamento.textContent =
-                    "Pagamento confirmado.";
+        }
+        catch (error) {
+
+            console.error(
+                "Erro em /consultar-pagamento:",
+                error
+            );
+
+            return res.status(500).json({
+
+                valido: false,
+
+                pago: false,
+
+                erro:
+                    error.message ||
+                    "Erro interno do servidor."
+            });
+        }
+    }
+);
+
+// =====================================================
+// AGENDAR CURSO PRESENCIAL
+// =====================================================
+
+app.post(
+    "/agendar-curso",
+    async (req, res) => {
+
+        try {
+
+            const {
+
+                pedidoId,
+
+                usuarioId,
+
+                data,
+
+                horario
+
+            } = req.body;
+
+            // =================================================
+            // VALIDAÇÃO
+            // =================================================
+
+            if (!pedidoId) {
+
+                return res.status(400).json({
+
+                    erro:
+                        "pedidoId não informado."
+                });
             }
 
-            return;
-        }
+            if (!usuarioId) {
 
-        // =================================================
-        // SERVIDOR NÃO RETORNOU SENHA
-        // =================================================
+                return res.status(400).json({
 
-        console.warn(
-            "Pagamento confirmado, mas senha não foi enviada pelo backend.",
-            dados
-        );
-
-        if (status) {
-
-            status.textContent =
-                "Pagamento confirmado, mas o servidor ainda não retornou a senha oficial.";
-        }
-
-        if (statusPagamento) {
-
-            statusPagamento.textContent =
-                "Pagamento confirmado.";
-        }
-
-        botao.disabled =
-            false;
-
-        botao.textContent =
-            "Confirmar pagamento";
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Erro ao confirmar pagamento:",
-            error
-        );
-
-        if (status) {
-
-            status.textContent =
-                error.message;
-        }
-
-        botao.disabled =
-            false;
-
-        botao.textContent =
-            "Confirmar pagamento";
-    }
-}
-
-// =====================================================
-// CURSO PRESENCIAL
-// =====================================================
-
-function mostrarCursoPresencial(
-    curso,
-    id,
-    nomeCurso,
-    descricao
-) {
-
-    cursosPresenciais.push({
-
-        ...curso,
-
-        id: id
-    });
-
-    if (cursosComprados) {
-
-        cursosComprados.innerHTML += `
-
-            <div class="curso-card">
-
-                <h3>
-                    ${escaparHTML(nomeCurso)}
-                </h3>
-
-                <p>
-                    <strong>
-                        Categoria:
-                    </strong>
-                    Presencial
-                </p>
-
-                <p>
-                    ${escaparHTML(descricao)}
-                </p>
-
-                <p>
-                    <strong>
-                        Pagamento:
-                    </strong>
-                    Confirmado
-                </p>
-
-                <p>
-                    Escolha abaixo a data
-                    e o horário da aula.
-                </p>
-
-            </div>
-
-        `;
-    }
-
-    if (areaPresencial) {
-
-        areaPresencial.style.display =
-            "block";
-    }
-}
-
-// =====================================================
-// DATA MÍNIMA
-// =====================================================
-
-if (dataCurso) {
-
-    const hoje =
-        new Date();
-
-    const ano =
-        hoje.getFullYear();
-
-    const mes =
-        String(
-            hoje.getMonth() + 1
-        ).padStart(
-            2,
-            "0"
-        );
-
-    const dia =
-        String(
-            hoje.getDate()
-        ).padStart(
-            2,
-            "0"
-        );
-
-    dataCurso.min =
-        `${ano}-${mes}-${dia}`;
-}
-
-// =====================================================
-// AGENDAR PRESENCIAL
-// =====================================================
-
-if (botaoAgendar) {
-
-    botaoAgendar.onclick =
-        async () => {
-
-            if (!usuarioAtual) {
-
-                alert(
-                    "Usuário não autenticado."
-                );
-
-                return;
+                    erro:
+                        "usuarioId não informado."
+                });
             }
-
-            if (
-                cursosPresenciais.length ===
-                0
-            ) {
-
-                alert(
-                    "Nenhum curso presencial encontrado."
-                );
-
-                return;
-            }
-
-            const data =
-                dataCurso
-                    ? dataCurso.value
-                    : "";
 
             if (!data) {
 
-                alert(
-                    "Selecione uma data."
-                );
+                return res.status(400).json({
 
-                return;
+                    erro:
+                        "Data não informada."
+                });
             }
-
-            const horario =
-                horarioCurso
-                    ? horarioCurso.value
-                    : "";
 
             if (!horario) {
 
-                alert(
-                    "Selecione um horário."
-                );
+                return res.status(400).json({
 
-                return;
+                    erro:
+                        "Horário não informado."
+                });
             }
 
-            try {
+            // =================================================
+            // SALVAR AGENDAMENTO
+            // =================================================
 
-                for (
-                    const curso
-                    of cursosPresenciais
-                ) {
+            const agendamento = {
 
-                    const resposta =
-                        await fetch(
-                            `${API_URL}/agendar-curso`,
-                            {
-                                method: "POST",
+                pedidoId:
+                    pedidoId,
 
-                                headers: {
-                                    "Content-Type":
-                                        "application/json",
+                usuarioId:
+                    usuarioId,
 
-                                    "Accept":
-                                        "application/json"
-                                },
+                data:
+                    data,
 
-                                body:
-                                    JSON.stringify({
+                horario:
+                    horario,
 
-                                        pedidoId:
-                                            curso.pedidoId ||
-                                            curso.id,
+                status:
+                    "agendado",
 
-                                        usuarioId:
-                                            usuarioAtual.uid,
+                criadoEm:
+                    admin.firestore.FieldValue.serverTimestamp()
+            };
 
-                                        data:
-                                            data,
-
-                                        horario:
-                                            horario
-                                    })
-                            }
-                        );
-
-                    const texto =
-                        await resposta.text();
-
-                    let dados;
-
-                    try {
-
-                        dados =
-                            JSON.parse(texto);
-
-                    }
-                    catch {
-
-                        throw new Error(
-                            "Resposta inválida do servidor."
-                        );
-                    }
-
-                    if (!resposta.ok) {
-
-                        throw new Error(
-                            dados.erro ||
-                            "Erro ao agendar curso."
-                        );
-                    }
-                }
-
-                if (statusPagamento) {
-
-                    statusPagamento.textContent =
-                        "Pagamento confirmado e curso presencial agendado.";
-                }
-
-                if (areaPresencial) {
-
-                    let html = `
-
-                        <h2>
-                            Cursos agendados
-                        </h2>
-
-                    `;
-
-                    cursosPresenciais.forEach(
-                        (curso) => {
-
-                            html += `
-
-                                <div class="curso-card">
-
-                                    <h3>
-                                        ${escaparHTML(
-                                            curso.curso
-                                        )}
-                                    </h3>
-
-                                    <p>
-                                        <strong>
-                                            Data:
-                                        </strong>
-
-                                        ${escaparHTML(
-                                            data
-                                        )}
-                                    </p>
-
-                                    <p>
-                                        <strong>
-                                            Horário:
-                                        </strong>
-
-                                        ${escaparHTML(
-                                            horario
-                                        )}
-                                    </p>
-
-                                    <p>
-                                        Agendamento salvo com sucesso.
-                                    </p>
-
-                                </div>
-
-                            `;
-                        }
+            const referencia =
+                await db
+                    .collection(
+                        "agendamentos"
+                    )
+                    .add(
+                        agendamento
                     );
 
-                    html += `
+            console.log(
+                "Agendamento criado:",
+                referencia.id
+            );
 
-                        <p>
-                            O agendamento foi registrado
-                            na plataforma.
-                        </p>
+            return res.json({
 
-                    `;
+                sucesso: true,
 
-                    areaPresencial.innerHTML =
-                        html;
-                }
+                agendamentoId:
+                    referencia.id,
 
-            }
-            catch (error) {
+                mensagem:
+                    "Curso agendado com sucesso."
+            });
 
-                console.error(
-                    "Erro ao agendar:",
-                    error
-                );
+        }
+        catch (error) {
 
-                alert(
+            console.error(
+                "Erro ao agendar curso:",
+                error
+            );
+
+            return res.status(500).json({
+
+                sucesso: false,
+
+                erro:
                     error.message ||
-                    "Erro ao salvar o agendamento."
-                );
-            }
-        };
-}
+                    "Erro ao salvar agendamento."
+            });
+        }
+    }
+);
 
 // =====================================================
-// ESCAPAR HTML
+// WEBHOOK STRIPE
+// =====================================================
+//
+// IMPORTANTE:
+// O webhook precisa receber o corpo bruto.
+// Por isso ele fica ANTES do express.json() caso
+// você queira utilizar esta rota.
+//
+// Nesta versão deixamos apenas a estrutura.
 // =====================================================
 
-function escaparHTML(valor) {
+// =====================================================
+// INICIAR SERVIDOR
+// =====================================================
 
-    return String(
-        valor ?? ""
-    )
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
+app.listen(
+    PORT,
+    () => {
+
+        console.log(
+            "======================================"
         );
-}
 
-// =====================================================
-// ESCAPAR ATRIBUTO
-// =====================================================
-
-function escaparAtributo(valor) {
-
-    return String(
-        valor ?? ""
-    )
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
+        console.log(
+            `Servidor iniciado na porta ${PORT}`
         );
-}
 
-// =====================================================
-// GERAR ID SEGURO
-// =====================================================
+        console.log(
+            "Stripe: configurada"
+        );
 
-function escaparID(valor) {
+        console.log(
+            "Firebase Admin: configurado"
+        );
 
-    return String(
-        valor ?? ""
-    ).replace(
-        /[^a-zA-Z0-9_-]/g,
-        "_"
-    );
-}
+        console.log(
+            "======================================"
+        );
+    }
+);
