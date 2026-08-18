@@ -4,6 +4,9 @@
     padding: 0;
 }
 
+.img{
+    opacity: 0,5;
+}
 
 body {
 
@@ -13,7 +16,7 @@ body {
         sans-serif;
 
     background:
-        #f4f6f8;
+        #2882db;
 
     color:
         #222;
