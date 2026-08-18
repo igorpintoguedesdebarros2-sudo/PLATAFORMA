@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="pt-BR">
 
 <head>
@@ -11,7 +10,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Cursos</title>
+    <title>Comprar Curso</title>
 
     <link
         rel="stylesheet"
@@ -26,72 +25,43 @@
 
 <div class="box">
 
-
     <h2>Comprar Curso</h2>
 
 
-    <select id="curso">
+    <p>
+        Digite a ID do curso que deseja comprar.
+    </p>
 
-        <option value="">
-            Selecione um curso
-        </option>
 
-        <option value="NR1">
-            NR1
-        </option>
-
-        <option value="CSS Completo">
-            CSS Completo
-        </option>
-
-        <option value="JavaScript">
-            JavaScript
-        </option>
-
-        <option value="Python">
-            Python
-        </option>
-
-        <option value="Firebase">
-            Firebase
-        </option>
-
-    </select>
+    <input
+        type="text"
+        id="cursoId"
+        placeholder="Digite a ID do curso"
+        autocomplete="off"
+    >
 
 
     <br><br>
 
 
-    <button id="solicitar">
-        Solicitar Curso
+    <button
+        type="button"
+        id="solicitar"
+    >
+        Comprar Curso
     </button>
 
 
     <hr>
 
 
-    <h2>Solicitações</h2>
-
-
-    <div id="solicitacoes">
-
-        <p>
-            Nenhuma solicitação.
-        </p>
-
-    </div>
-
-
-    <hr>
-
-
-    <h2>Cursos Liberados</h2>
+    <h2>Meus Cursos</h2>
 
 
     <div id="cursosLiberados">
 
         <p>
-            Nenhum curso liberado.
+            Carregando seus cursos...
         </p>
 
     </div>
@@ -100,7 +70,10 @@
     <br>
 
 
-    <button id="sair">
+    <button
+        type="button"
+        id="sair"
+    >
         Sair
     </button>
 
@@ -108,12 +81,10 @@
 </div>
 
 
-<script src="https://js.stripe.com/v3/"></script>
-
 <script
     type="module"
-    src="pagamento.js">
-</script>
+    src="pagamento.js"
+></script>
 
 
 </body>
