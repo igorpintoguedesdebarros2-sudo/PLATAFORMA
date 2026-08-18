@@ -197,10 +197,9 @@ const firebaseAuth =
 
 // =====================================================
 // TRANSPORTADOR DE E-MAIL
-// =====================================================
-
+// ====================================================
+ 
 let emailTransporter = null;
-
 
 if (
     SMTP_HOST &&
@@ -220,6 +219,9 @@ if (
             secure:
                 SMTP_PORT === 465,
 
+            family:
+                4,
+
             auth: {
 
                 user:
@@ -237,54 +239,20 @@ if (
                 15000,
 
             socketTimeout:
-                15000
+                30000
 
         });
 
-
     console.log(
-        "======================================"
+        "Sistema de e-mail configurado."
     );
-
-    console.log(
-        "SMTP CONFIGURADO"
-    );
-
-    console.log(
-        "Host:",
-        SMTP_HOST
-    );
-
-    console.log(
-        "Porta:",
-        SMTP_PORT
-    );
-
-    console.log(
-        "Usuário:",
-        SMTP_USER
-    );
-
-    console.log(
-        "Remetente:",
-        EMAIL_FROM
-    );
-
-    console.log(
-        "======================================"
-    );
-
-
-    // =================================================
-    // TESTAR CONEXÃO SMTP
-    // =================================================
 
     emailTransporter.verify()
 
         .then(() => {
 
             console.log(
-                "SMTP: conexão verificada com sucesso."
+                "SMTP: CONEXÃO OK."
             );
 
         })
@@ -304,26 +272,9 @@ if (
 } else {
 
     console.warn(
-        "======================================"
-    );
-
-    console.warn(
-        "SMTP NÃO CONFIGURADO."
-    );
-
-    console.warn(
-        "Os e-mails não serão enviados."
-    );
-
-    console.warn(
-        "Verifique SMTP_HOST, SMTP_PORT, SMTP_USER e SMTP_PASS."
-    );
-
-    console.warn(
-        "======================================"
+        "SMTP não configurado. Os e-mails não serão enviados."
     );
 }
-
 
 // =====================================================
 // CORS
