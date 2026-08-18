@@ -1748,16 +1748,14 @@ app.post(
                     // -----------------------------------------
 
                     success_url:
-                        `${FRONTEND_URL}/pagamento-sucesso.html?pedido=${encodeURIComponent(pedidoId)}&session_id={CHECKOUT_SESSION_ID}`,
-
+                   'https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/sucesso.html',
 
                     // -----------------------------------------
                     // URL DE CANCELAMENTO
                     // -----------------------------------------
 
                     cancel_url:
-                        `${FRONTEND_URL}/pagamento-cancelado.html?pedido=${encodeURIComponent(pedidoId)}`
-
+                   'https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/pagamento'
                 });
 
 
