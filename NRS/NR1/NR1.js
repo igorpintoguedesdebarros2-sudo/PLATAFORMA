@@ -10,8 +10,7 @@ import {
 // CONFIGURAÇÃO DA API
 // =====================================================
 
-const API_URL =
-    "https://plataforma-56gy.onrender.com";
+const API_URL = "https://plataforma-56gy.onrender.com";
 
 
 // =====================================================
@@ -19,12 +18,8 @@ const API_URL =
 // =====================================================
 
 const CURSO = {
-
     nome: "NR1",
-
-    descricao:
-        "Curso NR1 - Segurança e Saúde no Trabalho."
-
+    descricao: "Curso NR1 - Segurança e Saúde no Trabalho."
 };
 
 
@@ -33,172 +28,75 @@ const CURSO = {
 // =====================================================
 
 const telaSenha =
-    document.getElementById(
-        "telaSenha"
-    );
-
+    document.getElementById("telaSenha");
 
 const conteudoCurso =
-    document.getElementById(
-        "conteudoCurso"
-    );
-
+    document.getElementById("conteudoCurso");
 
 const senhaInput =
-    document.getElementById(
-        "senhaCurso"
-    );
-
+    document.getElementById("senhaCurso");
 
 const btnEntrar =
-    document.getElementById(
-        "btnEntrarCurso"
-    );
-
+    document.getElementById("btnEntrarCurso");
 
 const mensagem =
-    document.getElementById(
-        "mensagemSenha"
-    );
-
+    document.getElementById("mensagemSenha");
 
 const listaMateriais =
-    document.getElementById(
-        "listaMateriais"
-    );
-
+    document.getElementById("listaMateriais");
 
 const modal =
-    document.getElementById(
-        "modal"
-    );
-
+    document.getElementById("modal");
 
 const modalTitulo =
-    document.getElementById(
-        "modalTitulo"
-    );
-
+    document.getElementById("modalTitulo");
 
 const modalCorpo =
-    document.getElementById(
-        "modalCorpo"
-    );
-
+    document.getElementById("modalCorpo");
 
 const fecharModal =
-    document.getElementById(
-        "fecharModal"
-    );
-
+    document.getElementById("fecharModal");
 
 const btnSair =
-    document.getElementById(
-        "btnSair"
-    );
-
+    document.getElementById("btnSair");
 
 const tituloCurso =
-    document.getElementById(
-        "tituloCurso"
-    );
-
+    document.getElementById("tituloCurso");
 
 const descricaoCurso =
-    document.getElementById(
-        "descricaoCurso"
-    );
+    document.getElementById("descricaoCurso");
 
 
 // =====================================================
-// USUÁRIO ATUAL
+// ESTADO
 // =====================================================
 
-let usuarioAtual =
-    null;
+let usuarioAtual = null;
 
+let autenticacaoPronta = false;
 
-// =====================================================
-// AUTENTICAÇÃO PRONTA
-// =====================================================
-
-let autenticacaoPronta =
-    false;
+let cursoAutorizado = null;
 
 
 // =====================================================
-// DADOS DO CURSO AUTORIZADO
+// DEBUG INICIAL
 // =====================================================
 
-let cursoAutorizado =
-    null;
+console.log("======================================");
+console.log("INICIANDO NR1.JS");
+console.log("======================================");
 
+console.log("API:", API_URL);
+console.log("Curso:", CURSO.nome);
 
-// =====================================================
-// DEBUG
-// =====================================================
-
-console.log(
-    "======================================"
-);
-
-console.log(
-    "INICIANDO NR1.JS"
-);
-
-console.log(
-    "======================================"
-);
-
-console.log(
-    "API:",
-    API_URL
-);
-
-console.log(
-    "Curso:",
-    CURSO.nome
-);
-
-console.log(
-    "telaSenha:",
-    !!telaSenha
-);
-
-console.log(
-    "conteudoCurso:",
-    !!conteudoCurso
-);
-
-console.log(
-    "senhaInput:",
-    !!senhaInput
-);
-
-console.log(
-    "btnEntrar:",
-    !!btnEntrar
-);
-
-console.log(
-    "mensagem:",
-    !!mensagem
-);
-
-console.log(
-    "listaMateriais:",
-    !!listaMateriais
-);
-
-console.log(
-    "modal:",
-    !!modal
-);
-
-console.log(
-    "btnSair:",
-    !!btnSair
-);
+console.log("telaSenha:", !!telaSenha);
+console.log("conteudoCurso:", !!conteudoCurso);
+console.log("senhaInput:", !!senhaInput);
+console.log("btnEntrar:", !!btnEntrar);
+console.log("mensagem:", !!mensagem);
+console.log("listaMateriais:", !!listaMateriais);
+console.log("modal:", !!modal);
+console.log("btnSair:", !!btnSair);
 
 
 // =====================================================
@@ -206,18 +104,11 @@ console.log(
 // =====================================================
 
 if (tituloCurso) {
-
-    tituloCurso.textContent =
-        CURSO.nome;
-
+    tituloCurso.textContent = CURSO.nome;
 }
 
-
 if (descricaoCurso) {
-
-    descricaoCurso.textContent =
-        CURSO.descricao;
-
+    descricaoCurso.textContent = CURSO.descricao;
 }
 
 
@@ -229,48 +120,35 @@ onAuthStateChanged(
     auth,
     (usuario) => {
 
-        console.log(
-            "======================================"
-        );
+        console.log("======================================");
+        console.log("ESTADO DA AUTENTICAÇÃO");
 
-        console.log(
-            "ESTADO DA AUTENTICAÇÃO"
-        );
+        autenticacaoPronta = true;
 
 
-        autenticacaoPronta =
-            true;
-
-
-        // =================================================
+        // ---------------------------------------------
         // NÃO AUTENTICADO
-        // =================================================
+        // ---------------------------------------------
 
         if (!usuario) {
 
-            usuarioAtual =
-                null;
+            usuarioAtual = null;
 
             console.warn(
                 "Usuário não autenticado."
             );
 
-
-            window.location.href =
-                "index.html";
-
+            window.location.href = "index.html";
 
             return;
         }
 
 
-        // =================================================
+        // ---------------------------------------------
         // USUÁRIO AUTENTICADO
-        // =================================================
+        // ---------------------------------------------
 
-        usuarioAtual =
-            usuario;
-
+        usuarioAtual = usuario;
 
         console.log(
             "Usuário autenticado."
@@ -283,19 +161,15 @@ onAuthStateChanged(
 
         console.log(
             "Email:",
-            usuario.email ||
-            "não informado"
+            usuario.email || "não informado"
         );
 
         console.log(
             "Nome:",
-            usuario.displayName ||
-            "não informado"
+            usuario.displayName || "não informado"
         );
 
-        console.log(
-            "======================================"
-        );
+        console.log("======================================");
 
     }
 );
@@ -325,10 +199,7 @@ if (senhaInput) {
         "keydown",
         (event) => {
 
-            if (
-                event.key ===
-                "Enter"
-            ) {
+            if (event.key === "Enter") {
 
                 event.preventDefault();
 
@@ -348,21 +219,13 @@ if (senhaInput) {
 
 async function acessarCurso() {
 
-    console.log(
-        "======================================"
-    );
-
-    console.log(
-        "INICIANDO ACESSO AO CURSO"
-    );
-
-    console.log(
-        "======================================"
-    );
+    console.log("======================================");
+    console.log("INICIANDO ACESSO AO CURSO");
+    console.log("======================================");
 
 
     // =================================================
-    // AUTENTICAÇÃO
+    // VERIFICAR AUTENTICAÇÃO
     // =================================================
 
     if (!autenticacaoPronta) {
@@ -388,7 +251,7 @@ async function acessarCurso() {
 
 
     // =================================================
-    // SENHA
+    // PEGAR SENHA
     // =================================================
 
     const senha =
@@ -404,13 +267,9 @@ async function acessarCurso() {
             "erro"
         );
 
-
         if (senhaInput) {
-
             senhaInput.focus();
-
         }
-
 
         return;
     }
@@ -430,7 +289,7 @@ async function acessarCurso() {
     );
 
     console.log(
-        "Curso esperado:",
+        "Curso:",
         CURSO.nome
     );
 
@@ -441,8 +300,7 @@ async function acessarCurso() {
 
     if (btnEntrar) {
 
-        btnEntrar.disabled =
-            true;
+        btnEntrar.disabled = true;
 
         btnEntrar.textContent =
             "Verificando...";
@@ -459,35 +317,42 @@ async function acessarCurso() {
     try {
 
         // =================================================
+        // URL DA API
+        // =================================================
+
+        const url =
+            `${API_URL}/usar-senha-curso`;
+
+        console.log(
+            "Enviando requisição para:",
+            url
+        );
+
+
+        // =================================================
         // REQUISIÇÃO
         // =================================================
 
         const resposta =
             await fetch(
-                `${API_URL}/usar-senha-curso`,
+                url,
                 {
-
-                    method:
-                        "POST",
+                    method: "POST",
 
                     headers: {
-
                         "Content-Type":
                             "application/json"
-
                     },
 
-                    body:
-                        JSON.stringify({
+                    body: JSON.stringify({
 
-                            senha:
-                                senha,
+                        senha: senha,
 
-                            usuarioId:
-                                usuarioId
+                        usuarioId: usuarioId,
 
-                        })
+                        curso: CURSO.nome
 
+                    })
                 }
             );
 
@@ -499,108 +364,134 @@ async function acessarCurso() {
 
 
         // =================================================
-        // JSON
+        // TENTAR LER RESPOSTA
         // =================================================
 
-        let dados;
+        const texto =
+            await resposta.text();
 
 
-        try {
+        console.log(
+            "Resposta bruta:",
+            texto
+        );
 
-            dados =
-                await resposta.json();
 
-        }
-        catch (erro) {
+        let dados = null;
 
-            console.error(
-                "Resposta inválida:",
-                erro
-            );
 
-            throw new Error(
-                `Servidor retornou uma resposta inválida. HTTP ${resposta.status}`
-            );
+        if (texto) {
+
+            try {
+
+                dados =
+                    JSON.parse(texto);
+
+            }
+            catch (erro) {
+
+                console.error(
+                    "Servidor não retornou JSON:",
+                    erro
+                );
+
+            }
 
         }
 
 
         console.log(
-            "Resposta:",
+            "Resposta JSON:",
             dados
         );
 
 
         // =================================================
-        // ERRO HTTP
+        // ROTA NÃO EXISTE
+        // =================================================
+
+        if (resposta.status === 404) {
+
+            console.error(
+                "A rota /usar-senha-curso não existe no backend."
+            );
+
+            mostrarMensagem(
+                "O servidor não possui a rota de validação da senha do curso.",
+                "erro"
+            );
+
+            return;
+        }
+
+
+        // =================================================
+        // NÃO AUTORIZADO
+        // =================================================
+
+        if (
+            resposta.status === 401 ||
+            resposta.status === 403
+        ) {
+
+            mostrarMensagem(
+                dados?.erro ||
+                "Acesso não autorizado.",
+                "erro"
+            );
+
+            return;
+        }
+
+
+        // =================================================
+        // ERRO DO SERVIDOR
+        // =================================================
+
+        if (resposta.status >= 500) {
+
+            console.error(
+                "Erro interno:",
+                dados
+            );
+
+            mostrarMensagem(
+                "Erro interno no servidor. Tente novamente.",
+                "erro"
+            );
+
+            return;
+        }
+
+
+        // =================================================
+        // OUTROS ERROS HTTP
         // =================================================
 
         if (!resposta.ok) {
 
-            const erro =
+            mostrarMensagem(
                 dados?.erro ||
-                `Erro HTTP ${resposta.status}`;
-
-
-            if (
-                resposta.status ===
-                401
-            ) {
-
-                mostrarMensagem(
-                    erro,
-                    "erro"
-                );
-
-                return;
-            }
-
-
-            if (
-                resposta.status ===
-                403
-            ) {
-
-                mostrarMensagem(
-                    erro,
-                    "erro"
-                );
-
-                return;
-            }
-
-
-            if (
-                resposta.status ===
-                404
-            ) {
-
-                mostrarMensagem(
-                    erro,
-                    "erro"
-                );
-
-                return;
-            }
-
-
-            if (
-                resposta.status >=
-                500
-            ) {
-
-                mostrarMensagem(
-                    "Erro interno no servidor. Tente novamente.",
-                    "erro"
-                );
-
-                return;
-            }
-
-
-            throw new Error(
-                erro
+                `Erro HTTP ${resposta.status}.`,
+                "erro"
             );
+
+            return;
+        }
+
+
+        // =================================================
+        // VERIFICAR RESPOSTA
+        // =================================================
+
+        if (!dados) {
+
+            mostrarMensagem(
+                "O servidor não retornou uma resposta válida.",
+                "erro"
+            );
+
+            return;
         }
 
 
@@ -608,13 +499,10 @@ async function acessarCurso() {
         // VERIFICAR AUTORIZAÇÃO
         // =================================================
 
-        if (
-            dados?.valido !==
-            true
-        ) {
+        if (dados.valido !== true) {
 
             mostrarMensagem(
-                dados?.erro ||
+                dados.erro ||
                 "Senha inválida.",
                 "erro"
             );
@@ -629,8 +517,7 @@ async function acessarCurso() {
 
         const cursoServidor =
             String(
-                dados.curso ||
-                ""
+                dados.curso || ""
             )
                 .trim()
                 .toUpperCase();
@@ -644,8 +531,7 @@ async function acessarCurso() {
 
         if (
             cursoServidor &&
-            cursoServidor !==
-            cursoEsperado
+            cursoServidor !== cursoEsperado
         ) {
 
             console.error(
@@ -664,13 +550,9 @@ async function acessarCurso() {
 
 
             mostrarMensagem(
-
                 `Esta senha pertence ao curso "${dados.curso}" e não ao ${CURSO.nome}.`,
-
                 "erro"
-
             );
-
 
             return;
         }
@@ -682,8 +564,7 @@ async function acessarCurso() {
 
         if (
             dados.usuarioId &&
-            dados.usuarioId !==
-            usuarioId
+            dados.usuarioId !== usuarioId
         ) {
 
             console.error(
@@ -696,40 +577,33 @@ async function acessarCurso() {
                 "erro"
             );
 
-
             return;
         }
 
 
         // =================================================
-        // DADOS DO CURSO
+        // SALVAR DADOS AUTORIZADOS
         // =================================================
 
         cursoAutorizado = {
 
             pedidoId:
-                dados.pedidoId ||
-                null,
+                dados.pedidoId || null,
 
             usuarioId:
-                dados.usuarioId ||
-                usuarioId,
+                dados.usuarioId || usuarioId,
 
             curso:
-                dados.curso ||
-                CURSO.nome,
+                dados.curso || CURSO.nome,
 
             categoria:
-                dados.categoria ||
-                "EAD",
+                dados.categoria || "EAD",
 
             descricao:
-                dados.descricao ||
-                CURSO.descricao,
+                dados.descricao || CURSO.descricao,
 
             linkCurso:
-                dados.linkCurso ||
-                "",
+                dados.linkCurso || "",
 
             usosRestantes:
                 Number(
@@ -747,13 +621,9 @@ async function acessarCurso() {
         // LOG
         // =================================================
 
-        console.log(
-            "======================================"
-        );
-
-        console.log(
-            "ACESSO AUTORIZADO"
-        );
+        console.log("======================================");
+        console.log("ACESSO AUTORIZADO");
+        console.log("======================================");
 
         console.log(
             "Curso:",
@@ -785,21 +655,14 @@ async function acessarCurso() {
             cursoAutorizado.linkCurso
         );
 
-        console.log(
-            "======================================"
-        );
-
 
         // =================================================
         // MENSAGEM
         // =================================================
 
         mostrarMensagem(
-
             `Acesso autorizado. Usos restantes: ${cursoAutorizado.usosRestantes}`,
-
             "sucesso"
-
         );
 
 
@@ -808,13 +671,8 @@ async function acessarCurso() {
         // =================================================
 
         sessionStorage.setItem(
-
             "curso_acesso",
-
-            JSON.stringify(
-                cursoAutorizado
-            )
-
+            JSON.stringify(cursoAutorizado)
         );
 
 
@@ -824,7 +682,7 @@ async function acessarCurso() {
 
 
         // =================================================
-        // LIBERAR
+        // LIBERAR CURSO
         // =================================================
 
         await new Promise(
@@ -844,31 +702,35 @@ async function acessarCurso() {
     }
     catch (error) {
 
-        console.error(
-            "======================================"
-        );
-
-        console.error(
-            "ERRO AO VALIDAR ACESSO"
-        );
-
-        console.error(
-            error
-        );
-
-        console.error(
-            "======================================"
-        );
+        console.error("======================================");
+        console.error("ERRO AO VALIDAR ACESSO");
+        console.error(error);
+        console.error("======================================");
 
 
-        mostrarMensagem(
+        // ---------------------------------------------
+        // ERRO DE REDE
+        // ---------------------------------------------
 
-            error.message ||
-            "Não foi possível validar o acesso.",
+        if (
+            error instanceof TypeError
+        ) {
 
-            "erro"
+            mostrarMensagem(
+                "Não foi possível conectar ao servidor.",
+                "erro"
+            );
 
-        );
+        }
+        else {
+
+            mostrarMensagem(
+                error.message ||
+                "Não foi possível validar o acesso.",
+                "erro"
+            );
+
+        }
 
     }
     finally {
@@ -879,8 +741,7 @@ async function acessarCurso() {
 
         if (btnEntrar) {
 
-            btnEntrar.disabled =
-                false;
+            btnEntrar.disabled = false;
 
             btnEntrar.textContent =
                 "Acessar curso";
@@ -940,7 +801,7 @@ function liberarCurso() {
 
 
     // =================================================
-    // ATUALIZAR TÍTULO
+    // TÍTULO
     // =================================================
 
     if (
@@ -955,7 +816,7 @@ function liberarCurso() {
 
 
     // =================================================
-    // ATUALIZAR DESCRIÇÃO
+    // DESCRIÇÃO
     // =================================================
 
     if (
@@ -970,7 +831,7 @@ function liberarCurso() {
 
 
     // =================================================
-    // CARREGAR MATERIAIS
+    // MATERIAIS
     // =================================================
 
     carregarMateriais();
@@ -979,34 +840,13 @@ function liberarCurso() {
 
 
 // =====================================================
-// MATERIAIS
-// =====================================================
-//
-// IMPORTANTE:
-//
-// Os arquivos abaixo são exemplos.
-//
-// Você pode colocar os arquivos no GitHub Pages:
-//
-// videos/aula1.mp4
-// videos/aula2.mp4
-// videos/aula3.mp4
-//
-// pdfs/material1.pdf
-// pdfs/nr1.pdf
-// pdfs/seguranca.pdf
-//
-// Se posteriormente quiser deixar os materiais
-// totalmente no Firestore, esta parte pode ser
-// substituída por dados vindos do backend.
+// MATERIAIS DO CURSO
 // =====================================================
 
 const MATERIAIS = [
 
     {
-
-        tipo:
-            "video",
+        tipo: "video",
 
         titulo:
             "Aula 1 - Introdução à NR1",
@@ -1016,14 +856,10 @@ const MATERIAIS = [
 
         arquivo:
             "videos/aula1.mp4"
-
     },
 
-
     {
-
-        tipo:
-            "pdf",
+        tipo: "pdf",
 
         titulo:
             "Material 1 - Introdução",
@@ -1033,14 +869,10 @@ const MATERIAIS = [
 
         arquivo:
             "pdfs/material1.pdf"
-
     },
 
-
     {
-
-        tipo:
-            "video",
+        tipo: "video",
 
         titulo:
             "Aula 2 - NR1",
@@ -1050,14 +882,10 @@ const MATERIAIS = [
 
         arquivo:
             "videos/aula2.mp4"
-
     },
 
-
     {
-
-        tipo:
-            "pdf",
+        tipo: "pdf",
 
         titulo:
             "Material 2 - NR1",
@@ -1067,14 +895,10 @@ const MATERIAIS = [
 
         arquivo:
             "pdfs/nr1.pdf"
-
     },
 
-
     {
-
-        tipo:
-            "video",
+        tipo: "video",
 
         titulo:
             "Aula 3 - Segurança do Trabalho",
@@ -1084,14 +908,10 @@ const MATERIAIS = [
 
         arquivo:
             "videos/aula3.mp4"
-
     },
 
-
     {
-
-        tipo:
-            "pdf",
+        tipo: "pdf",
 
         titulo:
             "Material 3 - Segurança",
@@ -1101,7 +921,6 @@ const MATERIAIS = [
 
         arquivo:
             "pdfs/seguranca.pdf"
-
     }
 
 ];
@@ -1123,23 +942,16 @@ function carregarMateriais() {
     }
 
 
-    listaMateriais.innerHTML =
-        "";
+    listaMateriais.innerHTML = "";
 
 
     if (
-        !Array.isArray(
-            MATERIAIS
-        ) ||
+        !Array.isArray(MATERIAIS) ||
         MATERIAIS.length === 0
     ) {
 
         listaMateriais.innerHTML = `
-
-            <p>
-                Nenhum material disponível.
-            </p>
-
+            <p>Nenhum material disponível.</p>
         `;
 
         return;
@@ -1160,8 +972,7 @@ function carregarMateriais() {
 
 
             const tipoTexto =
-                material.tipo ===
-                "pdf"
+                material.tipo === "pdf"
                     ? "PDF"
                     : "Vídeo";
 
@@ -1204,7 +1015,7 @@ function carregarMateriais() {
 
 
     // =================================================
-    // EVENTOS
+    // EVENTOS DOS BOTÕES
     // =================================================
 
     listaMateriais
@@ -1225,9 +1036,7 @@ function carregarMateriais() {
 
 
                         const material =
-                            MATERIAIS[
-                                indice
-                            ];
+                            MATERIAIS[indice];
 
 
                         if (!material) {
@@ -1258,9 +1067,7 @@ function carregarMateriais() {
 // ABRIR MATERIAL
 // =====================================================
 
-function abrirMaterial(
-    material
-) {
+function abrirMaterial(material) {
 
     if (!modal) {
 
@@ -1304,18 +1111,14 @@ function abrirMaterial(
     // LIMPAR
     // =================================================
 
-    modalCorpo.innerHTML =
-        "";
+    modalCorpo.innerHTML = "";
 
 
     // =================================================
     // PDF
     // =================================================
 
-    if (
-        material.tipo ===
-        "pdf"
-    ) {
+    if (material.tipo === "pdf") {
 
         const iframe =
             document.createElement(
@@ -1360,10 +1163,7 @@ function abrirMaterial(
     // VÍDEO
     // =================================================
 
-    else if (
-        material.tipo ===
-        "video"
-    ) {
+    else if (material.tipo === "video") {
 
         const video =
             document.createElement(
@@ -1430,7 +1230,7 @@ function abrirMaterial(
 
 
     // =================================================
-    // ABRIR
+    // ABRIR MODAL
     // =================================================
 
     modal.classList.add(
@@ -1461,8 +1261,7 @@ if (modal) {
         (event) => {
 
             if (
-                event.target ===
-                modal
+                event.target === modal
             ) {
 
                 fecharModalCurso();
@@ -1476,13 +1275,12 @@ if (modal) {
 
 
 // =====================================================
-// FUNÇÃO FECHAR
+// FUNÇÃO FECHAR MODAL
 // =====================================================
 
 function fecharModalCurso() {
 
     if (!modal) {
-
         return;
     }
 
@@ -1494,7 +1292,6 @@ function fecharModalCurso() {
 
     if (modalCorpo) {
 
-        // Interrompe vídeo ao fechar.
         const video =
             modalCorpo.querySelector(
                 "video"
@@ -1504,6 +1301,8 @@ function fecharModalCurso() {
         if (video) {
 
             video.pause();
+
+            video.currentTime = 0;
 
         }
 
@@ -1517,17 +1316,14 @@ function fecharModalCurso() {
 
 
 // =====================================================
-// ESC
+// TECLA ESC
 // =====================================================
 
 document.addEventListener(
     "keydown",
     (event) => {
 
-        if (
-            event.key ===
-            "Escape"
-        ) {
+        if (event.key === "Escape") {
 
             fecharModalCurso();
 
@@ -1583,9 +1379,7 @@ if (btnSair) {
 
             try {
 
-                await signOut(
-                    auth
-                );
+                await signOut(auth);
 
             }
             catch (error) {
@@ -1608,19 +1402,18 @@ if (btnSair) {
 
 
             // =================================================
-            // LIMPAR VARIÁVEL
+            // LIMPAR VARIÁVEIS
             // =================================================
 
             cursoAutorizado =
                 null;
-
 
             usuarioAtual =
                 null;
 
 
             // =================================================
-            // LOGIN
+            // VOLTAR PARA LOGIN
             // =================================================
 
             window.location.href =
@@ -1636,9 +1429,7 @@ if (btnSair) {
 // ESCAPAR HTML
 // =====================================================
 
-function escaparHTML(
-    texto
-) {
+function escaparHTML(texto) {
 
     return String(
         texto || ""
@@ -1668,16 +1459,7 @@ function escaparHTML(
 
 
 // =====================================================
-// RECUPERAR SESSÃO EXISTENTE
-// =====================================================
-//
-// NÃO libera o curso automaticamente apenas porque
-// existe sessionStorage.
-//
-// O acesso verdadeiro precisa ser autorizado pelo
-// backend.
-//
-// Portanto, aqui apenas mostramos os dados salvos.
+// VERIFICAR SESSÃO LOCAL
 // =====================================================
 
 function verificarSessaoLocal() {
@@ -1691,9 +1473,7 @@ function verificarSessaoLocal() {
 
 
         if (!dados) {
-
             return null;
-
         }
 
 
@@ -1717,7 +1497,7 @@ function verificarSessaoLocal() {
 
 
         // =================================================
-        // VERIFICAR SE É O USUÁRIO ATUAL
+        // VERIFICAR USUÁRIO
         // =================================================
 
         if (
@@ -1751,6 +1531,7 @@ function verificarSessaoLocal() {
 
 
         return null;
+
     }
 
 }
@@ -1760,24 +1541,9 @@ function verificarSessaoLocal() {
 // FINAL
 // =====================================================
 
-console.log(
-    "======================================"
-);
-
-console.log(
-    "NR1.JS CARREGADO CORRETAMENTE"
-);
-
-console.log(
-    "Curso:",
-    CURSO.nome
-);
-
-console.log(
-    "API:",
-    API_URL
-);
-
-console.log(
-    "======================================"
-);
+console.log("======================================");
+console.log("NR1.JS CARREGADO CORRETAMENTE");
+console.log("Curso:", CURSO.nome);
+console.log("API:", API_URL);
+console.log("Endpoint:", `${API_URL}/usar-senha-curso`);
+console.log("======================================");
