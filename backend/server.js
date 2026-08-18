@@ -1,7 +1,9 @@
+import "dotenv/config";
+
 import express from "express";
 import cors from "cors";
 import Stripe from "stripe";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 import {
     cert,
@@ -26,7 +28,7 @@ import {
 const app = express();
 
 const PORT =
-    Number(process.env.PORT) || 10000;
+    process.env.PORT || 10000;
 
 
 // =====================================================
@@ -54,18 +56,23 @@ const FRONTEND_URL =
 
 
 // =====================================================
-// SMTP
+// RESEND
 // =====================================================
 
-const SMTP_USER =
-    process.env.SMTP_USER;
+const RESEND_API_KEY =
+    process.env.RESEND_API_KEY;
 
-const SMTP_PASS =
-    process.env.SMTP_PASS;
 
+// Remetente usado enquanto o domínio ainda não estiver
+// configurado/verificado no Resend.
+//
+// Depois você pode trocar para algo como:
+//
+// Plataforma <noreply@seudominio.com>
+//
 const EMAIL_FROM =
     process.env.EMAIL_FROM ||
-    SMTP_USER;
+    "Plataforma <onboarding@resend.dev>";
 
 
 // =====================================================
@@ -81,6 +88,7 @@ if (!STRIPE_SECRET_KEY) {
     process.exit(1);
 }
 
+
 if (!FIREBASE_PROJECT_ID) {
 
     console.error(
@@ -89,6 +97,7 @@ if (!FIREBASE_PROJECT_ID) {
 
     process.exit(1);
 }
+
 
 if (!FIREBASE_CLIENT_EMAIL) {
 
@@ -99,6 +108,7 @@ if (!FIREBASE_CLIENT_EMAIL) {
     process.exit(1);
 }
 
+
 if (!FIREBASE_PRIVATE_KEY) {
 
     console.error(
@@ -107,6 +117,17 @@ if (!FIREBASE_PRIVATE_KEY) {
 
     process.exit(1);
 }
+
+
+if (!RESEND_API_KEY) {
+
+    console.error(
+        "ERRO: RESEND_API_KEY não configurada."
+    );
+
+    process.exit(1);
+}
+
 
 if (!STRIPE_WEBHOOK_SECRET) {
 
@@ -125,6 +146,20 @@ const stripe =
     new Stripe(
         STRIPE_SECRET_KEY
     );
+
+
+// =====================================================
+// RESEND
+// =====================================================
+
+const resend =
+    new Resend(
+        RESEND_API_KEY
+    );
+
+console.log(
+    "Resend configurado."
+);
 
 
 // =====================================================
@@ -198,91 +233,6 @@ const firebaseAuth =
 
 
 // =====================================================
-// SMTP
-// =====================================================
-
-let emailTransporter = null;
-
-if (
-    SMTP_USER &&
-    SMTP_PASS
-) {
-
-    emailTransporter =
-        nodemailer.createTransport({
-
-            host:
-                "smtp.gmail.com",
-
-            port:
-                465,
-
-            secure:
-                true,
-
-            family:
-                4,
-
-            auth: {
-
-                user:
-                    SMTP_USER,
-
-                pass:
-                    SMTP_PASS
-
-            },
-
-            connectionTimeout:
-                30000,
-
-            greetingTimeout:
-                30000,
-
-            socketTimeout:
-                60000
-
-        });
-
-
-    console.log(
-        "Sistema SMTP configurado."
-    );
-
-
-    emailTransporter
-        .verify()
-
-        .then(() => {
-
-            console.log(
-                "SMTP: CONEXÃO OK."
-            );
-
-        })
-
-        .catch((error) => {
-
-            console.error(
-                "SMTP: ERRO NA CONEXÃO."
-            );
-
-            console.error(
-                error.message
-            );
-
-        });
-
-} else {
-
-    console.warn(
-        "SMTP não configurado."
-    );
-
-}
-
-
-// =====================================================
 // CORS
 // =====================================================
 
@@ -296,9 +246,13 @@ app.use(
 // =====================================================
 // WEBHOOK STRIPE
 //
-// IMPORTANTE:
-// express.raw() precisa ficar ANTES
-// de express.json().
+// MUITO IMPORTANTE:
+//
+// express.raw() precisa ficar ANTES de
+// express.json().
+//
+// NÃO coloque app.use(express.json())
+// antes desta rota.
 // =====================================================
 
 app.post(
@@ -316,12 +270,15 @@ app.post(
 
         if (!STRIPE_WEBHOOK_SECRET) {
 
+            console.error(
+                "STRIPE_WEBHOOK_SECRET não configurado."
+            );
+
             return res
                 .status(500)
                 .send(
                     "Webhook Stripe não configurado."
                 );
-
         }
 
 
@@ -333,12 +290,15 @@ app.post(
 
         if (!assinatura) {
 
+            console.error(
+                "Webhook sem stripe-signature."
+            );
+
             return res
                 .status(400)
                 .send(
                     "Assinatura Stripe ausente."
                 );
-
         }
 
 
@@ -366,8 +326,19 @@ app.post(
         catch (error) {
 
             console.error(
-                "ERRO DE ASSINATURA STRIPE:",
+                "======================================"
+            );
+
+            console.error(
+                "ERRO DE ASSINATURA STRIPE"
+            );
+
+            console.error(
                 error.message
+            );
+
+            console.error(
+                "======================================"
             );
 
             return res
@@ -375,7 +346,6 @@ app.post(
                 .send(
                     `Webhook Error: ${error.message}`
                 );
-
         }
 
 
@@ -427,12 +397,12 @@ app.post(
                     evento.data.object;
 
                 const metadata =
-                    session.metadata || {};
+                    session.metadata ||
+                    {};
 
                 const pedidoId =
-                    String(
-                        metadata.pedidoId || ""
-                    ).trim();
+                    metadata.pedidoId ||
+                    "";
 
 
                 if (pedidoId) {
@@ -533,9 +503,7 @@ app.post(
 // =====================================================
 
 app.use(
-    express.json({
-        limit: "1mb"
-    })
+    express.json()
 );
 
 
@@ -777,25 +745,19 @@ async function processarCheckoutConcluido(
 
 
     const pedidoId =
-        String(
-            metadata.pedidoId ||
-            ""
-        ).trim();
+        metadata.pedidoId ||
+        "";
 
 
     const usuarioId =
-        String(
-            metadata.usuarioId ||
-            session.client_reference_id ||
-            ""
-        ).trim();
+        metadata.usuarioId ||
+        session.client_reference_id ||
+        "";
 
 
     const cursoId =
-        String(
-            metadata.cursoId ||
-            ""
-        ).trim();
+        metadata.cursoId ||
+        "";
 
 
     const pago =
@@ -837,9 +799,11 @@ async function processarCheckoutConcluido(
 
     if (!pedidoId) {
 
-        throw new Error(
+        console.error(
             "Webhook sem pedidoId."
         );
+
+        return;
 
     }
 
@@ -937,6 +901,9 @@ async function processarCheckoutConcluido(
 
             linkCurso:
                 curso.linkCurso,
+
+            senhaCurso:
+                curso.senhaCurso,
 
             pago:
                 pago,
@@ -1084,7 +1051,7 @@ async function processarCheckoutConcluido(
 
 
 // =====================================================
-// ENVIAR SENHA POR E-MAIL
+// ENVIAR SENHA POR E-MAIL - RESEND
 // =====================================================
 
 async function enviarSenhaCursoPorEmail({
@@ -1102,7 +1069,7 @@ async function enviarSenhaCursoPorEmail({
     );
 
     console.log(
-        "INICIANDO ENVIO DE E-MAIL"
+        "INICIANDO ENVIO DE E-MAIL - RESEND"
     );
 
     console.log(
@@ -1134,10 +1101,10 @@ async function enviarSenhaCursoPorEmail({
     }
 
 
-    if (!emailTransporter) {
+    if (!RESEND_API_KEY) {
 
         throw new Error(
-            "SMTP não configurado."
+            "RESEND_API_KEY não configurada."
         );
 
     }
@@ -1314,14 +1281,18 @@ Pedido: ${pedidoId}
 `;
 
 
+    // =================================================
+    // RESEND
+    // =================================================
+
     const resultado =
-        await emailTransporter.sendMail({
+        await resend.emails.send({
 
             from:
                 EMAIL_FROM,
 
             to:
-                email,
+                [email],
 
             subject:
                 `Acesso ao curso ${curso.nome}`,
@@ -1335,11 +1306,37 @@ Pedido: ${pedidoId}
         });
 
 
+    if (
+        resultado.error
+    ) {
+
+        console.error(
+            "RESEND ERRO:",
+            resultado.error
+        );
+
+        throw new Error(
+            resultado.error.message ||
+            "Erro ao enviar e-mail pelo Resend."
+        );
+
+    }
+
+
+    const messageId =
+        resultado.data?.id ||
+        "";
+
+
     console.log(
-        "E-MAIL ENVIADO:",
-        resultado.messageId
+        "E-MAIL ENVIADO PELO RESEND:",
+        messageId
     );
 
+
+    // =================================================
+    // REGISTRAR ENVIO
+    // =================================================
 
     await db
         .collection(
@@ -1363,7 +1360,10 @@ Pedido: ${pedidoId}
                     email,
 
                 emailMessageId:
-                    resultado.messageId,
+                    messageId,
+
+                emailProvider:
+                    "resend",
 
                 atualizadoEm:
                     FieldValue
@@ -1388,7 +1388,7 @@ Pedido: ${pedidoId}
             false,
 
         messageId:
-            resultado.messageId
+            messageId
 
     };
 
@@ -1570,8 +1570,7 @@ app.post(
                             pedidoIdRecebido
                         );
 
-            }
-            else {
+            } else {
 
                 pedidoRef =
                     db
@@ -1685,6 +1684,18 @@ app.post(
                 `${FRONTEND_URL}/pagamento.html?cancelado=true&pedidoId=${encodeURIComponent(pedidoId)}`;
 
 
+            console.log(
+                "SUCCESS URL:",
+                successUrl
+            );
+
+
+            console.log(
+                "CANCEL URL:",
+                cancelUrl
+            );
+
+
             // =================================================
             // STRIPE
             // =================================================
@@ -1786,7 +1797,7 @@ app.post(
                     checkoutUrl:
                         session.url,
 
-                    stripeStatus:
+                    paymentStatus:
                         session.status ||
                         "open",
 
@@ -1812,6 +1823,11 @@ app.post(
             console.log(
                 "PEDIDO:",
                 pedidoId
+            );
+
+            console.log(
+                "URL:",
+                session.url
             );
 
 
@@ -1876,6 +1892,10 @@ app.post(
 
 // =====================================================
 // CONSULTAR PAGAMENTO
+//
+// GET:
+//
+// /consultar-pagamento?session_id=cs_test_...
 // =====================================================
 
 app.get(
@@ -1932,7 +1952,7 @@ app.get(
 
 
             // =================================================
-            // STRIPE
+            // CONSULTAR SESSION DIRETAMENTE NO STRIPE
             // =================================================
 
             const session =
@@ -1947,25 +1967,19 @@ app.get(
 
 
             const pedidoId =
-                String(
-                    metadata.pedidoId ||
-                    ""
-                ).trim();
+                metadata.pedidoId ||
+                "";
 
 
             const usuarioId =
-                String(
-                    metadata.usuarioId ||
-                    session.client_reference_id ||
-                    ""
-                ).trim();
+                metadata.usuarioId ||
+                session.client_reference_id ||
+                "";
 
 
             const cursoId =
-                String(
-                    metadata.cursoId ||
-                    ""
-                ).trim();
+                metadata.cursoId ||
+                "";
 
 
             const pago =
@@ -1980,7 +1994,7 @@ app.get(
 
 
             // =================================================
-            // FIRESTORE
+            // PEDIDO FIRESTORE
             // =================================================
 
             let dadosPedido = {};
@@ -2037,7 +2051,7 @@ app.get(
 
 
             // =================================================
-            // SE PAGOU
+            // SE PAGOU, SINCRONIZAR PEDIDO
             // =================================================
 
             if (
@@ -2181,74 +2195,6 @@ app.get(
                     );
 
 
-                // =================================================
-                // ENVIAR E-MAIL
-                //
-                // Isso também permite que a consulta
-                // funcione caso o webhook ainda não
-                // tenha processado o checkout.
-                // =================================================
-
-                try {
-
-                    await enviarSenhaCursoPorEmail({
-
-                        pedidoId:
-                            pedidoId,
-
-                        usuarioId:
-                            usuarioId,
-
-                        email:
-                            emailUsuario,
-
-                        cursoId:
-                            curso.id,
-
-                        pedidoAtual:
-                            dadosPedido
-
-                    });
-
-                }
-                catch (erroEmail) {
-
-                    console.error(
-                        "Erro enviando senha durante consulta:",
-                        erroEmail.message
-                    );
-
-
-                    await db
-                        .collection(
-                            "pedidos"
-                        )
-                        .doc(
-                            pedidoId
-                        )
-                        .set(
-
-                            {
-
-                                emailErro:
-                                    erroEmail.message,
-
-                                emailErroEm:
-                                    FieldValue
-                                        .serverTimestamp()
-
-                            },
-
-                            {
-                                merge:
-                                    true
-                            }
-
-                        );
-
-                }
-
-
                 dadosPedido = {
 
                     ...dadosPedido,
@@ -2263,9 +2209,7 @@ app.get(
                         usuarioId,
 
                     email:
-                        emailStripe ||
-                        dadosPedido.email ||
-                        "",
+                        emailUsuario,
 
                     cursoId:
                         curso.id,
@@ -2416,8 +2360,8 @@ app.get(
                     : "não configurado",
 
             email:
-                emailTransporter
-                    ? "configurado"
+                RESEND_API_KEY
+                    ? "Resend configurado"
                     : "não configurado",
 
             sistema:
@@ -2431,6 +2375,9 @@ app.get(
 
             senhaCursos:
                 "Firestore",
+
+            emailProvider:
+                "Resend",
 
             linkNoEmail:
                 false,
@@ -2478,7 +2425,11 @@ app.get(
 
 
 // =====================================================
-// TESTAR E-MAIL
+// TESTAR E-MAIL - RESEND
+//
+// Exemplo:
+//
+// /testar-email?email=seuemail@gmail.com
 // =====================================================
 
 app.get(
@@ -2516,7 +2467,7 @@ app.get(
             }
 
 
-            if (!emailTransporter) {
+            if (!RESEND_API_KEY) {
 
                 return res
                     .status(500)
@@ -2526,41 +2477,132 @@ app.get(
                             false,
 
                         erro:
-                            "SMTP não configurado."
+                            "RESEND_API_KEY não configurada."
 
                     });
 
             }
 
 
+            console.log(
+                "======================================"
+            );
+
+            console.log(
+                "TESTANDO E-MAIL COM RESEND"
+            );
+
+            console.log(
+                "Para:",
+                email
+            );
+
+            console.log(
+                "De:",
+                EMAIL_FROM
+            );
+
+            console.log(
+                "======================================"
+            );
+
+
             const resultado =
-                await emailTransporter.sendMail({
+                await resend.emails.send({
 
                     from:
                         EMAIL_FROM,
 
                     to:
-                        email,
+                        [email],
 
                     subject:
                         "Teste de e-mail - Plataforma",
 
                     text:
-                        "O sistema de e-mail está funcionando.",
+                        "O sistema de e-mail está funcionando através do Resend.",
 
                     html:
                         `
-                        <h1>
-                            Teste de e-mail
-                        </h1>
+                        <!DOCTYPE html>
 
-                        <p>
-                            O sistema de e-mail
-                            está funcionando.
-                        </p>
+                        <html lang="pt-BR">
+
+                        <head>
+
+                            <meta charset="UTF-8">
+
+                            <title>
+                                Teste de e-mail
+                            </title>
+
+                        </head>
+
+                        <body
+                            style="
+                                font-family:Arial,sans-serif;
+                                padding:30px;
+                            "
+                        >
+
+                            <h1>
+                                Teste de e-mail
+                            </h1>
+
+                            <p>
+                                O sistema de e-mail
+                                está funcionando.
+                            </p>
+
+                            <p>
+                                Provedor:
+                                <strong>
+                                    Resend
+                                </strong>
+                            </p>
+
+                        </body>
+
+                        </html>
                         `
 
                 });
+
+
+            if (
+                resultado.error
+            ) {
+
+                console.error(
+                    "RESEND ERRO:",
+                    resultado.error
+                );
+
+                return res
+                    .status(500)
+                    .json({
+
+                        sucesso:
+                            false,
+
+                        erro:
+                            resultado.error.message ||
+                            "Erro ao enviar e-mail."
+
+                    });
+
+            }
+
+
+            const messageId =
+                resultado.data?.id ||
+                null;
+
+
+            console.log(
+                "E-MAIL DE TESTE ENVIADO:",
+                messageId
+            );
 
 
             return res.json({
@@ -2569,10 +2611,13 @@ app.get(
                     true,
 
                 messageId:
-                    resultado.messageId,
+                    messageId,
 
                 email:
-                    email
+                    email,
+
+                provider:
+                    "resend"
 
             });
 
@@ -2633,52 +2678,6 @@ app.use(
 
 
 // =====================================================
-// TRATAMENTO DE ERRO JSON
-// =====================================================
-
-app.use(
-    (
-        error,
-        req,
-        res,
-        next
-    ) => {
-
-        console.error(
-            "Erro interno:",
-            error
-        );
-
-
-        if (
-            res.headersSent
-        ) {
-
-            return next(
-                error
-            );
-
-        }
-
-
-        return res
-            .status(500)
-            .json({
-
-                sucesso:
-                    false,
-
-                erro:
-                    error.message ||
-                    "Erro interno do servidor."
-
-            });
-
-    }
-);
-
-
-// =====================================================
 // INICIAR SERVIDOR
 // =====================================================
 
@@ -2718,9 +2717,9 @@ app.listen(
         );
 
         console.log(
-            "SMTP:",
-            emailTransporter
-                ? "configurado"
+            "E-mail:",
+            RESEND_API_KEY
+                ? "Resend configurado"
                 : "não configurado"
         );
 
