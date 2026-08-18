@@ -196,76 +196,43 @@ const firebaseAuth =
 
 
 // =====================================================
-// TRANSPORTADOR DE E-MAIL
-// ====================================================
- 
+// TRANSPORTADOR DE E-MAIL - GMAIL
+// =====================================================
+
 let emailTransporter = null;
 
-if (
-    SMTP_HOST &&
-    SMTP_USER &&
-    SMTP_PASS
-) {
+if (SMTP_USER && SMTP_PASS) {
 
-    emailTransporter =
-        nodemailer.createTransport({
+    emailTransporter = nodemailer.createTransport({
 
-            host:
-                SMTP_HOST,
+        service: "gmail",
 
-            port:
-                SMTP_PORT,
+        auth: {
+            user: SMTP_USER,
+            pass: SMTP_PASS
+        },
 
-            secure:
-                SMTP_PORT === 465,
+        connectionTimeout: 30000,
+        greetingTimeout: 30000,
+        socketTimeout: 60000
 
-            family:
-                4,
+    });
 
-            auth: {
-
-                user:
-                    SMTP_USER,
-
-                pass:
-                    SMTP_PASS
-
-            },
-
-            connectionTimeout:
-                15000,
-
-            greetingTimeout:
-                15000,
-
-            socketTimeout:
-                30000
-
-        });
-
-    console.log(
-        "Sistema de e-mail configurado."
-    );
+    console.log("Sistema de e-mail configurado.");
+    console.log("SMTP usando Gmail.");
 
     emailTransporter.verify()
 
         .then(() => {
 
-            console.log(
-                "SMTP: CONEXÃO OK."
-            );
+            console.log("SMTP: CONEXÃO OK.");
 
         })
 
         .catch((error) => {
 
-            console.error(
-                "SMTP: ERRO NA CONEXÃO."
-            );
-
-            console.error(
-                error.message
-            );
+            console.error("SMTP: ERRO NA CONEXÃO.");
+            console.error(error);
 
         });
 
