@@ -48,9 +48,18 @@ const FIREBASE_CLIENT_EMAIL =
 const FIREBASE_PRIVATE_KEY =
     process.env.FIREBASE_PRIVATE_KEY;
 
+
+// =====================================================
+// FRONTEND
+//
+// IMPORTANTE:
+// Este é o endereço do GitHub Pages,
+// NÃO o endereço do Render.
+// =====================================================
+
 const FRONTEND_URL =
     process.env.FRONTEND_URL ||
-    "https://plataforma-56gy.onrender.com";
+    "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA";
 
 
 // =====================================================
@@ -189,7 +198,7 @@ const firebaseAuth =
 
 
 // =====================================================
-// E-MAIL
+// SMTP
 // =====================================================
 
 let emailTransporter = null;
@@ -202,8 +211,23 @@ if (
     emailTransporter =
         nodemailer.createTransport({
 
-            service:
-                "gmail",
+            host:
+                "smtp.gmail.com",
+
+            port:
+                587,
+
+            secure:
+                false,
+
+            requireTLS:
+                true,
+
+            // Força IPv4.
+            // Resolve o ENETUNREACH do Render
+            // tentando conectar no IPv6.
+            family:
+                4,
 
             auth: {
 
@@ -226,11 +250,14 @@ if (
 
         });
 
+
     console.log(
         "Sistema de e-mail configurado."
     );
 
-    emailTransporter.verify()
+
+    emailTransporter
+        .verify()
 
         .then(() => {
 
@@ -257,6 +284,7 @@ if (
     console.warn(
         "SMTP não configurado."
     );
+
 }
 
 
@@ -275,7 +303,7 @@ app.use(
 // WEBHOOK STRIPE
 //
 // IMPORTANTE:
-// express.raw() precisa ficar ANTES de express.json().
+// raw precisa vir ANTES do express.json().
 // =====================================================
 
 app.post(
@@ -534,8 +562,6 @@ app.post(
                         valor:
                             curso.valor,
 
-                        // Link fica no banco.
-                        // NÃO é enviado por e-mail.
                         linkCurso:
                             curso.linkCurso,
 
@@ -804,8 +830,6 @@ app.post(
 
 // =====================================================
 // JSON NORMAL
-//
-// TEM QUE VIR DEPOIS DO WEBHOOK.
 // =====================================================
 
 app.use(
@@ -814,7 +838,7 @@ app.use(
 
 
 // =====================================================
-// FUNÇÃO ESCAPAR HTML
+// ESCAPAR HTML
 // =====================================================
 
 function escaparHtml(
@@ -854,7 +878,7 @@ function escaparHtml(
 
 
 // =====================================================
-// BUSCAR CURSO PELO ID
+// BUSCAR CURSO
 // =====================================================
 
 async function buscarCursoPorId(
@@ -874,101 +898,87 @@ async function buscarCursoPorId(
     }
 
 
-    try {
-
-        const documento =
-            await db
-                .collection(
-                    "cursos_config"
-                )
-                .doc(
-                    id
-                )
-                .get();
-
-
-        if (
-            !documento.exists
-        ) {
-
-            console.warn(
-                "Curso não encontrado:",
+    const documento =
+        await db
+            .collection(
+                "cursos_config"
+            )
+            .doc(
                 id
-            );
-
-            return null;
-
-        }
+            )
+            .get();
 
 
-        const dados =
-            documento.data() ||
-            {};
+    if (
+        !documento.exists
+    ) {
 
-
-        return {
-
-            id:
-                documento.id,
-
-            nome:
-                String(
-                    dados.nome ||
-                    documento.id
-                ).trim(),
-
-            descricao:
-                String(
-                    dados.descricao ||
-                    dados["descrição"] ||
-                    "Curso adquirido na plataforma."
-                ).trim(),
-
-            senhaCurso:
-                String(
-                    dados.senhaCurso ||
-                    ""
-                ).trim(),
-
-            linkCurso:
-                String(
-                    dados.linkCurso ||
-                    ""
-                ).trim(),
-
-            categoria:
-                String(
-                    dados.categoria ||
-                    "EAD"
-                ).trim(),
-
-            ativo:
-                dados.ativo !== false,
-
-            valor:
-                Number(
-                    dados.valor
-                ) || 0
-
-        };
-
-    }
-    catch (error) {
-
-        console.error(
-            "Erro buscando curso:",
-            error
+        console.warn(
+            "Curso não encontrado:",
+            id
         );
 
-        throw error;
+        return null;
 
     }
+
+
+    const dados =
+        documento.data() ||
+        {};
+
+
+    return {
+
+        id:
+            documento.id,
+
+        nome:
+            String(
+                dados.nome ||
+                documento.id
+            ).trim(),
+
+        descricao:
+            String(
+                dados.descricao ||
+                dados["descrição"] ||
+                "Curso adquirido na plataforma."
+            ).trim(),
+
+        senhaCurso:
+            String(
+                dados.senhaCurso ||
+                ""
+            ).trim(),
+
+        linkCurso:
+            String(
+                dados.linkCurso ||
+                ""
+            ).trim(),
+
+        categoria:
+            String(
+                dados.categoria ||
+                "EAD"
+            ).trim(),
+
+        ativo:
+            dados.ativo !== false,
+
+        valor:
+            Number(
+                dados.valor
+            ) || 0
+
+    };
 
 }
 
 
 // =====================================================
-// BUSCAR E-MAIL DO USUÁRIO
+// BUSCAR E-MAIL
 // =====================================================
 
 async function buscarEmailUsuario({
@@ -1053,13 +1063,6 @@ async function buscarEmailUsuario({
 
 // =====================================================
 // ENVIAR SENHA POR E-MAIL
-//
-// ENVIA:
-// - nome do curso
-// - senha
-//
-// NÃO ENVIA:
-// - link do curso
 // =====================================================
 
 async function enviarSenhaCursoPorEmail({
@@ -1225,21 +1228,12 @@ async function enviarSenhaCursoPorEmail({
         </p>
 
         <p>
-
-            <strong>
-                Curso:
-            </strong>
-
+            <strong>Curso:</strong>
             ${nomeCursoHtml}
-
         </p>
 
         <p>
-
-            <strong>
-                Senha:
-            </strong>
-
+            <strong>Senha:</strong>
         </p>
 
         <div
@@ -1381,19 +1375,7 @@ Pedido: ${pedidoId}
 
 
 // =====================================================
-// CRIAR PAGAMENTO STRIPE
-// =====================================================
-//
-// POST /criar-pagamento
-//
-// Body:
-//
-// {
-//     "cursoId": "1001",
-//     "usuarioId": "...",
-//     "email": "usuario@email.com"
-// }
-//
+// CRIAR PAGAMENTO
 // =====================================================
 
 app.post(
@@ -1448,7 +1430,7 @@ app.post(
 
 
             // =================================================
-            // VALIDAR ID
+            // VALIDAR CURSO
             // =================================================
 
             if (!cursoId) {
@@ -1517,7 +1499,7 @@ app.post(
 
 
             // =================================================
-            // CURSO DESATIVADO
+            // VERIFICAR ATIVO
             // =================================================
 
             if (
@@ -1540,7 +1522,7 @@ app.post(
 
 
             // =================================================
-            // VALOR
+            // VERIFICAR VALOR
             // =================================================
 
             if (
@@ -1563,15 +1545,45 @@ app.post(
 
 
             // =================================================
-            // GERAR PEDIDO
+            // PEDIDO
+            //
+            // Se o frontend enviar pedidoId,
+            // usamos esse ID.
+            //
+            // Caso contrário, criamos um novo.
             // =================================================
 
-            const pedidoRef =
-                db
-                    .collection(
-                        "pedidos"
-                    )
-                    .doc();
+            const pedidoIdRecebido =
+                String(
+                    req.body?.pedidoId ||
+                    ""
+                ).trim();
+
+
+            let pedidoRef;
+
+
+            if (pedidoIdRecebido) {
+
+                pedidoRef =
+                    db
+                        .collection(
+                            "pedidos"
+                        )
+                        .doc(
+                            pedidoIdRecebido
+                        );
+
+            } else {
+
+                pedidoRef =
+                    db
+                        .collection(
+                            "pedidos"
+                        )
+                        .doc();
+
+            }
 
 
             const pedidoId =
@@ -1606,53 +1618,92 @@ app.post(
 
 
             // =================================================
-            // SALVAR PEDIDO ANTES DO STRIPE
+            // SALVAR PEDIDO
             // =================================================
 
-            await pedidoRef.set({
+            await pedidoRef.set(
 
-                pedidoId:
-                    pedidoId,
+                {
 
-                usuarioId:
-                    usuarioId,
+                    pedidoId:
+                        pedidoId,
 
-                email:
-                    emailFinal,
+                    usuarioId:
+                        usuarioId,
 
-                cursoId:
-                    curso.id,
+                    email:
+                        emailFinal,
 
-                curso:
-                    curso.nome,
+                    cursoId:
+                        curso.id,
 
-                descricao:
-                    curso.descricao,
+                    curso:
+                        curso.nome,
 
-                categoria:
-                    curso.categoria,
+                    descricao:
+                        curso.descricao,
 
-                valor:
-                    curso.valor,
+                    categoria:
+                        curso.categoria,
 
-                linkCurso:
-                    curso.linkCurso,
+                    valor:
+                        curso.valor,
 
-                pago:
-                    false,
+                    linkCurso:
+                        curso.linkCurso,
 
-                paymentStatus:
-                    "pending",
+                    pago:
+                        false,
 
-                criadoEm:
-                    FieldValue
-                        .serverTimestamp(),
+                    paymentStatus:
+                        "pending",
 
-                atualizadoEm:
-                    FieldValue
-                        .serverTimestamp()
+                    criadoEm:
+                        FieldValue
+                            .serverTimestamp(),
 
-            });
+                    atualizadoEm:
+                        FieldValue
+                            .serverTimestamp()
+
+                },
+
+                {
+                    merge:
+                        true
+                }
+
+            );
+
+
+            // =================================================
+            // URLS DO STRIPE
+            //
+            // A parte importante é:
+            //
+            // {CHECKOUT_SESSION_ID}
+            //
+            // O Stripe substitui isso automaticamente
+            // pelo ID real da sessão.
+            // =================================================
+
+            const successUrl =
+                `${FRONTEND_URL}/sucesso.html?session_id={CHECKOUT_SESSION_ID}&pedidoId=${encodeURIComponent(pedidoId)}`;
+
+
+            const cancelUrl =
+                `${FRONTEND_URL}/pagamento.html?cancelado=true&pedidoId=${encodeURIComponent(pedidoId)}`;
+
+
+            console.log(
+                "SUCCESS URL:",
+                successUrl
+            );
+
+            console.log(
+                "CANCEL URL:",
+                cancelUrl
+            );
 
 
             // =================================================
@@ -1672,8 +1723,10 @@ app.post(
 
                     ...(emailFinal
                         ? {
+
                             customer_email:
                                 emailFinal
+
                         }
                         : {}),
 
@@ -1744,23 +1797,38 @@ app.post(
 
 
                     // -----------------------------------------
-                    // URL DE SUCESSO
+                    // SUCESSO
                     // -----------------------------------------
 
                     success_url:
-                   'https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/sucesso.html',
+                        successUrl,
+
 
                     // -----------------------------------------
-                    // URL DE CANCELAMENTO
+                    // CANCELAMENTO
                     // -----------------------------------------
 
                     cancel_url:
-                   'https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA/pagamento'
+                        cancelUrl
+
                 });
 
 
             // =================================================
-            // ATUALIZAR PEDIDO COM STRIPE
+            // VALIDAR URL
+            // =================================================
+
+            if (!session.url) {
+
+                throw new Error(
+                    "O Stripe criou a sessão, mas não retornou uma URL de checkout."
+                );
+
+            }
+
+
+            // =================================================
+            // ATUALIZAR PEDIDO
             // =================================================
 
             await pedidoRef.set(
@@ -1792,29 +1860,50 @@ app.post(
 
 
             // =================================================
-            // RESPOSTA
-            // =================================================
-            //
-            // ESTE É O PONTO QUE CORRIGE:
-            //
-            // "O Stripe não retornou a URL de pagamento."
-            //
-            // Agora o frontend recebe:
-            //
-            // dados.url
-            //
+            // LOG
             // =================================================
 
             console.log(
-                "PAGAMENTO CRIADO:",
+                "======================================"
+            );
+
+            console.log(
+                "PAGAMENTO CRIADO:"
+            );
+
+            console.log(
+                "Session:",
                 session.id
             );
 
             console.log(
-                "URL STRIPE:",
+                "Pedido:",
+                pedidoId
+            );
+
+            console.log(
+                "Curso:",
+                curso.id
+            );
+
+            console.log(
+                "Valor:",
+                curso.valor
+            );
+
+            console.log(
+                "URL:",
                 session.url
             );
 
+            console.log(
+                "======================================"
+            );
+
+
+            // =================================================
+            // RESPOSTA
+            // =================================================
 
             return res.json({
 
@@ -1828,6 +1917,9 @@ app.post(
                     session.id,
 
                 url:
+                    session.url,
+
+                checkoutUrl:
                     session.url,
 
                 pedidoId:
@@ -1848,8 +1940,19 @@ app.post(
         catch (error) {
 
             console.error(
-                "ERRO AO CRIAR PAGAMENTO:",
+                "======================================"
+            );
+
+            console.error(
+                "ERRO AO CRIAR PAGAMENTO"
+            );
+
+            console.error(
                 error
+            );
+
+            console.error(
+                "======================================"
             );
 
 
@@ -2145,6 +2248,11 @@ app.listen(
 
         console.log(
             "Pagamento: /criar-pagamento"
+        );
+
+        console.log(
+            "Frontend:",
+            FRONTEND_URL
         );
 
         console.log(
