@@ -304,10 +304,6 @@ async function buscarConfiguracaoCurso(
                 .get();
 
 
-        // =================================================
-        // TENTAR MAIÚSCULO
-        // =================================================
-
         if (!documento.exists) {
 
             documento =
@@ -321,10 +317,6 @@ async function buscarConfiguracaoCurso(
                     .get();
         }
 
-
-        // =================================================
-        // NÃO ENCONTRADO
-        // =================================================
 
         if (!documento.exists) {
 
@@ -341,19 +333,11 @@ async function buscarConfiguracaoCurso(
             documento.data() || {};
 
 
-        // =================================================
-        // DESCRIÇÃO
-        // =================================================
-
         const descricao =
             dados.descricao ||
             dados["descrição"] ||
             "Curso adquirido na plataforma.";
 
-
-        // =================================================
-        // SENHA
-        // =================================================
 
         const senhaCurso =
             String(
@@ -421,10 +405,6 @@ async function buscarEmailUsuario({
 
 }) {
 
-    // =================================================
-    // 1. E-MAIL DO STRIPE
-    // =================================================
-
     if (
         emailStripe &&
         String(emailStripe).trim()
@@ -436,10 +416,6 @@ async function buscarEmailUsuario({
     }
 
 
-    // =================================================
-    // 2. E-MAIL JÁ SALVO NO PEDIDO
-    // =================================================
-
     if (
         emailPedido &&
         String(emailPedido).trim()
@@ -450,10 +426,6 @@ async function buscarEmailUsuario({
         ).trim();
     }
 
-
-    // =================================================
-    // 3. FIREBASE AUTH
-    // =================================================
 
     if (
         usuarioId &&
@@ -506,10 +478,6 @@ async function enviarSenhaCursoPorEmail({
 
 }) {
 
-    // =================================================
-    // VALIDAR E-MAIL
-    // =================================================
-
     if (!email) {
 
         throw new Error(
@@ -518,10 +486,6 @@ async function enviarSenhaCursoPorEmail({
     }
 
 
-    // =================================================
-    // VALIDAR SMTP
-    // =================================================
-
     if (!emailTransporter) {
 
         throw new Error(
@@ -529,10 +493,6 @@ async function enviarSenhaCursoPorEmail({
         );
     }
 
-
-    // =================================================
-    // EVITAR DUPLICIDADE
-    // =================================================
 
     if (
         pedidoAtual?.senhaEmailEnviado === true
@@ -555,10 +515,6 @@ async function enviarSenhaCursoPorEmail({
     }
 
 
-    // =================================================
-    // BUSCAR CURSO
-    // =================================================
-
     const configuracao =
         await buscarConfiguracaoCurso(
             curso
@@ -572,10 +528,6 @@ async function enviarSenhaCursoPorEmail({
         );
     }
 
-
-    // =================================================
-    // SENHA
-    // =================================================
 
     const senhaCurso =
         String(
@@ -592,19 +544,11 @@ async function enviarSenhaCursoPorEmail({
     }
 
 
-    // =================================================
-    // LINK
-    // =================================================
-
     const linkCurso =
         configuracao.linkCurso ||
         pedidoAtual?.linkCurso ||
         "";
 
-
-    // =================================================
-    // NOME
-    // =================================================
 
     const nomeCurso =
         configuracao.nome ||
@@ -628,10 +572,6 @@ async function enviarSenhaCursoPorEmail({
             pedidoId
         );
 
-
-    // =================================================
-    // HTML
-    // =================================================
 
     const html = `
 
@@ -750,10 +690,6 @@ async function enviarSenhaCursoPorEmail({
 `;
 
 
-    // =================================================
-    // TEXTO
-    // =================================================
-
     const texto = `
 
 Seu pagamento foi confirmado.
@@ -775,10 +711,6 @@ Pedido: ${pedidoId}
 `;
 
 
-    // =================================================
-    // ENVIAR
-    // =================================================
-
     await emailTransporter.sendMail({
 
         from:
@@ -798,10 +730,6 @@ Pedido: ${pedidoId}
 
     });
 
-
-    // =================================================
-    // MARCAR COMO ENVIADO
-    // =================================================
 
     await db
         .collection(
@@ -839,30 +767,7 @@ Pedido: ${pedidoId}
 
 
     console.log(
-        "======================================"
-    );
-
-    console.log(
         "SENHA ENVIADA POR E-MAIL"
-    );
-
-    console.log(
-        "E-mail:",
-        email
-    );
-
-    console.log(
-        "Curso:",
-        nomeCurso
-    );
-
-    console.log(
-        "Pedido:",
-        pedidoId
-    );
-
-    console.log(
-        "======================================"
     );
 
 
@@ -881,10 +786,6 @@ Pedido: ${pedidoId}
 // =====================================================
 // WEBHOOK STRIPE
 // =====================================================
-//
-// IMPORTANTE:
-// express.raw() precisa ficar ANTES de express.json().
-// =====================================================
 
 app.post(
 
@@ -898,10 +799,6 @@ app.post(
     async (req, res) => {
 
         if (!STRIPE_WEBHOOK_SECRET) {
-
-            console.error(
-                "STRIPE_WEBHOOK_SECRET não configurada."
-            );
 
             return res
                 .status(500)
@@ -929,10 +826,6 @@ app.post(
 
         let evento;
 
-
-        // =================================================
-        // VALIDAR WEBHOOK
-        // =================================================
 
         try {
 
@@ -965,22 +858,10 @@ app.post(
         try {
 
             console.log(
-                "======================================"
-            );
-
-            console.log(
-                "WEBHOOK STRIPE"
-            );
-
-            console.log(
-                "Evento:",
+                "WEBHOOK STRIPE:",
                 evento.type
             );
 
-
-            // =================================================
-            // CHECKOUT CONCLUÍDO
-            // =================================================
 
             if (
                 evento.type ===
@@ -1019,37 +900,6 @@ app.post(
                     "";
 
 
-                console.log(
-                    "Session:",
-                    session.id
-                );
-
-                console.log(
-                    "Pedido:",
-                    pedidoId
-                );
-
-                console.log(
-                    "Usuário:",
-                    usuarioId
-                );
-
-                console.log(
-                    "E-mail Stripe:",
-                    emailStripe ||
-                    "não encontrado"
-                );
-
-                console.log(
-                    "Pagamento:",
-                    session.payment_status
-                );
-
-
-                // =================================================
-                // PEDIDO OBRIGATÓRIO
-                // =================================================
-
                 if (!pedidoId) {
 
                     console.error(
@@ -1062,10 +912,6 @@ app.post(
                     });
                 }
 
-
-                // =================================================
-                // BUSCAR PEDIDO
-                // =================================================
 
                 const pedidoRef =
                     db
@@ -1087,10 +933,6 @@ app.post(
                         : {};
 
 
-                // =================================================
-                // BUSCAR E-MAIL
-                // =================================================
-
                 const emailUsuario =
                     await buscarEmailUsuario({
 
@@ -1106,10 +948,6 @@ app.post(
                     });
 
 
-                // =================================================
-                // DADOS DO CURSO
-                // =================================================
-
                 const curso =
                     metadata.curso ||
                     dadosAtuais.curso ||
@@ -1121,10 +959,6 @@ app.post(
                     dadosAtuais.categoria ||
                     "EAD";
 
-
-                // =================================================
-                // ATUALIZAR PEDIDO
-                // =================================================
 
                 await pedidoRef.set(
 
@@ -1172,10 +1006,6 @@ app.post(
 
                 );
 
-
-                // =================================================
-                // ATUALIZAR PAGAMENTO
-                // =================================================
 
                 await db
                     .collection(
@@ -1226,20 +1056,7 @@ app.post(
                     );
 
 
-                // =================================================
-                // PAGAMENTO CONFIRMADO
-                // =================================================
-
                 if (pago) {
-
-                    console.log(
-                        "Pagamento confirmado."
-                    );
-
-                    console.log(
-                        "Preparando envio da senha..."
-                    );
-
 
                     try {
 
@@ -1265,16 +1082,9 @@ app.post(
                     } catch (erroEmail) {
 
                         console.error(
-                            "ERRO AO ENVIAR E-MAIL:"
-                        );
-
-                        console.error(
+                            "ERRO AO ENVIAR E-MAIL:",
                             erroEmail.message
                         );
-
-                        // =================================================
-                        // NÃO REVERTER PAGAMENTO
-                        // =================================================
 
                         await pedidoRef.set(
 
@@ -1284,10 +1094,6 @@ app.post(
                                     erroEmail.message,
 
                                 emailErroEm:
-                                    FieldValue
-                                        .serverTimestamp(),
-
-                                atualizadoEm:
                                     FieldValue
                                         .serverTimestamp()
 
@@ -1301,17 +1107,8 @@ app.post(
                         );
                     }
                 }
-
-
-                console.log(
-                    "Webhook de pagamento processado."
-                );
             }
 
-
-            // =================================================
-            // CHECKOUT EXPIRADO
-            // =================================================
 
             if (
                 evento.type ===
@@ -1363,18 +1160,8 @@ app.post(
 
                         );
                 }
-
-
-                console.log(
-                    "Checkout expirado:",
-                    session.id
-                );
             }
 
-
-            // =================================================
-            // PAYMENT INTENT
-            // =================================================
 
             if (
                 evento.type ===
@@ -1392,11 +1179,6 @@ app.post(
             }
 
 
-            console.log(
-                "======================================"
-            );
-
-
             return res.json({
 
                 recebido:
@@ -1410,7 +1192,6 @@ app.post(
                 "Erro processando webhook:",
                 error
             );
-
 
             return res
                 .status(500)
@@ -1469,26 +1250,7 @@ app.get(
                     : "não configurado",
 
             senhaCursos:
-                "ilimitada",
-
-            rotas: {
-
-                usarSenhaCurso:
-                    "/usar-senha-curso",
-
-                criarPagamento:
-                    "/criar-pagamento",
-
-                consultarPagamento:
-                    "/consultar-pagamento",
-
-                agendarCurso:
-                    "/agendar-curso",
-
-                concluirCurso:
-                    "/concluir-curso"
-
-            }
+                "ilimitada"
 
         });
     }
@@ -1519,12 +1281,11 @@ app.get(
     }
 );
 
-
 // =====================================================
 // USAR SENHA DO CURSO
 // =====================================================
 //
-// A senha NÃO possui contador.
+// A senha não possui contador.
 //
 // Cada curso possui uma senha própria.
 //
@@ -1547,8 +1308,7 @@ app.post(
             const {
                 senha,
                 usuarioId
-            } =
-                req.body || {};
+            } = req.body || {};
 
 
             const senhaInformada =
@@ -1604,7 +1364,7 @@ app.post(
 
 
             // =================================================
-            // BUSCAR PEDIDOS
+            // BUSCAR PEDIDOS DO USUÁRIO
             // =================================================
 
             const pedidosSnapshot =
@@ -1690,7 +1450,7 @@ app.post(
 
 
                 // =================================================
-                // CONFIGURAÇÃO
+                // CONFIGURAÇÃO DO CURSO
                 // =================================================
 
                 let configuracao;
@@ -1732,7 +1492,7 @@ app.post(
 
 
                 // =================================================
-                // SENHA DO CURSO
+                // SENHA
                 // =================================================
 
                 const senhaBanco =
@@ -1749,7 +1509,7 @@ app.post(
 
 
                 // =================================================
-                // COMPARAR
+                // COMPARAR SENHAS
                 // =================================================
 
                 if (
@@ -1826,7 +1586,7 @@ app.post(
 
 
             // =================================================
-            // DADOS
+            // DADOS DO CURSO
             // =================================================
 
             const curso =
@@ -2030,9 +1790,12 @@ app.post(
             const {
                 pedidoId,
                 usuarioId
-            } =
-                req.body || {};
+            } = req.body || {};
 
+
+            // =================================================
+            // VALIDAR PEDIDO
+            // =================================================
 
             if (!pedidoId) {
 
@@ -2050,6 +1813,10 @@ app.post(
             }
 
 
+            // =================================================
+            // VALIDAR USUÁRIO
+            // =================================================
+
             if (!usuarioId) {
 
                 return res
@@ -2065,6 +1832,10 @@ app.post(
                     });
             }
 
+
+            // =================================================
+            // BUSCAR PEDIDO
+            // =================================================
 
             const pedidoRef =
                 db
@@ -2103,7 +1874,7 @@ app.post(
 
 
             // =================================================
-            // USUÁRIO
+            // VALIDAR USUÁRIO
             // =================================================
 
             if (
@@ -2126,7 +1897,7 @@ app.post(
 
 
             // =================================================
-            // PAGAMENTO
+            // VALIDAR PAGAMENTO
             // =================================================
 
             if (
@@ -2148,7 +1919,7 @@ app.post(
 
 
             // =================================================
-            // JÁ CONCLUÍDO
+            // VERIFICAR CONCLUSÃO
             // =================================================
 
             if (
@@ -2171,7 +1942,7 @@ app.post(
 
 
             // =================================================
-            // CONCLUIR
+            // MARCAR COMO CONCLUÍDO
             // =================================================
 
             await pedidoRef.set(
@@ -2200,7 +1971,7 @@ app.post(
 
 
             // =================================================
-            // PAGAMENTO
+            // ATUALIZAR PAGAMENTO
             // =================================================
 
             await db
@@ -2325,9 +2096,12 @@ app.post(
                 curso,
                 pedidoId,
                 usuarioId
-            } =
-                req.body || {};
+            } = req.body || {};
 
+
+            // =================================================
+            // VALIDAÇÕES
+            // =================================================
 
             if (!curso) {
 
@@ -2369,7 +2143,7 @@ app.post(
 
 
             // =================================================
-            // CONFIGURAÇÃO
+            // BUSCAR CURSO
             // =================================================
 
             const configuracao =
@@ -2654,35 +2428,8 @@ app.post(
 
 
             console.log(
-                "======================================"
-            );
-
-            console.log(
-                "PAGAMENTO CRIADO"
-            );
-
-            console.log(
-                "Session:",
+                "PAGAMENTO CRIADO:",
                 session.id
-            );
-
-            console.log(
-                "Pedido:",
-                pedidoId
-            );
-
-            console.log(
-                "Curso:",
-                curso
-            );
-
-            console.log(
-                "Valor:",
-                valor
-            );
-
-            console.log(
-                "======================================"
             );
 
 
@@ -2767,6 +2514,10 @@ app.get(
                     });
             }
 
+
+            // =================================================
+            // BUSCAR SESSION STRIPE
+            // =================================================
 
             const session =
                 await stripe
@@ -3069,9 +2820,12 @@ app.post(
                 usuarioId,
                 data,
                 horario
-            } =
-                req.body || {};
+            } = req.body || {};
 
+
+            // =================================================
+            // VALIDAÇÕES
+            // =================================================
 
             if (!pedidoId) {
 
@@ -3138,7 +2892,7 @@ app.post(
 
 
             // =================================================
-            // PEDIDO
+            // BUSCAR PEDIDO
             // =================================================
 
             const pedidoSnapshot =
@@ -3175,7 +2929,7 @@ app.post(
 
 
             // =================================================
-            // USUÁRIO
+            // VALIDAR USUÁRIO
             // =================================================
 
             if (
@@ -3198,7 +2952,7 @@ app.post(
 
 
             // =================================================
-            // PAGAMENTO
+            // VALIDAR PAGAMENTO
             // =================================================
 
             if (
@@ -3220,7 +2974,7 @@ app.post(
 
 
             // =================================================
-            // CATEGORIA
+            // VALIDAR CATEGORIA
             // =================================================
 
             if (
@@ -3246,7 +3000,7 @@ app.post(
 
 
             // =================================================
-            // DUPLICIDADE
+            // VERIFICAR DUPLICIDADE
             // =================================================
 
             const existente =
