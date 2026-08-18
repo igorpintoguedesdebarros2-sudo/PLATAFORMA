@@ -26,7 +26,7 @@ import {
 const app = express();
 
 const PORT =
-    process.env.PORT || 10000;
+    Number(process.env.PORT) || 10000;
 
 
 // =====================================================
@@ -208,20 +208,6 @@ if (
     SMTP_PASS
 ) {
 
-    /*
-     * Gmail:
-     *
-     * 465 = SSL direto
-     * 587 = STARTTLS
-     *
-     * Aqui usamos 465.
-     *
-     * family: 4
-     * força IPv4 e evita o erro:
-     *
-     * ENETUNREACH 2607:f8b0...
-     */
-
     emailTransporter =
         nodemailer.createTransport({
 
@@ -285,10 +271,6 @@ if (
                 error.message
             );
 
-            console.error(
-                "O pagamento continuará funcionando."
-            );
-
         });
 
 } else {
@@ -314,13 +296,9 @@ app.use(
 // =====================================================
 // WEBHOOK STRIPE
 //
-// MUITO IMPORTANTE:
-//
-// express.raw() precisa ficar ANTES de
-// express.json().
-//
-// NÃO coloque app.use(express.json())
-// antes desta rota.
+// IMPORTANTE:
+// express.raw() precisa ficar ANTES
+// de express.json().
 // =====================================================
 
 app.post(
@@ -338,15 +316,12 @@ app.post(
 
         if (!STRIPE_WEBHOOK_SECRET) {
 
-            console.error(
-                "STRIPE_WEBHOOK_SECRET não configurado."
-            );
-
             return res
                 .status(500)
                 .send(
                     "Webhook Stripe não configurado."
                 );
+
         }
 
 
@@ -358,15 +333,12 @@ app.post(
 
         if (!assinatura) {
 
-            console.error(
-                "Webhook sem stripe-signature."
-            );
-
             return res
                 .status(400)
                 .send(
                     "Assinatura Stripe ausente."
                 );
+
         }
 
 
@@ -394,37 +366,16 @@ app.post(
         catch (error) {
 
             console.error(
-                "======================================"
-            );
-
-            console.error(
-                "ERRO DE ASSINATURA STRIPE"
-            );
-
-            console.error(
+                "ERRO DE ASSINATURA STRIPE:",
                 error.message
             );
-
-            console.error(
-                "======================================"
-            );
-
-            /*
-             * NÃO desative esta validação.
-             *
-             * Se chegar aqui, o problema normalmente é:
-             *
-             * 1. STRIPE_WEBHOOK_SECRET errado
-             * 2. endpoint Stripe diferente
-             * 3. chave de teste/live diferente
-             * 4. webhook encaminhado por outra ferramenta
-             */
 
             return res
                 .status(400)
                 .send(
                     `Webhook Error: ${error.message}`
                 );
+
         }
 
 
@@ -476,12 +427,12 @@ app.post(
                     evento.data.object;
 
                 const metadata =
-                    session.metadata ||
-                    {};
+                    session.metadata || {};
 
                 const pedidoId =
-                    metadata.pedidoId ||
-                    "";
+                    String(
+                        metadata.pedidoId || ""
+                    ).trim();
 
 
                 if (pedidoId) {
@@ -582,7 +533,9 @@ app.post(
 // =====================================================
 
 app.use(
-    express.json()
+    express.json({
+        limit: "1mb"
+    })
 );
 
 
@@ -824,19 +777,25 @@ async function processarCheckoutConcluido(
 
 
     const pedidoId =
-        metadata.pedidoId ||
-        "";
+        String(
+            metadata.pedidoId ||
+            ""
+        ).trim();
 
 
     const usuarioId =
-        metadata.usuarioId ||
-        session.client_reference_id ||
-        "";
+        String(
+            metadata.usuarioId ||
+            session.client_reference_id ||
+            ""
+        ).trim();
 
 
     const cursoId =
-        metadata.cursoId ||
-        "";
+        String(
+            metadata.cursoId ||
+            ""
+        ).trim();
 
 
     const pago =
@@ -878,11 +837,9 @@ async function processarCheckoutConcluido(
 
     if (!pedidoId) {
 
-        console.error(
+        throw new Error(
             "Webhook sem pedidoId."
         );
-
-        return;
 
     }
 
@@ -980,9 +937,6 @@ async function processarCheckoutConcluido(
 
             linkCurso:
                 curso.linkCurso,
-
-            senhaCurso:
-                curso.senhaCurso,
 
             pago:
                 pago,
@@ -1616,7 +1570,8 @@ app.post(
                             pedidoIdRecebido
                         );
 
-            } else {
+            }
+            else {
 
                 pedidoRef =
                     db
@@ -1730,18 +1685,6 @@ app.post(
                 `${FRONTEND_URL}/pagamento.html?cancelado=true&pedidoId=${encodeURIComponent(pedidoId)}`;
 
 
-            console.log(
-                "SUCCESS URL:",
-                successUrl
-            );
-
-
-            console.log(
-                "CANCEL URL:",
-                cancelUrl
-            );
-
-
             // =================================================
             // STRIPE
             // =================================================
@@ -1843,7 +1786,7 @@ app.post(
                     checkoutUrl:
                         session.url,
 
-                    paymentStatus:
+                    stripeStatus:
                         session.status ||
                         "open",
 
@@ -1869,11 +1812,6 @@ app.post(
             console.log(
                 "PEDIDO:",
                 pedidoId
-            );
-
-            console.log(
-                "URL:",
-                session.url
             );
 
 
@@ -1938,12 +1876,6 @@ app.post(
 
 // =====================================================
 // CONSULTAR PAGAMENTO
-//
-// GET:
-//
-// /consultar-pagamento?session_id=cs_test_...
-//
-// Esta era a rota que estava faltando.
 // =====================================================
 
 app.get(
@@ -2000,7 +1932,7 @@ app.get(
 
 
             // =================================================
-            // CONSULTAR SESSION DIRETAMENTE NO STRIPE
+            // STRIPE
             // =================================================
 
             const session =
@@ -2015,19 +1947,25 @@ app.get(
 
 
             const pedidoId =
-                metadata.pedidoId ||
-                "";
+                String(
+                    metadata.pedidoId ||
+                    ""
+                ).trim();
 
 
             const usuarioId =
-                metadata.usuarioId ||
-                session.client_reference_id ||
-                "";
+                String(
+                    metadata.usuarioId ||
+                    session.client_reference_id ||
+                    ""
+                ).trim();
 
 
             const cursoId =
-                metadata.cursoId ||
-                "";
+                String(
+                    metadata.cursoId ||
+                    ""
+                ).trim();
 
 
             const pago =
@@ -2042,7 +1980,7 @@ app.get(
 
 
             // =================================================
-            // PEDIDO FIRESTORE
+            // FIRESTORE
             // =================================================
 
             let dadosPedido = {};
@@ -2099,10 +2037,7 @@ app.get(
 
 
             // =================================================
-            // SE PAGOU, SINCRONIZAR PEDIDO
-            //
-            // Isso permite que a página de sucesso
-            // funcione mesmo antes do webhook terminar.
+            // SE PAGOU
             // =================================================
 
             if (
@@ -2246,6 +2181,74 @@ app.get(
                     );
 
 
+                // =================================================
+                // ENVIAR E-MAIL
+                //
+                // Isso também permite que a consulta
+                // funcione caso o webhook ainda não
+                // tenha processado o checkout.
+                // =================================================
+
+                try {
+
+                    await enviarSenhaCursoPorEmail({
+
+                        pedidoId:
+                            pedidoId,
+
+                        usuarioId:
+                            usuarioId,
+
+                        email:
+                            emailUsuario,
+
+                        cursoId:
+                            curso.id,
+
+                        pedidoAtual:
+                            dadosPedido
+
+                    });
+
+                }
+                catch (erroEmail) {
+
+                    console.error(
+                        "Erro enviando senha durante consulta:",
+                        erroEmail.message
+                    );
+
+
+                    await db
+                        .collection(
+                            "pedidos"
+                        )
+                        .doc(
+                            pedidoId
+                        )
+                        .set(
+
+                            {
+
+                                emailErro:
+                                    erroEmail.message,
+
+                                emailErroEm:
+                                    FieldValue
+                                        .serverTimestamp()
+
+                            },
+
+                            {
+                                merge:
+                                    true
+                            }
+
+                        );
+
+                }
+
+
                 dadosPedido = {
 
                     ...dadosPedido,
@@ -2260,7 +2263,9 @@ app.get(
                         usuarioId,
 
                     email:
-                        emailUsuario,
+                        emailStripe ||
+                        dadosPedido.email ||
+                        "",
 
                     cursoId:
                         curso.id,
@@ -2624,6 +2629,52 @@ app.use(
 
     }
 
+);
+
+
+// =====================================================
+// TRATAMENTO DE ERRO JSON
+// =====================================================
+
+app.use(
+    (
+        error,
+        req,
+        res,
+        next
+    ) => {
+
+        console.error(
+            "Erro interno:",
+            error
+        );
+
+
+        if (
+            res.headersSent
+        ) {
+
+            return next(
+                error
+            );
+
+        }
+
+
+        return res
+            .status(500)
+            .json({
+
+                sucesso:
+                    false,
+
+                erro:
+                    error.message ||
+                    "Erro interno do servidor."
+
+            });
+
+    }
 );
 
 
