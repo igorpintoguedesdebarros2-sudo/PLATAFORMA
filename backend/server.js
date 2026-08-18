@@ -193,8 +193,7 @@ app.use(
 // WEBHOOK STRIPE
 //
 // IMPORTANTE:
-// express.raw() precisa vir antes
-// de express.json().
+// express.raw() precisa ficar antes de express.json().
 // =====================================================
 
 app.post(
@@ -344,7 +343,10 @@ app.post(
 
 
             return res.json({
-                recebido: true
+
+                recebido:
+                    true
+
             });
 
         }
@@ -418,7 +420,7 @@ function escaparHtml(valor) {
 
 
 // =====================================================
-// BUSCAR CURSO
+// BUSCAR CURSO POR ID
 // =====================================================
 
 async function buscarCursoPorId(cursoId) {
@@ -452,6 +454,101 @@ async function buscarCursoPorId(cursoId) {
         return null;
     }
 
+
+    const dados =
+        documento.data() || {};
+
+
+    return {
+
+        id:
+            documento.id,
+
+        nome:
+            String(
+                dados.nome ||
+                documento.id
+            ).trim(),
+
+        descricao:
+            String(
+                dados.descricao ||
+                dados["descrição"] ||
+                "Curso adquirido na plataforma."
+            ).trim(),
+
+        categoria:
+            String(
+                dados.categoria ||
+                "EAD"
+            ).trim(),
+
+        linkCurso:
+            String(
+                dados.linkCurso ||
+                ""
+            ).trim(),
+
+        senhaCurso:
+            String(
+                dados.senhaCurso ||
+                ""
+            ).trim(),
+
+        ativo:
+            dados.ativo !== false,
+
+        valor:
+            Number(
+                dados.valor
+            ) || 0
+
+    };
+}
+
+
+// =====================================================
+// BUSCAR CURSO PELA SENHA
+// =====================================================
+//
+// A senha fica somente no backend/Firestore.
+// Ela nunca é enviada de volta ao navegador.
+// =====================================================
+
+async function buscarCursoPorSenha(senha) {
+
+    const senhaNormalizada =
+        String(
+            senha || ""
+        ).trim();
+
+
+    if (!senhaNormalizada) {
+
+        return null;
+    }
+
+
+    const snapshot =
+        await db
+            .collection("cursos_config")
+            .where(
+                "senhaCurso",
+                "==",
+                senhaNormalizada
+            )
+            .limit(1)
+            .get();
+
+
+    if (snapshot.empty) {
+
+        return null;
+    }
+
+
+    const documento =
+        snapshot.docs[0];
 
     const dados =
         documento.data() || {};
@@ -573,6 +670,549 @@ async function buscarEmailUsuario({
 
     return "";
 }
+
+
+// =====================================================
+// AUTENTICAR TOKEN FIREBASE
+// =====================================================
+//
+// Se o frontend enviar:
+//
+// Authorization: Bearer TOKEN
+//
+// o backend valida o token.
+//
+// O sistema continua aceitando usuarioId para
+// compatibilidade com seu NR1.js atual.
+// =====================================================
+
+async function verificarTokenFirebase(req) {
+
+    const authorization =
+        req.headers.authorization;
+
+
+    if (
+        !authorization ||
+        !authorization.startsWith("Bearer ")
+    ) {
+
+        return null;
+    }
+
+
+    const token =
+        authorization
+            .substring(7)
+            .trim();
+
+
+    if (!token) {
+
+        return null;
+    }
+
+
+    try {
+
+        const decoded =
+            await firebaseAuth.verifyIdToken(
+                token
+            );
+
+
+        return decoded;
+
+    }
+    catch (error) {
+
+        console.warn(
+            "Token Firebase inválido:",
+            error.message
+        );
+
+        return null;
+    }
+}
+
+
+// =====================================================
+// USAR SENHA DO CURSO
+// =====================================================
+//
+// ROTA USADA PELO NR1.js:
+//
+// POST /usar-senha-curso
+//
+// Body:
+//
+// {
+//     senha: "...",
+//     usuarioId: "..."
+// }
+//
+// Fluxo:
+//
+// 1. Verifica usuário.
+// 2. Procura curso pela senha.
+// 3. Verifica se curso está ativo.
+// 4. Procura pedido pago do usuário.
+// 5. Retorna autorização.
+// =====================================================
+
+app.post(
+
+    "/usar-senha-curso",
+
+    async (req, res) => {
+
+        try {
+
+            console.log(
+                "======================================"
+            );
+
+            console.log(
+                "SOLICITAÇÃO DE ACESSO AO CURSO"
+            );
+
+
+            const senha =
+                String(
+                    req.body?.senha ||
+                    ""
+                ).trim();
+
+
+            const usuarioId =
+                String(
+                    req.body?.usuarioId ||
+                    ""
+                ).trim();
+
+
+            // =================================================
+            // VALIDAR SENHA
+            // =================================================
+
+            if (!senha) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        valido:
+                            false,
+
+                        erro:
+                            "Senha do curso não informada."
+
+                    });
+            }
+
+
+            // =================================================
+            // VALIDAR USUÁRIO
+            // =================================================
+
+            if (!usuarioId) {
+
+                return res
+                    .status(401)
+                    .json({
+
+                        valido:
+                            false,
+
+                        erro:
+                            "Usuário não autenticado."
+
+                    });
+            }
+
+
+            // =================================================
+            // TOKEN FIREBASE
+            // =================================================
+
+            const usuarioToken =
+                await verificarTokenFirebase(
+                    req
+                );
+
+
+            if (
+                usuarioToken &&
+                usuarioToken.uid !== usuarioId
+            ) {
+
+                return res
+                    .status(403)
+                    .json({
+
+                        valido:
+                            false,
+
+                        erro:
+                            "O token não pertence ao usuário informado."
+
+                    });
+            }
+
+
+            // =================================================
+            // BUSCAR CURSO PELA SENHA
+            // =================================================
+
+            const curso =
+                await buscarCursoPorSenha(
+                    senha
+                );
+
+
+            if (!curso) {
+
+                console.warn(
+                    "Senha inválida."
+                );
+
+                return res
+                    .status(401)
+                    .json({
+
+                        valido:
+                            false,
+
+                        erro:
+                            "Senha do curso inválida."
+
+                    });
+            }
+
+
+            // =================================================
+            // CURSO DESATIVADO
+            // =================================================
+
+            if (!curso.ativo) {
+
+                return res
+                    .status(403)
+                    .json({
+
+                        valido:
+                            false,
+
+                        erro:
+                            "Este curso está temporariamente indisponível."
+
+                    });
+            }
+
+
+            console.log(
+                "Curso encontrado:",
+                curso.id
+            );
+
+
+            // =================================================
+            // PROCURAR PEDIDO DO USUÁRIO
+            // =================================================
+            //
+            // Procuramos pelo usuário e depois verificamos
+            // curso + pagamento.
+            //
+            // Isso evita liberar o curso apenas porque
+            // alguém descobriu a senha.
+            // =================================================
+
+            const pedidosSnapshot =
+                await db
+                    .collection("pedidos")
+                    .where(
+                        "usuarioId",
+                        "==",
+                        usuarioId
+                    )
+                    .get();
+
+
+            if (pedidosSnapshot.empty) {
+
+                return res
+                    .status(403)
+                    .json({
+
+                        valido:
+                            false,
+
+                        erro:
+                            "Você não possui uma compra registrada para este curso."
+
+                    });
+            }
+
+
+            let pedidoEncontrado =
+                null;
+
+
+            for (
+                const documento
+                of pedidosSnapshot.docs
+            ) {
+
+                const pedido =
+                    documento.data() || {};
+
+
+                const pedidoCursoId =
+                    String(
+                        pedido.cursoId ||
+                        ""
+                    ).trim();
+
+
+                const pedidoCursoNome =
+                    String(
+                        pedido.curso ||
+                        ""
+                    ).trim()
+                    .toUpperCase();
+
+
+                const cursoNome =
+                    String(
+                        curso.nome ||
+                        ""
+                    ).trim()
+                    .toUpperCase();
+
+
+                const cursoCorresponde =
+                    pedidoCursoId === curso.id ||
+                    pedidoCursoNome === cursoNome;
+
+
+                const pagamentoConfirmado =
+                    pedido.pago === true ||
+                    pedido.paymentStatus === "paid";
+
+
+                if (
+                    cursoCorresponde &&
+                    pagamentoConfirmado
+                ) {
+
+                    pedidoEncontrado = {
+
+                        id:
+                            documento.id,
+
+                        ...pedido
+
+                    };
+
+                    break;
+                }
+            }
+
+
+            // =================================================
+            // NENHUMA COMPRA
+            // =================================================
+
+            if (!pedidoEncontrado) {
+
+                console.warn(
+                    "Usuário não possui compra paga:",
+                    usuarioId,
+                    curso.id
+                );
+
+                return res
+                    .status(403)
+                    .json({
+
+                        valido:
+                            false,
+
+                        erro:
+                            "Você não possui acesso liberado para este curso."
+
+                    });
+            }
+
+
+            // =================================================
+            // VERIFICAR USOS
+            // =================================================
+
+            let usosRestantes;
+
+
+            if (
+                pedidoEncontrado.usosRestantes !==
+                undefined
+            ) {
+
+                usosRestantes =
+                    Number(
+                        pedidoEncontrado.usosRestantes
+                    );
+
+            } else {
+
+                // Primeiro acesso.
+                // Se não existir contador no pedido,
+                // consideramos 1 acesso disponível.
+                usosRestantes = 1;
+            }
+
+
+            if (
+                !Number.isFinite(
+                    usosRestantes
+                )
+            ) {
+
+                usosRestantes = 1;
+            }
+
+
+            if (
+                usosRestantes <= 0
+            ) {
+
+                return res
+                    .status(403)
+                    .json({
+
+                        valido:
+                            false,
+
+                        erro:
+                            "Este acesso ao curso não possui mais usos disponíveis."
+
+                    });
+            }
+
+
+            // =================================================
+            // NÃO CONSUMIR O USO
+            // =================================================
+            //
+            // O login no curso não reduz o contador.
+            // Assim, o usuário pode sair e entrar novamente.
+            //
+            // Caso queira limitar quantidade de acessos,
+            // podemos alterar isso depois.
+            // =================================================
+
+
+            // =================================================
+            // AUTORIZAÇÃO
+            // =================================================
+
+            const autorizadoEm =
+                new Date()
+                    .toISOString();
+
+
+            console.log(
+                "ACESSO AUTORIZADO"
+            );
+
+            console.log(
+                "Usuário:",
+                usuarioId
+            );
+
+            console.log(
+                "Pedido:",
+                pedidoEncontrado.id
+            );
+
+            console.log(
+                "Curso:",
+                curso.nome
+            );
+
+
+            // =================================================
+            // RESPOSTA
+            // =================================================
+            //
+            // IMPORTANTE:
+            // senhaCurso NÃO é enviada.
+            // =================================================
+
+            return res.json({
+
+                valido:
+                    true,
+
+                pedidoId:
+                    pedidoEncontrado.id,
+
+                usuarioId,
+
+                curso:
+                    curso.nome,
+
+                cursoId:
+                    curso.id,
+
+                categoria:
+                    curso.categoria,
+
+                descricao:
+                    curso.descricao,
+
+                linkCurso:
+                    curso.linkCurso,
+
+                usosRestantes,
+
+                autorizadoEm
+
+            });
+
+        }
+        catch (error) {
+
+            console.error(
+                "======================================"
+            );
+
+            console.error(
+                "ERRO EM /usar-senha-curso:"
+            );
+
+            console.error(
+                error
+            );
+
+            console.error(
+                "======================================"
+            );
+
+
+            return res
+                .status(500)
+                .json({
+
+                    valido:
+                        false,
+
+                    erro:
+                        "Erro interno ao validar o acesso ao curso."
+
+                });
+        }
+    }
+);
 
 
 // =====================================================
@@ -1030,6 +1670,7 @@ Pedido: ${pedidoId}
 
 `;
 
+
     // =================================================
     // RESEND
     // =================================================
@@ -1337,7 +1978,7 @@ app.post(
 
 
             // =================================================
-            // URLs
+            // URLS
             // =================================================
 
             const successUrl =
@@ -1360,8 +2001,10 @@ app.post(
 
                     ...(emailFinal
                         ? {
+
                             customer_email:
                                 emailFinal
+
                         }
                         : {}),
 
@@ -1398,7 +2041,6 @@ app.post(
 
                                 },
 
-                                // Valor vem do Firestore
                                 unit_amount:
                                     Math.round(
                                         curso.valor *
@@ -1920,8 +2562,11 @@ app.get(
             consultaPagamento:
                 "/consultar-pagamento",
 
+            validarCurso:
+                "/usar-senha-curso",
+
             cursos:
-                "Firestore / cursos_config",
+                "Firestore /cursos_config",
 
             emailProvider:
                 "Resend",
@@ -2152,6 +2797,10 @@ app.listen(
 
         console.log(
             "Consulta: /consultar-pagamento"
+        );
+
+        console.log(
+            "Acesso curso: /usar-senha-curso"
         );
 
         console.log(
