@@ -2404,6 +2404,402 @@ app.get(
     }
 );
 
+// =====================================================
+// USAR SENHA DO CURSO
+// =====================================================
+
+app.post(
+    "/usar-senha-curso",
+    async (req, res) => {
+
+        try {
+
+            const senha =
+                String(
+                    req.body?.senha || ""
+                ).trim();
+
+            const usuarioId =
+                String(
+                    req.body?.usuarioId || ""
+                ).trim();
+
+            const cursoNome =
+                String(
+                    req.body?.curso || ""
+                ).trim();
+
+
+            // =================================================
+            // VALIDAR DADOS
+            // =================================================
+
+            if (!senha) {
+
+                return res
+                    .status(400)
+                    .json({
+                        valido: false,
+                        erro: "Senha não informada."
+                    });
+            }
+
+
+            if (!usuarioId) {
+
+                return res
+                    .status(401)
+                    .json({
+                        valido: false,
+                        erro: "Usuário não informado."
+                    });
+            }
+
+
+            if (!cursoNome) {
+
+                return res
+                    .status(400)
+                    .json({
+                        valido: false,
+                        erro: "Curso não informado."
+                    });
+            }
+
+
+            // =================================================
+            // BUSCAR USUÁRIO NO FIREBASE AUTH
+            // =================================================
+
+            try {
+
+                await firebaseAuth.getUser(
+                    usuarioId
+                );
+
+            }
+            catch (error) {
+
+                return res
+                    .status(401)
+                    .json({
+                        valido: false,
+                        erro: "Usuário inválido."
+                    });
+
+            }
+
+
+            // =================================================
+            // BUSCAR CURSO
+            // =================================================
+
+            const cursoSnapshot =
+                await db
+                    .collection("cursos_config")
+                    .where(
+                        "nome",
+                        "==",
+                        cursoNome
+                    )
+                    .limit(1)
+                    .get();
+
+
+            if (cursoSnapshot.empty) {
+
+                return res
+                    .status(404)
+                    .json({
+                        valido: false,
+                        erro:
+                            `Curso "${cursoNome}" não encontrado.`
+                    });
+
+            }
+
+
+            const cursoDoc =
+                cursoSnapshot.docs[0];
+
+            const cursoDados =
+                cursoDoc.data() || {};
+
+
+            const curso = {
+
+                id:
+                    cursoDoc.id,
+
+                nome:
+                    String(
+                        cursoDados.nome ||
+                        cursoDoc.id
+                    ).trim(),
+
+                descricao:
+                    String(
+                        cursoDados.descricao ||
+                        cursoDados["descrição"] ||
+                        "Curso adquirido na plataforma."
+                    ).trim(),
+
+                categoria:
+                    String(
+                        cursoDados.categoria ||
+                        "EAD"
+                    ).trim(),
+
+                linkCurso:
+                    String(
+                        cursoDados.linkCurso ||
+                        ""
+                    ).trim(),
+
+                senhaCurso:
+                    String(
+                        cursoDados.senhaCurso ||
+                        ""
+                    ).trim()
+
+            };
+
+
+            // =================================================
+            // VERIFICAR SE O CURSO POSSUI SENHA
+            // =================================================
+
+            if (!curso.senhaCurso) {
+
+                return res
+                    .status(500)
+                    .json({
+                        valido: false,
+                        erro:
+                            "Este curso não possui uma senha configurada."
+                    });
+
+            }
+
+
+            // =================================================
+            // BUSCAR PEDIDO PAGO DO USUÁRIO
+            // =================================================
+
+            const pedidosSnapshot =
+                await db
+                    .collection("pedidos")
+                    .where(
+                        "usuarioId",
+                        "==",
+                        usuarioId
+                    )
+                    .where(
+                        "pago",
+                        "==",
+                        true
+                    )
+                    .get();
+
+
+            if (pedidosSnapshot.empty) {
+
+                return res
+                    .status(403)
+                    .json({
+                        valido: false,
+                        erro:
+                            "Você não possui um pagamento confirmado para este curso."
+                    });
+
+            }
+
+
+            // =================================================
+            // LOCALIZAR PEDIDO DO CURSO
+            // =================================================
+
+            let pedidoEncontrado = null;
+
+
+            for (
+                const documento
+                of pedidosSnapshot.docs
+            ) {
+
+                const pedido =
+                    documento.data() || {};
+
+
+                const pedidoCursoId =
+                    String(
+                        pedido.cursoId ||
+                        ""
+                    ).trim();
+
+
+                const pedidoCurso =
+                    String(
+                        pedido.curso ||
+                        ""
+                    ).trim();
+
+
+                if (
+                    pedidoCursoId === curso.id ||
+                    pedidoCurso.toUpperCase() ===
+                    curso.nome.toUpperCase()
+                ) {
+
+                    pedidoEncontrado = {
+
+                        id:
+                            documento.id,
+
+                        ...pedido
+
+                    };
+
+                    break;
+
+                }
+
+            }
+
+
+            // =================================================
+            // NÃO COMPROU O CURSO
+            // =================================================
+
+            if (!pedidoEncontrado) {
+
+                return res
+                    .status(403)
+                    .json({
+                        valido: false,
+                        erro:
+                            "Você ainda não possui acesso a este curso."
+                    });
+
+            }
+
+
+            // =================================================
+            // VALIDAR SENHA
+            // =================================================
+
+            if (
+                senha !==
+                curso.senhaCurso
+            ) {
+
+                return res
+                    .status(403)
+                    .json({
+                        valido: false,
+                        erro: "Senha inválida."
+                    });
+
+            }
+
+
+            // =================================================
+            // ACESSO AUTORIZADO
+            // =================================================
+
+            const resposta = {
+
+                valido:
+                    true,
+
+                pedidoId:
+                    pedidoEncontrado.id,
+
+                usuarioId:
+                    usuarioId,
+
+                curso:
+                    curso.nome,
+
+                cursoId:
+                    curso.id,
+
+                categoria:
+                    curso.categoria,
+
+                descricao:
+                    curso.descricao,
+
+                linkCurso:
+                    curso.linkCurso,
+
+                usosRestantes:
+                    Number(
+                        pedidoEncontrado.usosRestantes
+                    ) || 1,
+
+                autorizadoEm:
+                    new Date().toISOString()
+
+            };
+
+
+            console.log(
+                "======================================"
+            );
+
+            console.log(
+                "ACESSO AO CURSO AUTORIZADO"
+            );
+
+            console.log(
+                "Usuário:",
+                usuarioId
+            );
+
+            console.log(
+                "Curso:",
+                curso.nome
+            );
+
+            console.log(
+                "Pedido:",
+                pedidoEncontrado.id
+            );
+
+            console.log(
+                "======================================"
+            );
+
+
+            return res.json(
+                resposta
+            );
+
+        }
+        catch (error) {
+
+            console.error(
+                "ERRO AO USAR SENHA DO CURSO:",
+                error
+            );
+
+            return res
+                .status(500)
+                .json({
+
+                    valido:
+                        false,
+
+                    erro:
+                        error.message ||
+                        "Erro interno ao validar a senha."
+
+                });
+
+        }
+    }
+);
 
 // =====================================================
 // 404
