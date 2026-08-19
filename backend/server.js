@@ -57,9 +57,20 @@ const FRONTEND_URL =
     process.env.FRONTEND_URL ||
     "https://igorpintoguedesdebarros2-sudo.github.io/PLATAFORMA";
 
+
+// IMPORTANTE:
+// coloque aqui o e-mail do domínio VERIFICADO no Resend.
+//
+// Exemplo:
+// Plataforma <noreply@seudominio.com>
+//
+// NÃO use:
+// onboarding@resend.dev
+//
+// se quiser enviar para clientes reais.
 const EMAIL_FROM =
     process.env.EMAIL_FROM ||
-    "Plataforma <onboarding@resend.dev>";
+    "Plataforma <noreply@ipgbtech.com>";
 
 
 // =====================================================
@@ -67,12 +78,19 @@ const EMAIL_FROM =
 // =====================================================
 
 const variaveisObrigatorias = {
+
     STRIPE_SECRET_KEY,
+
     FIREBASE_PROJECT_ID,
+
     FIREBASE_CLIENT_EMAIL,
+
     FIREBASE_PRIVATE_KEY,
+
     RESEND_API_KEY
+
 };
+
 
 for (
     const [nome, valor]
@@ -88,6 +106,7 @@ for (
         process.exit(1);
     }
 }
+
 
 if (!STRIPE_WEBHOOK_SECRET) {
 
@@ -126,16 +145,19 @@ let firebaseApp;
 const apps =
     getApps();
 
+
 if (apps.length > 0) {
 
     firebaseApp =
         apps[0];
 
-} else {
+}
+else {
 
     const privateKey =
         FIREBASE_PRIVATE_KEY
             .replace(/\\n/g, "\n");
+
 
     firebaseApp =
         initializeApp({
@@ -155,6 +177,7 @@ if (apps.length > 0) {
                 })
 
         });
+
 }
 
 
@@ -191,6 +214,14 @@ app.use(
 
 // =====================================================
 // WEBHOOK STRIPE
+//
+// IMPORTANTE:
+//
+// Esta rota PRECISA ficar ANTES de:
+//
+// app.use(express.json());
+//
+// porque o Stripe precisa do corpo RAW.
 // =====================================================
 
 app.post(
@@ -204,6 +235,10 @@ app.post(
     async (req, res) => {
 
         if (!STRIPE_WEBHOOK_SECRET) {
+
+            console.error(
+                "STRIPE_WEBHOOK_SECRET não configurado."
+            );
 
             return res
                 .status(500)
@@ -221,6 +256,10 @@ app.post(
 
         if (!assinatura) {
 
+            console.error(
+                "Stripe-Signature ausente."
+            );
+
             return res
                 .status(400)
                 .send(
@@ -231,6 +270,10 @@ app.post(
 
         let evento;
 
+
+        // =================================================
+        // VALIDAR ASSINATURA
+        // =================================================
 
         try {
 
@@ -249,8 +292,19 @@ app.post(
         catch (error) {
 
             console.error(
-                "ERRO DE ASSINATURA STRIPE:",
+                "======================================"
+            );
+
+            console.error(
+                "ERRO DE ASSINATURA STRIPE"
+            );
+
+            console.error(
                 error.message
+            );
+
+            console.error(
+                "======================================"
             );
 
             return res
@@ -261,25 +315,84 @@ app.post(
         }
 
 
+        // =================================================
+        // PROCESSAR EVENTO
+        // =================================================
+
         try {
+
+            console.log(
+                "======================================"
+            );
 
             console.log(
                 "WEBHOOK:",
                 evento.type
             );
 
+            console.log(
+                "======================================"
+            );
+
+
+            // =================================================
+            // CHECKOUT CONCLUÍDO
+            //
+            // Cartão normalmente chega aqui já pago.
+            //
+            // Pix/Boleto podem chegar aqui ainda pendentes.
+            // =================================================
 
             if (
                 evento.type ===
                 "checkout.session.completed"
             ) {
 
-                await processarCheckoutConcluido(
+                await processarCheckout(
                     evento.data.object
                 );
 
             }
 
+
+            // =================================================
+            // PIX / BOLETO PAGOS
+            //
+            // ESTE É O EVENTO IMPORTANTE PARA PAGAMENTOS
+            // ASSÍNCRONOS.
+            // =================================================
+
+            else if (
+                evento.type ===
+                "checkout.session.async_payment_succeeded"
+            ) {
+
+                await processarPagamentoConfirmado(
+                    evento.data.object
+                );
+
+            }
+
+
+            // =================================================
+            // PIX / BOLETO FALHARAM
+            // =================================================
+
+            else if (
+                evento.type ===
+                "checkout.session.async_payment_failed"
+            ) {
+
+                await processarPagamentoFalhou(
+                    evento.data.object
+                );
+
+            }
+
+
+            // =================================================
+            // CHECKOUT EXPIRADO
+            // =================================================
 
             else if (
                 evento.type ===
@@ -289,8 +402,10 @@ app.post(
                 const session =
                     evento.data.object;
 
+
                 const metadata =
                     session.metadata || {};
+
 
                 const pedidoId =
                     String(
@@ -327,17 +442,62 @@ app.post(
             }
 
 
+            // =================================================
+            // PAYMENT INTENT
+            //
+            // Apenas log.
+            //
+            // NÃO usamos este evento para liberar o curso,
+            // porque o Checkout é a fonte principal neste fluxo.
+            // =================================================
+
+            else if (
+                evento.type ===
+                "payment_intent.succeeded"
+            ) {
+
+                const paymentIntent =
+                    evento.data.object;
+
+
+                console.log(
+                    "PaymentIntent confirmado:",
+                    paymentIntent.id
+                );
+
+            }
+
+
+            // =================================================
+            // RESPOSTA
+            // =================================================
+
             return res.json({
-                recebido: true
+
+                recebido:
+                    true
+
             });
 
         }
         catch (error) {
 
             console.error(
-                "ERRO PROCESSANDO WEBHOOK:",
+                "======================================"
+            );
+
+            console.error(
+                "ERRO PROCESSANDO WEBHOOK"
+            );
+
+            console.error(
                 error
             );
+
+            console.error(
+                "======================================"
+            );
+
 
             return res
                 .status(500)
@@ -347,16 +507,22 @@ app.post(
                         false,
 
                     erro:
-                        error.message
+                        error.message ||
+                        "Erro ao processar webhook."
 
                 });
+
         }
+
     }
+
 );
 
 
 // =====================================================
 // JSON NORMAL
+//
+// SOMENTE DEPOIS DO WEBHOOK
 // =====================================================
 
 app.use(
@@ -398,6 +564,7 @@ function escaparHtml(valor) {
             /'/g,
             "&#039;"
         );
+
 }
 
 
@@ -483,7 +650,9 @@ async function buscarCursoPorId(cursoId) {
             Number(
                 dados.valor
             ) || 0
+
     };
+
 }
 
 
@@ -507,6 +676,7 @@ async function buscarEmailUsuario({
         return String(
             emailStripe
         ).trim();
+
     }
 
 
@@ -518,6 +688,7 @@ async function buscarEmailUsuario({
         return String(
             emailPedido
         ).trim();
+
     }
 
 
@@ -540,6 +711,7 @@ async function buscarEmailUsuario({
                 return String(
                     usuario.email
                 ).trim();
+
             }
 
         }
@@ -549,16 +721,19 @@ async function buscarEmailUsuario({
                 "Erro buscando usuário:",
                 error.message
             );
+
         }
+
     }
 
 
     return "";
+
 }
 
 
 // =====================================================
-// VERIFICAR SE USUÁRIO PAGOU O CURSO
+// VERIFICAR SE USUÁRIO POSSUI CURSO PAGO
 // =====================================================
 
 async function usuarioPossuiCursoPago(
@@ -572,12 +747,9 @@ async function usuarioPossuiCursoPago(
     ) {
 
         return false;
+
     }
 
-
-    // =================================================
-    // PRIMEIRO: COLEÇÃO PEDIDOS
-    // =================================================
 
     const pedidos =
         await db
@@ -605,26 +777,15 @@ async function usuarioPossuiCursoPago(
 
 
         if (
-            pedido.pago === true &&
-            pedido.paymentStatus === "paid"
-        ) {
-
-            return true;
-        }
-
-
-        if (
             pedido.pago === true
         ) {
 
             return true;
+
         }
+
     }
 
-
-    // =================================================
-    // SEGUNDO: COLEÇÃO PAGAMENTOS
-    // =================================================
 
     const pagamentos =
         await db
@@ -652,312 +813,26 @@ async function usuarioPossuiCursoPago(
 
 
         if (
-            pagamento.pago === true &&
-            (
-                pagamento.paymentStatus === "paid" ||
-                !pagamento.paymentStatus
-            )
+            pagamento.pago === true
         ) {
 
             return true;
+
         }
+
     }
 
 
     return false;
+
 }
 
 
 // =====================================================
-// USAR SENHA DO CURSO
-//
-// ROTA QUE ESTAVA FALTANDO
-//
-// POST /usar-senha-curso
-//
-// Body:
-//
-// {
-//     "usuarioId": "...",
-//     "cursoId": "...",
-//     "senha": "..."
-// }
-//
+// PROCESSAR CHECKOUT
 // =====================================================
 
-app.post(
-
-    "/usar-senha-curso",
-
-    async (req, res) => {
-
-        try {
-
-            const usuarioId =
-                String(
-                    req.body?.usuarioId ||
-                    ""
-                ).trim();
-
-
-            const cursoId =
-                String(
-                    req.body?.cursoId ||
-                    req.body?.curso ||
-                    ""
-                ).trim();
-
-
-            const senha =
-                String(
-                    req.body?.senha ||
-                    req.body?.senhaCurso ||
-                    ""
-                );
-
-
-            console.log(
-                "USAR SENHA:",
-                {
-                    usuarioId,
-                    cursoId
-                }
-            );
-
-
-            // =================================================
-            // VALIDAR CAMPOS
-            // =================================================
-
-            if (!usuarioId) {
-
-                return res
-                    .status(400)
-                    .json({
-
-                        sucesso:
-                            false,
-
-                        autorizado:
-                            false,
-
-                        erro:
-                            "Usuário não informado."
-
-                    });
-            }
-
-
-            if (!cursoId) {
-
-                return res
-                    .status(400)
-                    .json({
-
-                        sucesso:
-                            false,
-
-                        autorizado:
-                            false,
-
-                        erro:
-                            "Curso não informado."
-
-                    });
-            }
-
-
-            if (!senha) {
-
-                return res
-                    .status(400)
-                    .json({
-
-                        sucesso:
-                            false,
-
-                        autorizado:
-                            false,
-
-                        erro:
-                            "Senha não informada."
-
-                    });
-            }
-
-
-            // =================================================
-            // BUSCAR CURSO
-            // =================================================
-
-            const curso =
-                await buscarCursoPorId(
-                    cursoId
-                );
-
-
-            if (!curso) {
-
-                return res
-                    .status(404)
-                    .json({
-
-                        sucesso:
-                            false,
-
-                        autorizado:
-                            false,
-
-                        erro:
-                            "Curso não encontrado."
-
-                    });
-            }
-
-
-            // =================================================
-            // VERIFICAR PAGAMENTO
-            // =================================================
-
-            const possuiCurso =
-                await usuarioPossuiCursoPago(
-                    usuarioId,
-                    curso.id
-                );
-
-
-            if (!possuiCurso) {
-
-                return res
-                    .status(403)
-                    .json({
-
-                        sucesso:
-                            false,
-
-                        autorizado:
-                            false,
-
-                        erro:
-                            "Você não possui este curso ou o pagamento ainda não foi confirmado."
-
-                    });
-            }
-
-
-            // =================================================
-            // VERIFICAR SENHA
-            // =================================================
-
-            if (!curso.senhaCurso) {
-
-                return res
-                    .status(500)
-                    .json({
-
-                        sucesso:
-                            false,
-
-                        autorizado:
-                            false,
-
-                        erro:
-                            "Este curso não possui uma senha configurada."
-
-                    });
-            }
-
-
-            if (
-                senha !==
-                curso.senhaCurso
-            ) {
-
-                return res
-                    .status(401)
-                    .json({
-
-                        sucesso:
-                            false,
-
-                        autorizado:
-                            false,
-
-                        erro:
-                            "Senha incorreta."
-
-                    });
-            }
-
-
-            // =================================================
-            // ACESSO AUTORIZADO
-            // =================================================
-
-            console.log(
-                "ACESSO AUTORIZADO:",
-                {
-                    usuarioId,
-                    cursoId: curso.id
-                }
-            );
-
-
-            return res.json({
-
-                sucesso:
-                    true,
-
-                autorizado:
-                    true,
-
-                cursoId:
-                    curso.id,
-
-                curso:
-                    curso.nome,
-
-                categoria:
-                    curso.categoria,
-
-                linkCurso:
-                    curso.linkCurso
-
-            });
-
-        }
-        catch (error) {
-
-            console.error(
-                "ERRO /usar-senha-curso:",
-                error
-            );
-
-            return res
-                .status(500)
-                .json({
-
-                    sucesso:
-                        false,
-
-                    autorizado:
-                        false,
-
-                    erro:
-                        error.message ||
-                        "Erro ao validar senha."
-
-                });
-        }
-    }
-);
-
-
-// =====================================================
-// PROCESSAR CHECKOUT CONCLUÍDO
-// =====================================================
-
-async function processarCheckoutConcluido(
+async function processarCheckout(
     session
 ) {
 
@@ -981,13 +856,9 @@ async function processarCheckoutConcluido(
 
     const cursoId =
         String(
-            metadata.cursoId || ""
+            metadata.cursoId ||
+            ""
         ).trim();
-
-
-    const pago =
-        session.payment_status ===
-        "paid";
 
 
     const emailStripe =
@@ -1001,12 +872,9 @@ async function processarCheckoutConcluido(
         throw new Error(
             "Webhook sem pedidoId."
         );
+
     }
 
-
-    // =================================================
-    // PEDIDO
-    // =================================================
 
     const pedidoRef =
         db
@@ -1018,15 +886,11 @@ async function processarCheckoutConcluido(
         await pedidoRef.get();
 
 
-    const dadosAtuais =
+    const pedidoAtual =
         pedidoSnapshot.exists
             ? pedidoSnapshot.data() || {}
             : {};
 
-
-    // =================================================
-    // E-MAIL
-    // =================================================
 
     const emailUsuario =
         await buscarEmailUsuario({
@@ -1036,18 +900,14 @@ async function processarCheckoutConcluido(
             emailStripe,
 
             emailPedido:
-                dadosAtuais.email
+                pedidoAtual.email
 
         });
 
 
-    // =================================================
-    // CURSO
-    // =================================================
-
     const cursoIdFinal =
         cursoId ||
-        dadosAtuais.cursoId ||
+        pedidoAtual.cursoId ||
         "";
 
 
@@ -1062,11 +922,17 @@ async function processarCheckoutConcluido(
         throw new Error(
             `Curso "${cursoIdFinal}" não encontrado.`
         );
+
     }
 
 
+    const pago =
+        session.payment_status ===
+        "paid";
+
+
     // =================================================
-    // ATUALIZAR PEDIDO
+    // SALVAR PEDIDO
     // =================================================
 
     await pedidoRef.set({
@@ -1099,10 +965,13 @@ async function processarCheckoutConcluido(
         linkCurso:
             curso.linkCurso,
 
-        pago,
+        paymentMethodTypes:
+            session.payment_method_types || [],
 
         paymentStatus:
             session.payment_status,
+
+        pago,
 
         atualizadoEm:
             FieldValue
@@ -1117,7 +986,7 @@ async function processarCheckoutConcluido(
 
 
     // =================================================
-    // PAGAMENTO
+    // SALVAR PAGAMENTO
     // =================================================
 
     await db
@@ -1147,10 +1016,13 @@ async function processarCheckoutConcluido(
             valor:
                 curso.valor,
 
-            pago,
+            paymentMethodTypes:
+                session.payment_method_types || [],
 
             paymentStatus:
                 session.payment_status,
+
+            pago,
 
             atualizadoEm:
                 FieldValue
@@ -1164,15 +1036,230 @@ async function processarCheckoutConcluido(
         });
 
 
+    console.log(
+        "CHECKOUT REGISTRADO:",
+        {
+            pedidoId,
+            pagamentoConfirmado: pago,
+            metodos:
+                session.payment_method_types
+        }
+    );
+
+
     // =================================================
-    // E-MAIL
+    // SE JÁ ESTIVER PAGO
     // =================================================
 
     if (pago) {
 
-        await enviarSenhaCursoPorEmail({
+        await processarPagamentoConfirmado(
+            session
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// PROCESSAR PAGAMENTO CONFIRMADO
+//
+// Usado para:
+//
+// CARD
+// PIX
+// BOLETO
+//
+// =====================================================
+
+async function processarPagamentoConfirmado(
+    session
+) {
+
+    const metadata =
+        session.metadata || {};
+
+
+    const pedidoId =
+        String(
+            metadata.pedidoId || ""
+        ).trim();
+
+
+    const usuarioId =
+        String(
+            metadata.usuarioId ||
+            session.client_reference_id ||
+            ""
+        ).trim();
+
+
+    const cursoId =
+        String(
+            metadata.cursoId ||
+            ""
+        ).trim();
+
+
+    if (!pedidoId) {
+
+        throw new Error(
+            "Pagamento confirmado sem pedidoId."
+        );
+
+    }
+
+
+    const pedidoRef =
+        db
+            .collection("pedidos")
+            .doc(pedidoId);
+
+
+    const pedidoSnapshot =
+        await pedidoRef.get();
+
+
+    const pedidoAtual =
+        pedidoSnapshot.exists
+            ? pedidoSnapshot.data() || {}
+            : {};
+
+
+    // =================================================
+    // EVITAR PROCESSAR NOVAMENTE
+    // =================================================
+
+    if (
+        pedidoAtual.pago === true &&
+        pedidoAtual.senhaEmailEnviado === true
+    ) {
+
+        console.log(
+            "Pagamento já processado:",
+            pedidoId
+        );
+
+        return;
+
+    }
+
+
+    const emailStripe =
+        session.customer_details?.email ||
+        session.customer_email ||
+        "";
+
+
+    const emailUsuario =
+        await buscarEmailUsuario({
+
+            usuarioId,
+
+            emailStripe,
+
+            emailPedido:
+                pedidoAtual.email
+
+        });
+
+
+    const cursoIdFinal =
+        cursoId ||
+        pedidoAtual.cursoId ||
+        "";
+
+
+    const curso =
+        await buscarCursoPorId(
+            cursoIdFinal
+        );
+
+
+    if (!curso) {
+
+        throw new Error(
+            `Curso "${cursoIdFinal}" não encontrado.`
+        );
+
+    }
+
+
+    // =================================================
+    // MARCAR COMO PAGO
+    // =================================================
+
+    await pedidoRef.set({
+
+        pedidoId,
+
+        sessionId:
+            session.id,
+
+        usuarioId,
+
+        email:
+            emailUsuario,
+
+        cursoId:
+            curso.id,
+
+        curso:
+            curso.nome,
+
+        categoria:
+            curso.categoria,
+
+        descricao:
+            curso.descricao,
+
+        valor:
+            curso.valor,
+
+        linkCurso:
+            curso.linkCurso,
+
+        pago:
+            true,
+
+        paymentStatus:
+            "paid",
+
+        paymentMethodTypes:
+            session.payment_method_types ||
+            pedidoAtual.paymentMethodTypes ||
+            [],
+
+        pagoEm:
+            FieldValue
+                .serverTimestamp(),
+
+        atualizadoEm:
+            FieldValue
+                .serverTimestamp()
+
+    }, {
+
+        merge:
+            true
+
+    });
+
+
+    // =================================================
+    // PAGAMENTOS
+    // =================================================
+
+    await db
+        .collection("pagamentos")
+        .doc(pedidoId)
+        .set({
 
             pedidoId,
+
+            sessionId:
+                session.id,
 
             usuarioId,
 
@@ -1180,10 +1267,171 @@ async function processarCheckoutConcluido(
                 emailUsuario,
 
             cursoId:
-                curso.id
+                curso.id,
+
+            curso:
+                curso.nome,
+
+            categoria:
+                curso.categoria,
+
+            valor:
+                curso.valor,
+
+            pago:
+                true,
+
+            paymentStatus:
+                "paid",
+
+            paymentMethodTypes:
+                session.payment_method_types ||
+                pedidoAtual.paymentMethodTypes ||
+                [],
+
+            pagoEm:
+                FieldValue
+                    .serverTimestamp(),
+
+            atualizadoEm:
+                FieldValue
+                    .serverTimestamp()
+
+        }, {
+
+            merge:
+                true
 
         });
+
+
+    console.log(
+        "PAGAMENTO CONFIRMADO:",
+        {
+            pedidoId,
+            usuarioId,
+            curso: curso.nome,
+            metodos:
+                session.payment_method_types
+        }
+    );
+
+
+    // =================================================
+    // ENVIAR SENHA
+    // =================================================
+
+    if (emailUsuario) {
+
+        try {
+
+            await enviarSenhaCursoPorEmail({
+
+                pedidoId,
+
+                usuarioId,
+
+                email:
+                    emailUsuario,
+
+                cursoId:
+                    curso.id
+
+            });
+
+        }
+        catch (erroEmail) {
+
+            console.error(
+                "ERRO AO ENVIAR E-MAIL:",
+                erroEmail
+            );
+
+
+            await pedidoRef.set({
+
+                emailErro:
+                    erroEmail.message,
+
+                emailErroEm:
+                    FieldValue
+                        .serverTimestamp(),
+
+                email:
+                    emailUsuario
+
+            }, {
+
+                merge:
+                    true
+
+            });
+
+        }
+
     }
+    else {
+
+        console.warn(
+            "Pagamento confirmado, mas usuário não possui e-mail."
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// PAGAMENTO ASSÍNCRONO FALHOU
+// =====================================================
+
+async function processarPagamentoFalhou(
+    session
+) {
+
+    const metadata =
+        session.metadata || {};
+
+
+    const pedidoId =
+        String(
+            metadata.pedidoId || ""
+        ).trim();
+
+
+    if (!pedidoId) {
+        return;
+    }
+
+
+    await db
+        .collection("pedidos")
+        .doc(pedidoId)
+        .set({
+
+            pago:
+                false,
+
+            paymentStatus:
+                "failed",
+
+            atualizadoEm:
+                FieldValue
+                    .serverTimestamp()
+
+        }, {
+
+            merge:
+                true
+
+        });
+
+
+    console.log(
+        "PAGAMENTO FALHOU:",
+        pedidoId
+    );
+
 }
 
 
@@ -1205,6 +1453,7 @@ async function enviarSenhaCursoPorEmail({
         throw new Error(
             "E-mail do usuário não encontrado."
         );
+
     }
 
 
@@ -1224,15 +1473,19 @@ async function enviarSenhaCursoPorEmail({
             : {};
 
 
+    // =================================================
+    // EVITAR DUPLICAÇÃO
+    // =================================================
+
     if (
-        pedido.senhaEmailEnviado ===
-        true
+        pedido.senhaEmailEnviado === true
     ) {
 
         console.log(
             "E-mail já enviado:",
             pedidoId
         );
+
 
         return {
 
@@ -1243,6 +1496,7 @@ async function enviarSenhaCursoPorEmail({
                 true
 
         };
+
     }
 
 
@@ -1257,6 +1511,7 @@ async function enviarSenhaCursoPorEmail({
         throw new Error(
             `Curso "${cursoId}" não encontrado.`
         );
+
     }
 
 
@@ -1265,6 +1520,7 @@ async function enviarSenhaCursoPorEmail({
         throw new Error(
             `O curso "${curso.nome}" não possui senha.`
         );
+
     }
 
 
@@ -1294,77 +1550,84 @@ async function enviarSenhaCursoPorEmail({
 
 <head>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <title>Acesso ao curso</title>
+<title>Acesso ao curso</title>
 
 </head>
 
 <body
-    style="
-        margin:0;
-        padding:30px;
-        background:#f5f5f5;
-        font-family:Arial,sans-serif;
-    "
+style="
+margin:0;
+padding:30px;
+background:#f5f5f5;
+font-family:Arial,sans-serif;
+"
 >
 
-    <div
-        style="
-            max-width:600px;
-            margin:auto;
-            background:#ffffff;
-            padding:30px;
-            border-radius:10px;
-        "
-    >
+<div
+style="
+max-width:600px;
+margin:auto;
+background:#ffffff;
+padding:30px;
+border-radius:10px;
+"
+>
 
-        <h1>
-            Acesso ao curso
-        </h1>
+<h1>
+Acesso ao curso
+</h1>
 
-        <p>
-            Seu pagamento foi confirmado.
-        </p>
+<p>
+Seu pagamento foi confirmado.
+</p>
 
-        <p>
-            <strong>Curso:</strong>
-            ${nomeCursoHtml}
-        </p>
+<p>
+<strong>Curso:</strong>
+${nomeCursoHtml}
+</p>
 
-        <p>
-            <strong>Senha:</strong>
-        </p>
+<p>
+<strong>Senha:</strong>
+</p>
 
-        <div
-            style="
-                background:#eeeeee;
-                padding:18px;
-                font-size:24px;
-                font-weight:bold;
-                text-align:center;
-                letter-spacing:2px;
-                border-radius:6px;
-            "
-        >
-            ${senhaCursoHtml}
-        </div>
+<div
+style="
+background:#eeeeee;
+padding:18px;
+font-size:24px;
+font-weight:bold;
+text-align:center;
+letter-spacing:2px;
+border-radius:6px;
+"
+>
 
-        <p>
-            Acesse o curso pela plataforma.
-        </p>
+${senhaCursoHtml}
 
-        <p
-            style="
-                color:#777;
-                font-size:12px;
-            "
-        >
-            Pedido:
-            ${pedidoIdHtml}
-        </p>
+</div>
 
-    </div>
+<p>
+Acesse o curso pela sua área de cursos
+dentro da plataforma.
+</p>
+
+<hr>
+
+<p
+style="
+color:#777;
+font-size:12px;
+"
+>
+
+Pedido:
+${pedidoIdHtml}
+
+</p>
+
+</div>
 
 </body>
 
@@ -1381,12 +1644,16 @@ Curso: ${curso.nome}
 
 Senha: ${curso.senhaCurso}
 
-Acesse o curso pela plataforma.
+Acesse o curso pela sua área de cursos dentro da plataforma.
 
 Pedido: ${pedidoId}
 
 `;
 
+
+    // =================================================
+    // RESEND
+    // =================================================
 
     const resultado =
         await resend.emails.send({
@@ -1417,6 +1684,7 @@ Pedido: ${pedidoId}
             resultado.error.message ||
             "Erro ao enviar e-mail."
         );
+
     }
 
 
@@ -1471,11 +1739,18 @@ Pedido: ${pedidoId}
         messageId
 
     };
-}
 
+}
 
 // =====================================================
 // CRIAR PAGAMENTO
+//
+// MÉTODOS:
+//
+// CARD
+// PIX
+// BOLETO
+//
 // =====================================================
 
 app.post(
@@ -1508,6 +1783,10 @@ app.post(
                 ).trim();
 
 
+            // =================================================
+            // VALIDAR
+            // =================================================
+
             if (!cursoId) {
 
                 return res
@@ -1521,6 +1800,7 @@ app.post(
                             "Informe o ID do curso."
 
                     });
+
             }
 
 
@@ -1537,8 +1817,13 @@ app.post(
                             "Usuário não informado."
 
                     });
+
             }
 
+
+            // =================================================
+            // BUSCAR CURSO
+            // =================================================
 
             const curso =
                 await buscarCursoPorId(
@@ -1559,6 +1844,7 @@ app.post(
                             `Curso "${cursoId}" não encontrado.`
 
                     });
+
             }
 
 
@@ -1575,6 +1861,7 @@ app.post(
                             "Este curso não está disponível para compra."
 
                     });
+
             }
 
 
@@ -1596,8 +1883,13 @@ app.post(
                             "O curso não possui um valor válido."
 
                     });
+
             }
 
+
+            // =================================================
+            // E-MAIL
+            // =================================================
 
             let emailFinal =
                 email;
@@ -1617,8 +1909,13 @@ app.post(
                             ""
 
                     });
+
             }
 
+
+            // =================================================
+            // CRIAR PEDIDO
+            // =================================================
 
             const pedidoRef =
                 db
@@ -1663,6 +1960,14 @@ app.post(
                 paymentStatus:
                     "pending",
 
+                paymentMethods:
+
+                    [
+                        "card",
+                        "pix",
+                        "boleto"
+                    ],
+
                 criadoEm:
                     FieldValue
                         .serverTimestamp(),
@@ -1674,13 +1979,29 @@ app.post(
             });
 
 
+            // =================================================
+            // URL DE SUCESSO
+            // =================================================
+
             const successUrl =
                 `${FRONTEND_URL}/sucesso.html?session_id={CHECKOUT_SESSION_ID}&pedidoId=${encodeURIComponent(pedidoId)}`;
 
 
+            // =================================================
+            // URL DE CANCELAMENTO
+            // =================================================
+
             const cancelUrl =
                 `${FRONTEND_URL}/pagamento.html?cancelado=true&pedidoId=${encodeURIComponent(pedidoId)}`;
 
+
+            // =================================================
+            // STRIPE CHECKOUT
+            //
+            // CARD
+            // PIX
+            // BOLETO
+            // =================================================
 
             const session =
                 await stripe.checkout.sessions.create({
@@ -1688,15 +2009,57 @@ app.post(
                     mode:
                         "payment",
 
+
+                    // -------------------------------------------------
+                    // MÉTODOS DE PAGAMENTO
+                    // -------------------------------------------------
+
+                    payment_method_types: [
+
+                        "card",
+
+                        "pix",
+
+                        "boleto"
+
+                    ],
+
+
+                    // -------------------------------------------------
+                    // E-MAIL
+                    // -------------------------------------------------
+
                     ...(emailFinal
                         ? {
+
                             customer_email:
                                 emailFinal
+
                         }
                         : {}),
 
+
+                    // -------------------------------------------------
+                    // ENDEREÇO
+                    //
+                    // Ajuda no fluxo de boleto.
+                    // -------------------------------------------------
+
+                    billing_address_collection:
+                        "required",
+
+
+                    // -------------------------------------------------
+                    // REFERÊNCIA DO USUÁRIO
+                    // -------------------------------------------------
+
                     client_reference_id:
                         usuarioId,
+
+
+                    // -------------------------------------------------
+                    // METADATA
+                    // -------------------------------------------------
 
                     metadata: {
 
@@ -1708,6 +2071,11 @@ app.post(
                             curso.id
 
                     },
+
+
+                    // -------------------------------------------------
+                    // PRODUTO
+                    // -------------------------------------------------
 
                     line_items: [
 
@@ -1743,6 +2111,11 @@ app.post(
 
                     ],
 
+
+                    // -------------------------------------------------
+                    // URLs
+                    // -------------------------------------------------
+
                     success_url:
                         successUrl,
 
@@ -1752,13 +2125,22 @@ app.post(
                 });
 
 
+            // =================================================
+            // VALIDAR URL
+            // =================================================
+
             if (!session.url) {
 
                 throw new Error(
                     "Stripe não retornou a URL."
                 );
+
             }
 
+
+            // =================================================
+            // SALVAR SESSION
+            // =================================================
 
             await pedidoRef.set({
 
@@ -1768,8 +2150,15 @@ app.post(
                 checkoutUrl:
                     session.url,
 
+                paymentMethodTypes:
+                    session.payment_method_types ||
+                    [
+                        "card",
+                        "pix",
+                        "boleto"
+                    ],
+
                 paymentStatus:
-                    session.status ||
                     "open",
 
                 atualizadoEm:
@@ -1783,6 +2172,10 @@ app.post(
 
             });
 
+
+            // =================================================
+            // RESPOSTA
+            // =================================================
 
             return res.json({
 
@@ -1807,7 +2200,15 @@ app.post(
                     curso.nome,
 
                 valor:
-                    curso.valor
+                    curso.valor,
+
+                paymentMethods:
+
+                    [
+                        "card",
+                        "pix",
+                        "boleto"
+                    ]
 
             });
 
@@ -1818,6 +2219,7 @@ app.post(
                 "ERRO AO CRIAR PAGAMENTO:",
                 error
             );
+
 
             return res
                 .status(500)
@@ -1831,8 +2233,11 @@ app.post(
                         "Não foi possível criar o pagamento."
 
                 });
+
         }
+
     }
+
 );
 
 
@@ -1868,8 +2273,13 @@ app.get(
                             "session_id não informado."
 
                     });
+
             }
 
+
+            // =================================================
+            // BUSCAR SESSION
+            // =================================================
 
             const session =
                 await stripe.checkout.sessions.retrieve(
@@ -1914,6 +2324,10 @@ app.get(
                 "";
 
 
+            // =================================================
+            // PEDIDO
+            // =================================================
+
             let dadosPedido = {};
 
 
@@ -1932,8 +2346,13 @@ app.get(
                         snapshot.data() || {};
 
                 }
+
             }
 
+
+            // =================================================
+            // CURSO
+            // =================================================
 
             const cursoIdFinal =
                 cursoId ||
@@ -1949,119 +2368,21 @@ app.get(
                     : null;
 
 
+            // =================================================
+            // SE ESTIVER PAGO
+            //
+            // GARANTIR PROCESSAMENTO
+            // =================================================
+
             if (
                 pago &&
                 pedidoId &&
                 curso
             ) {
 
-                const emailUsuario =
-                    await buscarEmailUsuario({
-
-                        usuarioId,
-
-                        emailStripe,
-
-                        emailPedido:
-                            dadosPedido.email
-
-                    });
-
-
-                await db
-                    .collection("pedidos")
-                    .doc(pedidoId)
-                    .set({
-
-                        pedidoId,
-
-                        sessionId:
-                            session.id,
-
-                        usuarioId,
-
-                        email:
-                            emailUsuario,
-
-                        cursoId:
-                            curso.id,
-
-                        curso:
-                            curso.nome,
-
-                        categoria:
-                            curso.categoria,
-
-                        descricao:
-                            curso.descricao,
-
-                        valor:
-                            curso.valor,
-
-                        linkCurso:
-                            curso.linkCurso,
-
-                        pago:
-                            true,
-
-                        paymentStatus:
-                            session.payment_status,
-
-                        atualizadoEm:
-                            FieldValue
-                                .serverTimestamp()
-
-                    }, {
-
-                        merge:
-                            true
-
-                    });
-
-
-                await db
-                    .collection("pagamentos")
-                    .doc(pedidoId)
-                    .set({
-
-                        pedidoId,
-
-                        sessionId:
-                            session.id,
-
-                        usuarioId,
-
-                        email:
-                            emailUsuario,
-
-                        cursoId:
-                            curso.id,
-
-                        curso:
-                            curso.nome,
-
-                        categoria:
-                            curso.categoria,
-
-                        valor:
-                            curso.valor,
-
-                        pago:
-                            true,
-
-                        paymentStatus:
-                            session.payment_status,
-
-                        atualizadoEm:
-                            FieldValue
-                                .serverTimestamp()
-
-                    }, {
-
-                        merge:
-                            true
-
-                    });
+                await processarPagamentoConfirmado(
+                    session
+                );
 
 
                 dadosPedido = {
@@ -2076,7 +2397,9 @@ app.get(
                     usuarioId,
 
                     email:
-                        emailUsuario,
+                        emailStripe ||
+                        dadosPedido.email ||
+                        "",
 
                     cursoId:
                         curso.id,
@@ -2100,11 +2423,16 @@ app.get(
                         true,
 
                     paymentStatus:
-                        session.payment_status
+                        "paid"
 
                 };
+
             }
 
+
+            // =================================================
+            // RESPOSTA
+            // =================================================
 
             return res.json({
 
@@ -2150,7 +2478,12 @@ app.get(
                 email:
                     emailStripe ||
                     dadosPedido.email ||
-                    ""
+                    "",
+
+                paymentMethods:
+                    session.payment_method_types ||
+                    dadosPedido.paymentMethodTypes ||
+                    []
 
             });
 
@@ -2161,6 +2494,7 @@ app.get(
                 "ERRO AO CONSULTAR PAGAMENTO:",
                 error
             );
+
 
             return res
                 .status(500)
@@ -2174,104 +2508,11 @@ app.get(
                         "Erro ao consultar pagamento."
 
                 });
+
         }
+
     }
-);
 
-
-// =====================================================
-// ROTA PRINCIPAL
-// =====================================================
-
-app.get(
-
-    "/",
-
-    (req, res) => {
-
-        res.json({
-
-            ok:
-                true,
-
-            servidor:
-                "Plataforma",
-
-            status:
-                "online",
-
-            firebase:
-                "conectado",
-
-            stripe:
-                "configurada",
-
-            webhook:
-                STRIPE_WEBHOOK_SECRET
-                    ? "configurado"
-                    : "não configurado",
-
-            email:
-                RESEND_API_KEY
-                    ? "Resend configurado"
-                    : "não configurado",
-
-            sistema:
-                "Curso por ID + Stripe",
-
-            pagamento:
-                "Stripe Checkout",
-
-            consultaPagamento:
-                "/consultar-pagamento",
-
-            usarSenhaCurso:
-                "/usar-senha-curso",
-
-            cursos:
-                "Firestore /cursos_config",
-
-            emailProvider:
-                "Resend",
-
-            senhaNoEmail:
-                true,
-
-            linkNoEmail:
-                false,
-
-            linkNaPlataforma:
-                true
-
-        });
-    }
-);
-
-
-// =====================================================
-// HEALTH
-// =====================================================
-
-app.get(
-
-    "/health",
-
-    (req, res) => {
-
-        res.json({
-
-            ok:
-                true,
-
-            status:
-                "online",
-
-            timestamp:
-                new Date()
-                    .toISOString()
-
-        });
-    }
 );
 
 
@@ -2307,6 +2548,7 @@ app.get(
                             "Informe o e-mail."
 
                     });
+
             }
 
 
@@ -2332,8 +2574,7 @@ app.get(
                         </h1>
 
                         <p>
-                            O sistema de e-mail
-                            está funcionando.
+                            O sistema de e-mail está funcionando.
                         </p>
 
                         <p>
@@ -2362,6 +2603,7 @@ app.get(
                             resultado.error.message
 
                     });
+
             }
 
 
@@ -2389,6 +2631,7 @@ app.get(
                 error
             );
 
+
             return res
                 .status(500)
                 .json({
@@ -2400,38 +2643,58 @@ app.get(
                         error.message
 
                 });
+
         }
+
     }
+
 );
+
 
 // =====================================================
 // USAR SENHA DO CURSO
+//
+// ATENÇÃO:
+//
+// ESTA É A ÚNICA ROTA /usar-senha-curso.
+//
+// Removemos a segunda rota duplicada que existia
+// no seu server.js.
 // =====================================================
 
 app.post(
+
     "/usar-senha-curso",
+
     async (req, res) => {
 
         try {
 
             const senha =
                 String(
-                    req.body?.senha || ""
+                    req.body?.senha ||
+                    req.body?.senhaCurso ||
+                    ""
                 ).trim();
+
 
             const usuarioId =
                 String(
-                    req.body?.usuarioId || ""
+                    req.body?.usuarioId ||
+                    ""
                 ).trim();
+
 
             const cursoNome =
                 String(
-                    req.body?.curso || ""
+                    req.body?.curso ||
+                    req.body?.cursoId ||
+                    ""
                 ).trim();
 
 
             // =================================================
-            // VALIDAR DADOS
+            // VALIDAR
             // =================================================
 
             if (!senha) {
@@ -2439,9 +2702,21 @@ app.post(
                 return res
                     .status(400)
                     .json({
-                        valido: false,
-                        erro: "Senha não informada."
+
+                        valido:
+                            false,
+
+                        autorizado:
+                            false,
+
+                        sucesso:
+                            false,
+
+                        erro:
+                            "Senha não informada."
+
                     });
+
             }
 
 
@@ -2450,9 +2725,21 @@ app.post(
                 return res
                     .status(401)
                     .json({
-                        valido: false,
-                        erro: "Usuário não informado."
+
+                        valido:
+                            false,
+
+                        autorizado:
+                            false,
+
+                        sucesso:
+                            false,
+
+                        erro:
+                            "Usuário não informado."
+
                     });
+
             }
 
 
@@ -2461,14 +2748,26 @@ app.post(
                 return res
                     .status(400)
                     .json({
-                        valido: false,
-                        erro: "Curso não informado."
+
+                        valido:
+                            false,
+
+                        autorizado:
+                            false,
+
+                        sucesso:
+                            false,
+
+                        erro:
+                            "Curso não informado."
+
                     });
+
             }
 
 
             // =================================================
-            // BUSCAR USUÁRIO NO FIREBASE AUTH
+            // VALIDAR USUÁRIO
             // =================================================
 
             try {
@@ -2483,8 +2782,19 @@ app.post(
                 return res
                     .status(401)
                     .json({
-                        valido: false,
-                        erro: "Usuário inválido."
+
+                        valido:
+                            false,
+
+                        autorizado:
+                            false,
+
+                        sucesso:
+                            false,
+
+                        erro:
+                            "Usuário inválido."
+
                     });
 
             }
@@ -2494,79 +2804,110 @@ app.post(
             // BUSCAR CURSO
             // =================================================
 
-            const cursoSnapshot =
-                await db
-                    .collection("cursos_config")
-                    .where(
-                        "nome",
-                        "==",
-                        cursoNome
-                    )
-                    .limit(1)
-                    .get();
+            let curso =
+                await buscarCursoPorId(
+                    cursoNome
+                );
 
 
-            if (cursoSnapshot.empty) {
+            // =================================================
+            // CASO O NOME SEJA DIFERENTE DO ID
+            // =================================================
+
+            if (!curso) {
+
+                const cursoSnapshot =
+                    await db
+                        .collection("cursos_config")
+                        .where(
+                            "nome",
+                            "==",
+                            cursoNome
+                        )
+                        .limit(1)
+                        .get();
+
+
+                if (
+                    !cursoSnapshot.empty
+                ) {
+
+                    const documento =
+                        cursoSnapshot.docs[0];
+
+
+                    const dados =
+                        documento.data() || {};
+
+
+                    curso = {
+
+                        id:
+                            documento.id,
+
+                        nome:
+                            String(
+                                dados.nome ||
+                                documento.id
+                            ).trim(),
+
+                        descricao:
+                            String(
+                                dados.descricao ||
+                                dados["descrição"] ||
+                                "Curso adquirido na plataforma."
+                            ).trim(),
+
+                        categoria:
+                            String(
+                                dados.categoria ||
+                                "EAD"
+                            ).trim(),
+
+                        linkCurso:
+                            String(
+                                dados.linkCurso ||
+                                ""
+                            ).trim(),
+
+                        senhaCurso:
+                            String(
+                                dados.senhaCurso ||
+                                ""
+                            ).trim()
+
+                    };
+
+                }
+
+            }
+
+
+            if (!curso) {
 
                 return res
                     .status(404)
                     .json({
-                        valido: false,
+
+                        valido:
+                            false,
+
+                        autorizado:
+                            false,
+
+                        sucesso:
+                            false,
+
                         erro:
                             `Curso "${cursoNome}" não encontrado.`
+
                     });
 
             }
 
 
-            const cursoDoc =
-                cursoSnapshot.docs[0];
-
-            const cursoDados =
-                cursoDoc.data() || {};
-
-
-            const curso = {
-
-                id:
-                    cursoDoc.id,
-
-                nome:
-                    String(
-                        cursoDados.nome ||
-                        cursoDoc.id
-                    ).trim(),
-
-                descricao:
-                    String(
-                        cursoDados.descricao ||
-                        cursoDados["descrição"] ||
-                        "Curso adquirido na plataforma."
-                    ).trim(),
-
-                categoria:
-                    String(
-                        cursoDados.categoria ||
-                        "EAD"
-                    ).trim(),
-
-                linkCurso:
-                    String(
-                        cursoDados.linkCurso ||
-                        ""
-                    ).trim(),
-
-                senhaCurso:
-                    String(
-                        cursoDados.senhaCurso ||
-                        ""
-                    ).trim()
-
-            };
-
-
             // =================================================
-            // VERIFICAR SE O CURSO POSSUI SENHA
+            // SENHA
             // =================================================
 
             if (!curso.senhaCurso) {
@@ -2574,16 +2915,26 @@ app.post(
                 return res
                     .status(500)
                     .json({
-                        valido: false,
+
+                        valido:
+                            false,
+
+                        autorizado:
+                            false,
+
+                        sucesso:
+                            false,
+
                         erro:
                             "Este curso não possui uma senha configurada."
+
                     });
 
             }
 
 
             // =================================================
-            // BUSCAR PEDIDO PAGO DO USUÁRIO
+            // BUSCAR PEDIDOS PAGOS
             // =================================================
 
             const pedidosSnapshot =
@@ -2602,24 +2953,37 @@ app.post(
                     .get();
 
 
-            if (pedidosSnapshot.empty) {
+            if (
+                pedidosSnapshot.empty
+            ) {
 
                 return res
                     .status(403)
                     .json({
-                        valido: false,
+
+                        valido:
+                            false,
+
+                        autorizado:
+                            false,
+
+                        sucesso:
+                            false,
+
                         erro:
                             "Você não possui um pagamento confirmado para este curso."
+
                     });
 
             }
 
 
             // =================================================
-            // LOCALIZAR PEDIDO DO CURSO
+            // LOCALIZAR PEDIDO
             // =================================================
 
-            let pedidoEncontrado = null;
+            let pedidoEncontrado =
+                null;
 
 
             for (
@@ -2646,9 +3010,15 @@ app.post(
 
 
                 if (
-                    pedidoCursoId === curso.id ||
+
+                    pedidoCursoId ===
+                    curso.id
+
+                    ||
+
                     pedidoCurso.toUpperCase() ===
                     curso.nome.toUpperCase()
+
                 ) {
 
                     pedidoEncontrado = {
@@ -2660,6 +3030,7 @@ app.post(
 
                     };
 
+
                     break;
 
                 }
@@ -2668,17 +3039,29 @@ app.post(
 
 
             // =================================================
-            // NÃO COMPROU O CURSO
+            // NÃO COMPROU
             // =================================================
 
-            if (!pedidoEncontrado) {
+            if (
+                !pedidoEncontrado
+            ) {
 
                 return res
                     .status(403)
                     .json({
-                        valido: false,
+
+                        valido:
+                            false,
+
+                        autorizado:
+                            false,
+
+                        sucesso:
+                            false,
+
                         erro:
                             "Você ainda não possui acesso a este curso."
+
                     });
 
             }
@@ -2696,8 +3079,19 @@ app.post(
                 return res
                     .status(403)
                     .json({
-                        valido: false,
-                        erro: "Senha inválida."
+
+                        valido:
+                            false,
+
+                        autorizado:
+                            false,
+
+                        sucesso:
+                            false,
+
+                        erro:
+                            "Senha inválida."
+
                     });
 
             }
@@ -2710,6 +3104,12 @@ app.post(
             const resposta = {
 
                 valido:
+                    true,
+
+                autorizado:
+                    true,
+
+                sucesso:
                     true,
 
                 pedidoId:
@@ -2780,15 +3180,22 @@ app.post(
         catch (error) {
 
             console.error(
-                "ERRO AO USAR SENHA DO CURSO:",
+                "ERRO AO USAR SENHA:",
                 error
             );
+
 
             return res
                 .status(500)
                 .json({
 
                     valido:
+                        false,
+
+                    autorizado:
+                        false,
+
+                    sucesso:
                         false,
 
                     erro:
@@ -2798,8 +3205,110 @@ app.post(
                 });
 
         }
+
     }
+
 );
+
+
+// =====================================================
+// ROTA PRINCIPAL
+// =====================================================
+
+app.get(
+
+    "/",
+
+    (req, res) => {
+
+        res.json({
+
+            ok:
+                true,
+
+            servidor:
+                "Plataforma",
+
+            status:
+                "online",
+
+            firebase:
+                "conectado",
+
+            stripe:
+                "configurada",
+
+            webhook:
+                STRIPE_WEBHOOK_SECRET
+                    ? "configurado"
+                    : "não configurado",
+
+            email:
+                RESEND_API_KEY
+                    ? "Resend configurado"
+                    : "não configurado",
+
+            emailProvider:
+                "Resend",
+
+            paymentMethods:
+
+                [
+                    "card",
+                    "pix",
+                    "boleto"
+                ],
+
+            pagamento:
+                "Stripe Checkout",
+
+            consultaPagamento:
+                "/consultar-pagamento",
+
+            criarPagamento:
+                "/criar-pagamento",
+
+            usarSenhaCurso:
+                "/usar-senha-curso",
+
+            cursos:
+                "Firestore /cursos_config"
+
+        });
+
+    }
+
+);
+
+
+// =====================================================
+// HEALTH
+// =====================================================
+
+app.get(
+
+    "/health",
+
+    (req, res) => {
+
+        res.json({
+
+            ok:
+                true,
+
+            status:
+                "online",
+
+            timestamp:
+                new Date()
+                    .toISOString()
+
+        });
+
+    }
+
+);
+
 
 // =====================================================
 // 404
@@ -2820,7 +3329,9 @@ app.use(
                     req.originalUrl
 
             });
+
     }
+
 );
 
 
@@ -2844,6 +3355,10 @@ app.listen(
 
         console.log(
             "Stripe Checkout: OK"
+        );
+
+        console.log(
+            "Métodos: CARD + PIX + BOLETO"
         );
 
         console.log(
@@ -2876,6 +3391,11 @@ app.listen(
             RESEND_API_KEY
                 ? "Resend configurado"
                 : "não configurado"
+        );
+
+        console.log(
+            "E-mail FROM:",
+            EMAIL_FROM
         );
 
         console.log(

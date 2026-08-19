@@ -5,11 +5,17 @@
 
 <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
 <title>Criar Conta</title>
 
-<link rel="stylesheet" href="style.css">
+<link
+    rel="stylesheet"
+    href="style.css"
+>
 
 </head>
 
@@ -17,107 +23,149 @@
 
 <div class="box">
 
-<h2>Criar Conta</h2>
+    <h2>Criar Conta</h2>
 
 
-<input
-    id="nome"
-    type="text"
-    placeholder="Nome completo"
->
+    <input
+        id="nome"
+        type="text"
+        placeholder="Nome completo"
+    >
 
-
-<input
-    id="email"
-    type="email"
-    placeholder="Email"
->
-
-
-<input
-    id="senha"
-    type="password"
-    placeholder="Senha"
->
-
-
-<input
-    id="pais"
-    type="text"
-    placeholder="UF"
->
-
-
-<input
-    id="estado"
-    type="text"
-    placeholder="Estado"
->
-
-
-<input
-    id="endereco"
-    type="text"
-    placeholder="Endereço"
->
-
-
-<input
-    id="complemento"
-    type="text"
-    placeholder="Complemento"
->
-
-<input
-    id="bairro"
-    type="text"
-    placeholder="bairro"
->
-
-<input
-    id="telefone"
-    type="tel"
-    placeholder="Telefone"
->
-
-
-<input
-    id="cpf"
-    type="text"
-    placeholder="CPF"
->
-
-
-<input
-    id="identidade"
-    type="text"
-    placeholder="ID"
->
-
-
-<input
+    <input
     id="dataNascimento"
     type="date"
 >
 
+    <input
+        id="endereco"
+        type="text"
+        placeholder="Endereço"
+    >
 
-<button id="btn">
-    Cadastrar
-</button>
+    <input
+       id="complemento"
+       type="text"
+       placeholder="Complemento"
+    >
+
+    <input
+        id="estado"
+        type="text"
+        placeholder="Estado"
+    >
+
+    <input
+        id="bairro"
+        type="text"
+        placeholder="Bairro"
+    >
+
+    <input
+        id="cep"
+        type="text"
+        placeholder="CEP"
+        maxlength="9"
+        inputmode="numeric"
+    >
+
+    <input
+        id="uf"
+        type="text"
+        placeholder="UF"
+        maxlength="2"
+    >
 
 
-<a href="index.html">
-    Já tenho conta
-</a>
+    <!-- TELEFONE -->
 
+    <div class="telefone">
+
+        <input
+            id="codigoPais"
+            type="text"
+            value="+55"
+            readonly
+        >
+
+        <input
+            id="ddd"
+            type="text"
+            placeholder="DDD"
+            maxlength="2"
+            inputmode="numeric"
+        >
+
+        <input
+            id="telefone"
+            type="tel"
+            placeholder="fixo"
+            maxlength="9"
+            inputmode="numeric"
+        >
+
+    </div>
+
+
+    <input
+        id="celular"
+        type="tel"
+        placeholder="Celular"
+        inputmode="numeric"
+    >
+
+    <div class="indentidade">
+    <input
+        id="cpf"
+        type="text"
+        placeholder="CPF"
+        maxlength="14"
+        inputmode="numeric"
+    >
+
+
+    <input
+    id="identidade"
+    type="text"
+    placeholder="ID"
+>
+    </div>
+
+    <input
+        id="email"
+        type="email"
+        placeholder="E-mail"
+    >
+
+    <input
+        id="senha"
+        type="password"
+        placeholder="Senha"
+    >
+
+    <input
+        id="confirmarSenha"
+        type="password"
+        placeholder="Confirmar senha"
+    >
+
+
+    <button id="btn">
+        Cadastrar
+    </button>
+
+
+    <a href="index.html">
+        Já tenho conta
+    </a>
 
 </div>
 
 
 <script
     type="module"
-    src="cadastro.js">
-</script>
+    src="cadastro.js"
+></script>
 
 </body>
 

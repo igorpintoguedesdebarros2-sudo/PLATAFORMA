@@ -14,60 +14,52 @@ align-items:center;
 
 }
 
-
-
-.box{
-
-background:white;
-
-padding:30px;
-
-border-radius:15px;
-
-width:300px;
-
-text-align:center;
-
+.box {
+    width: 90%;
+    max-width: 450px;
+    margin: 40px auto;
 }
 
-
-
-input{
-
-width:90%;
-
-padding:12px;
-
-margin:8px;
-
+.box input {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 14px;
+    padding: 12px;
 }
 
-
-
-button{
-
-width:95%;
-
-padding:12px;
-
-background:#0066ff;
-
-color:white;
-
-border:none;
-
-border-radius:8px;
-
-cursor:pointer;
-
+.telefone {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
 }
 
+.telefone #codigoPais {
+    width: 65px;
+}
 
+.telefone #ddd {
+    width: 70px;
+}
 
-a{
+.telefone #telefone {
+    flex: 1;
+}
 
-display:block;
+.indentidade{
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+}
 
-margin-top:15px;
+.box button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+}
 
+.box a {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
 }
